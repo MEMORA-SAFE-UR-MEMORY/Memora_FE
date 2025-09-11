@@ -24,6 +24,10 @@ export default function Login() {
         style={styles.input}
       />
       <Button title="Login" onPress={handleLogin} />
+      <Button
+        title="Forgot Password"
+        onPress={() => router.replace("/forgotPassword")}
+      />
     </View>
   );
 }

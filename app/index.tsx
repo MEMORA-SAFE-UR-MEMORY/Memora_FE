@@ -1,10 +1,17 @@
-import { View, Text, StyleSheet, ImageBackground } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+} from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { Router } from "expo-router";
 
 export default function Home() {
   return (
@@ -24,46 +31,48 @@ export default function Home() {
             paddingHorizontal: 16,
           }}
         >
-          <BlurView
-            intensity={100}
-            tint="light"
-            style={{
-              height: 50,
-              width: 166,
-              padding: 4,
-              borderRadius: 161,
-              overflow: "hidden",
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 12,
-              justifyContent: "space-between",
-              borderColor: "white",
-              borderWidth: 1,
-              gap: 5,
-            }}
-          >
-            <View
+          <TouchableOpacity onPress={() => router.replace("/login")}>
+            <BlurView
+              intensity={100}
+              tint="light"
               style={{
-                borderWidth: 1,
-                borderRadius: 100,
-                width: 30,
-                height: 30,
+                height: 50,
+                width: 166,
+                padding: 4,
+                borderRadius: 161,
+                overflow: "hidden",
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#FFADAD",
+                paddingHorizontal: 12,
+                justifyContent: "space-between",
+                borderColor: "white",
+                borderWidth: 1,
+                gap: 5,
               }}
             >
-              <Ionicons name="person" size={20} />
-            </View>
-            <Text
-              style={{
-                fontWeight: "semibold",
-                fontSize: 14,
-              }}
-            >
-              PLAYER INGAME
-            </Text>
-          </BlurView>
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderRadius: 100,
+                  width: 30,
+                  height: 30,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#FFADAD",
+                }}
+              >
+                <Ionicons name="person" size={20} />
+              </View>
+              <Text
+                style={{
+                  fontWeight: "semibold",
+                  fontSize: 14,
+                }}
+              >
+                PLAYER INGAME
+              </Text>
+            </BlurView>
+          </TouchableOpacity>
 
           <View
             style={{
