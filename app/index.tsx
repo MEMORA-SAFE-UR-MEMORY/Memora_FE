@@ -1,14 +1,42 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import BlurBox from "@src/components/BlurBox";
 import { AntDesign } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import LoginModal from "@src/components/LoginModal";
+import RegisterModal from "@src/components/RegisterModal";
+import { router } from "expo-router";
 
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [registerVisible, setRegisterVisible] = useState(false);
+
+  const handleRegisterPress = useCallback(() => {
+    setTimeout(() => {
+      setRegisterVisible(true);
+    }, 100);
+    setModalVisible(false);
+  }, []);
+
+  const handleLoginPress = useCallback(() => {
+    setTimeout(() => {
+      setModalVisible(true);
+    }, 100);
+    setRegisterVisible(false);
+  }, []);
+
+  const handleForgotPassword = useCallback(() => {
+    setTimeout(() => {
+      setModalVisible(false);
+    }, 100);
+    router.push("/forgotPassword");
+  });
 
   return (
     <View style={styles.container}>
+      {/* <View>
+        <Image source={require("../assets/images/Logo.png")} />
+      </View> */}
+
       <View
         style={{
           marginTop: 320,
@@ -43,6 +71,13 @@ export default function Home() {
       <LoginModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
+        onRegisterPress={handleRegisterPress}
+        onForgotPasswordPress={handleForgotPassword}
+      />
+      <RegisterModal
+        visible={registerVisible}
+        onClose={() => setRegisterVisible(false)}
+        onLoginPress={handleLoginPress}
       />
     </View>
   );

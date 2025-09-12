@@ -1,15 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import Modal from "react-native-modal";
+import { Text, TextInput, TouchableOpacity, View, Modal } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import Button from "./Button";
+import { router } from "expo-router";
 
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
+  onRegisterPress: () => void;
+  onForgotPasswordPress: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
+const LoginModal: React.FC<LoginModalProps> = ({
+  visible,
+  onClose,
+  onRegisterPress,
+  onForgotPasswordPress,
+}) => {
   const [email, onChangeEmail] = useState("");
   const [password, onChangePassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +26,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
     <SafeAreaProvider>
       <SafeAreaView>
         <Modal
-          onBackdropPress={onClose}
+          animationType="fade"
+          transparent={true}
           onDismiss={onClose}
           visible={visible}
           onRequestClose={onClose}
@@ -86,6 +95,28 @@ const LoginModal: React.FC<LoginModalProps> = ({ visible, onClose }) => {
                   color="gray"
                 />
               </TouchableOpacity>
+            </View>
+            <View
+              style={{
+                marginTop: 12,
+                flexDirection: "row",
+                marginLeft: 250,
+                gap: 10,
+              }}
+            >
+              <TouchableOpacity onPress={onRegisterPress}>
+                <Text style={{ textDecorationLine: "underline" }}>
+                  Chưa có tài khoản?
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onForgotPasswordPress}>
+                <Text style={{ textDecorationLine: "underline" }}>
+                  Quên mật khẩu?
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ marginTop: 12 }}>
+              <Button h={44} w={493} title={"Đăng nhập"} color={"A6E3FF"} />
             </View>
           </View>
         </Modal>

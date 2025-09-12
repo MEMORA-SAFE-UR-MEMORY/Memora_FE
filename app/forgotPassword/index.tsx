@@ -5,11 +5,15 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 export class forgotPassword extends Component {
   render() {
     return (
-      <SafeAreaProvider>
-        <View>
-          <Text>forgotPassword</Text>
-        </View>
-      </SafeAreaProvider>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          marginTop: 100,
+        }}
+      >
+        <Text style={{ fontSize: 34, fontWeight: "bold" }}>Quên mật khẩu</Text>
+      </View>
     );
   }
 }
