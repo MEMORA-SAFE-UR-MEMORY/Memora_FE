@@ -9,6 +9,10 @@ import { useRef, useState, useEffect } from "react";
 const RoomMenu = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const openStore = () => {
+    router.push("/store");
+  };
+
   // animated value cho menu (0 = đóng, 1 = mở)
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -60,7 +64,7 @@ const RoomMenu = () => {
 
         <View style={styles.divider} />
 
-        <Pressable style={styles.icon}>
+        <Pressable style={styles.icon} onPress={openStore}>
           <Ionicons name="storefront" size={35} color="white" />
           <Text style={styles.textIcon}>Store</Text>
         </Pressable>
