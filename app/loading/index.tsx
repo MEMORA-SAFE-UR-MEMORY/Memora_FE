@@ -12,6 +12,7 @@ import * as Progress from "react-native-progress";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { Entypo } from "@expo/vector-icons";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import { router } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -39,7 +40,13 @@ const Loading = () => {
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [progress]);
+    
+    if (progress === 1 && fontsLoaded) {
+      setTimeout(() => {
+        router.replace("/room");
+      }, 500);
+    }
+  }, [progress, fontsLoaded]);
 
   return (
     <View style={styles.container}>
