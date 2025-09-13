@@ -40,7 +40,7 @@ const Loading = () => {
       duration: 200,
       useNativeDriver: false,
     }).start();
-    
+
     if (progress === 1 && fontsLoaded) {
       setTimeout(() => {
         router.replace("/room");
@@ -74,6 +74,8 @@ const Loading = () => {
           unfilledColor="#000"
           borderWidth={0}
           height={12}
+          style={{ marginHorizontal: 0 }}
+          borderRadius={0}
         />
         <View style={styles.percentWrapper}>
           <ActivityIndicator size="small" color="#fff" />

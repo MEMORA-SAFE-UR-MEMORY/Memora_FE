@@ -4,9 +4,12 @@ import useCustomFonts from "@src/hooks/useCustomFonts";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { router } from "expo-router";
 import RoomMenu from "@src/components/RoomMenu";
+import Inventory from "@src/components/Inventory";
+import { useState } from "react";
 
 const Room = () => {
   const fontsLoaded = useCustomFonts();
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -24,8 +27,11 @@ const Room = () => {
         </Pressable>
 
         {/* Menu */}
-        <RoomMenu />
+        <RoomMenu onOpenInventory={() => setIsInventoryOpen(true)} />
       </View>
+      {isInventoryOpen && (
+        <Inventory onClose={() => setIsInventoryOpen(false)} />
+      )}
     </View>
   );
 };
@@ -38,11 +44,11 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
   },
   icon: {
     flexDirection: "column",
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   textIcon: {
     marginTop: -8,
