@@ -1,9 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Text, TextInput, TouchableOpacity, View, Modal } from "react-native";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Modal,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
-import { router } from "expo-router";
 
 interface LoginModalProps {
   visible: boolean;
@@ -33,17 +39,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
           onRequestClose={onClose}
           supportedOrientations={["portrait", "landscape"]}
         >
-          <View
-            style={{
-              backgroundColor: "white",
-              width: 557,
-              height: 334,
-              marginTop: 40,
-              alignSelf: "center",
-              borderRadius: 32,
-              alignItems: "center",
-            }}
-          >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
             <Text style={{ marginTop: 16, fontSize: 30, fontWeight: "bold" }}>
               Chào mừng quay trở lại!
             </Text>
@@ -124,5 +123,25 @@ const LoginModal: React.FC<LoginModalProps> = ({
     </SafeAreaProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: "white",
+    width: 557,
+    height: 334,
+    marginTop: 40,
+    alignSelf: "center",
+    borderRadius: 32,
+    alignItems: "center",
+    position: "relative",
+  },
+  closeButton: {
+    position: "absolute",
+    right: 16,
+    top: 16,
+    padding: 8,
+    zIndex: 1,
+  },
+});
 
 export default LoginModal;

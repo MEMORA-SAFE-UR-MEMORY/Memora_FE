@@ -41,6 +41,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         >
           <View style={styles.modalContainer}>
             <ScrollView showsVerticalScrollIndicator={false}>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Ionicons name="close" size={24} color="black" />
+              </TouchableOpacity>
               <Text style={styles.title}>Tạo tài khoản mới!</Text>
 
               <View style={styles.inputContainer}>
@@ -162,6 +165,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
+  },
+  closeButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    padding: 8,
+    zIndex: 1,
   },
 });
 
