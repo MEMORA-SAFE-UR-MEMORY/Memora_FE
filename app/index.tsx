@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  InteractionManager,
+} from "react-native";
 import BlurBox from "@src/components/BlurBox";
 import { AntDesign } from "@expo/vector-icons";
 import { useState, useCallback } from "react";
@@ -9,6 +17,7 @@ import { router } from "expo-router";
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [registerVisible, setRegisterVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegisterPress = useCallback(() => {
     setTimeout(() => {
@@ -29,6 +38,25 @@ export default function Home() {
       setModalVisible(false);
     }, 100);
     router.push("/forgotPassword");
+  });
+
+  const handleLogin = useCallback(() => {
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+      setModalVisible(false);
+      // Alert.alert("Đăng nhập thành công", "Chào mừng quay lại!", [
+      //   {
+      //     text: "OK",
+      //     onPress: () => router.push("/welcome"),
+      //   },
+      // ]);
+      alert("Đăng nhập thành công!");
+      InteractionManager.runAfterInteractions(() => {
+        router.replace("/welcome");
+      });
+    }, 3000);
   });
 
   return (
@@ -73,6 +101,8 @@ export default function Home() {
         onClose={() => setModalVisible(false)}
         onRegisterPress={handleRegisterPress}
         onForgotPasswordPress={handleForgotPassword}
+        onLogin={handleLogin}
+        loading={isLoading}
       />
       <RegisterModal
         visible={registerVisible}

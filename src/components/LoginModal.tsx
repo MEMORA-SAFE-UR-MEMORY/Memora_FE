@@ -4,12 +4,15 @@ import { Text, TextInput, TouchableOpacity, View, Modal } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
 import { router } from "expo-router";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
   onRegisterPress: () => void;
   onForgotPasswordPress: () => void;
+  onLogin: () => void;
+  loading?: boolean;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({
@@ -17,6 +20,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onRegisterPress,
   onForgotPasswordPress,
+  onLogin,
+  loading = false,
 }) => {
   const [email, onChangeEmail] = useState("");
   const [password, onChangePassword] = useState("");
@@ -33,6 +38,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
           onRequestClose={onClose}
           supportedOrientations={["portrait", "landscape"]}
         >
+          {loading && <LoadingOverlay />}
           <View
             style={{
               backgroundColor: "white",
@@ -116,7 +122,13 @@ const LoginModal: React.FC<LoginModalProps> = ({
               </TouchableOpacity>
             </View>
             <View style={{ marginTop: 12 }}>
-              <Button h={44} w={493} title={"Đăng nhập"} color={"A6E3FF"} />
+              <Button
+                h={44}
+                w={493}
+                title={"Đăng nhập"}
+                color={"A6E3FF"}
+                onPress={onLogin}
+              />
             </View>
           </View>
         </Modal>
