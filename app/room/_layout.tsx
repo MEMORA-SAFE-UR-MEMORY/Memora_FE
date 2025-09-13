@@ -1,23 +1,17 @@
 import { Stack } from "expo-router";
-import { Image, ImageBackground, StyleSheet, View } from "react-native";
+import { ImageBackground, StyleSheet, } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ImageBackground
-        source={require("../assets/images/background.jpg")}
+        source={{
+          uri: "https://w0.peakpx.com/wallpaper/404/720/HD-wallpaper-anime-suzume-no-tojimari.jpg",
+        }}
         style={styles.background}
         resizeMode="cover"
       >
-        <View>
-          <Image
-            width={204}
-            height={204}
-            style={{ position: "absolute", alignSelf: "center", top: 60 }}
-            source={require("../assets/images/Logo.png")}
-          />
-        </View>
         <Stack
           screenOptions={{
             headerShown: false,

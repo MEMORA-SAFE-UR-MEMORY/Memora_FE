@@ -1,8 +1,8 @@
 import { Text, TouchableOpacity, View } from "react-native";
 
-const Button = ({ w, h, title, color }) => {
+const Button = ({ w, h, title, color, onPress }) => {
   return (
-    <TouchableOpacity>
+    <TouchableOpacity onPress={onPress}>
       <View
         style={{
           width: w,

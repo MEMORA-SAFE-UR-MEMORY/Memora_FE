@@ -1,0 +1,112 @@
+import { Pressable, StyleSheet, Text, View, Animated } from "react-native";
+import Entypo from "@expo/vector-icons/Entypo";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { router } from "expo-router";
+import { useRef, useState, useEffect } from "react";
+
+const RoomMenu = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // animated value cho menu (0 = đóng, 1 = mở)
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: isMenuOpen ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [isMenuOpen]);
+
+  // translate cho menu
+  const translateX = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0], // menu từ phải trượt vào
+  });
+
+  // opacity ngược lại cho icon menu
+  const menuIconOpacity = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+
+  return (
+    <View>
+      <Animated.View
+        style={[styles.menuIcon, { opacity: menuIconOpacity }]}
+        pointerEvents={isMenuOpen ? "none" : "auto"}
+      >
+        <Pressable onPress={() => setIsMenuOpen(true)}>
+          <Entypo name="menu" size={35} color="white" />
+          <Text style={styles.textIcon}>Menu</Text>
+        </Pressable>
+      </Animated.View>
+
+      {/* Menu */}
+      <Animated.View
+        style={[
+          styles.menuContainer,
+          { transform: [{ translateX }], opacity: slideAnim },
+        ]}
+      >
+        <Pressable
+          style={{ marginBottom: 10 }}
+          onPress={() => setIsMenuOpen(false)}
+        >
+          <FontAwesome name="play-circle" size={25} color="white" />
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable style={styles.icon}>
+          <Ionicons name="storefront" size={35} color="white" />
+          <Text style={styles.textIcon}>Store</Text>
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable style={styles.icon}>
+          <MaterialIcons name="inventory" size={35} color="white" />
+          <Text style={styles.textIcon}>Inventory</Text>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  icon: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  menuIcon: {
+    flexDirection: "column",
+    alignItems: "center",
+    position: "absolute",
+    right: 0,
+  },
+  textIcon: {
+    marginTop: -8,
+    color: "white",
+    fontSize: 12,
+    fontFamily: "Baloo2_medium",
+  },
+  menuContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 220,
+  },
+  divider: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "white",
+    marginHorizontal: 5,
+    marginBottom: 10,
+  },
+});
+
+export default RoomMenu;
