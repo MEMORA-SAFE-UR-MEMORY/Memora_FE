@@ -4,6 +4,7 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRef, useState, useEffect } from "react";
+import { router } from "expo-router";
 
 type RoomMenuProps = {
   onOpenInventory: () => void;
