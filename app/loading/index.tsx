@@ -43,7 +43,7 @@ const Loading = () => {
     
     if (progress === 1 && fontsLoaded) {
       setTimeout(() => {
-        router.replace("/room");
+        router.replace("/home");
       }, 500);
     }
   }, [progress, fontsLoaded]);
