@@ -8,6 +8,8 @@ import {
   Modal,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
@@ -40,72 +42,82 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
           supportedOrientations={["portrait", "landscape"]}
         >
           <View style={styles.modalContainer}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.title}>Tạo tài khoản mới!</Text>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={{ flex: 1 }}
+            >
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                  <Ionicons name="close" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.title}>Tạo tài khoản mới!</Text>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>E-mail</Text>
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Nhập email của bạn"
-                  keyboardType="email-address"
-                  style={styles.input}
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Mật khẩu</Text>
-                <View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>E-mail</Text>
                   <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Nhập mật khẩu của bạn"
-                    secureTextEntry={!showPassword}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="Nhập email của bạn"
+                    keyboardType="email-address"
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Mật khẩu</Text>
+                  <View>
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Nhập mật khẩu của bạn"
+                      secureTextEntry={!showPassword}
+                      style={styles.input}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeIcon}
+                    >
+                      <Ionicons
+                        name={showPassword ? "eye-off" : "eye"}
+                        size={24}
+                        color="gray"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Xác nhận mật khẩu</Text>
+                  <TextInput
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Nhập lại mật khẩu của bạn"
+                    secureTextEntry={!showConfirmPassword}
                     style={styles.input}
                   />
                   <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.eyeIconConfirm}
                   >
                     <Ionicons
-                      name={showPassword ? "eye-off" : "eye"}
+                      name={showConfirmPassword ? "eye-off" : "eye"}
                       size={24}
                       color="gray"
                     />
                   </TouchableOpacity>
                 </View>
-              </View>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Xác nhận mật khẩu</Text>
-                <TextInput
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Nhập lại mật khẩu của bạn"
-                  secureTextEntry={!showConfirmPassword}
-                  style={styles.input}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeIconConfirm}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? "eye-off" : "eye"}
-                    size={24}
-                    color="gray"
-                  />
+                <TouchableOpacity onPress={onLoginPress}>
+                  <Text style={styles.linkText}>
+                    Đã có tài khoản? Đăng nhập
+                  </Text>
                 </TouchableOpacity>
-              </View>
 
-              <TouchableOpacity onPress={onLoginPress}>
-                <Text style={styles.linkText}>Đã có tài khoản? Đăng nhập</Text>
-              </TouchableOpacity>
-
-              <View style={styles.buttonContainer}>
-                <Button h={44} w={493} title="Đăng ký" color="A6E3FF" />
-              </View>
-            </ScrollView>
+                <View style={styles.buttonContainer}>
+                  <Button h={44} w={493} title="Đăng ký" color="A6E3FF" />
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </View>
         </Modal>
       </SafeAreaView>
@@ -162,6 +174,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 20,
+  },
+  closeButton: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    padding: 8,
+    zIndex: 1,
   },
 });
 

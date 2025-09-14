@@ -12,6 +12,10 @@ type RoomMenuProps = {
 const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const openStore = () => {
+    router.push("/store");
+  };
+
   // animated value cho menu (0 = đóng, 1 = mở)
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -63,7 +67,7 @@ const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
 
         <View style={styles.divider} />
 
-        <Pressable style={styles.icon}>
+        <Pressable style={styles.icon} onPress={openStore}>
           <Ionicons name="storefront" size={35} color="white" />
           <Text style={styles.textIcon}>Store</Text>
         </Pressable>

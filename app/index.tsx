@@ -38,7 +38,7 @@ export default function Home() {
       setModalVisible(false);
     }, 100);
     router.push("/forgotPassword");
-  });
+  }, []);
 
   const handleLogin = useCallback(() => {
     setIsLoading(true);
@@ -52,12 +52,11 @@ export default function Home() {
       //     onPress: () => router.push("/welcome"),
       //   },
       // ]);
-      alert("Đăng nhập thành công!");
       InteractionManager.runAfterInteractions(() => {
         router.replace("/welcome");
       });
     }, 3000);
-  });
+  }, []);
 
   return (
     <View style={styles.container}>
