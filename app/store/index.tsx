@@ -1,5 +1,13 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { FlatList, Image, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  FlatList,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Shop = () => {
   const puzzle = 10;
@@ -89,6 +97,12 @@ const Shop = () => {
       category: "Sticker",
     },
   ];
+
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
+  const openCategory = () => {
+    setCategoryOpen(true);
+  };
   return (
     <View style={{ flex: 1, flexDirection: "row" }}>
       <View style={{ width: 307, backgroundColor: "#B1E2FF" }}></View>
@@ -159,9 +173,7 @@ const Shop = () => {
           bottom: 0,
           left: 307,
         }}
-      >
-        <MaterialIcons name="category" size={24} color="black" />
-      </View>
+      ></View>
     </View>
   );
 };
