@@ -3,10 +3,14 @@ import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { router } from "expo-router";
 import { useRef, useState, useEffect } from "react";
+import { router } from "expo-router";
 
-const RoomMenu = () => {
+type RoomMenuProps = {
+  onOpenInventory: () => void;
+};
+
+const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const openStore = () => {
@@ -71,7 +75,7 @@ const RoomMenu = () => {
 
         <View style={styles.divider} />
 
-        <Pressable style={styles.icon}>
+        <Pressable style={styles.icon} onPress={onOpenInventory}>
           <MaterialIcons name="inventory" size={35} color="white" />
           <Text style={styles.textIcon}>Inventory</Text>
         </Pressable>
@@ -90,6 +94,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "absolute",
     right: 0,
+    paddingHorizontal: 20,
   },
   textIcon: {
     marginTop: -8,
@@ -101,7 +106,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    width: 220,
+    width: 240,
+    paddingRight: 20,
   },
   divider: {
     flex: 1,

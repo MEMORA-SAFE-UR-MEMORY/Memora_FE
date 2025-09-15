@@ -1,0 +1,295 @@
+import BlurBox from "@src/components/BlurBox";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  Image,
+  Modal,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+export default function HallScreen() {
+  const [modalVisible, setModalVisible] = useState(false);
+  return (
+    <View style={{ flex: 1 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 26,
+          paddingTop: 18,
+        }}
+      >
+        <TouchableOpacity>
+          <BlurBox
+            h={50}
+            w={170}
+            title="PLAYER INGAME"
+            image={require("../../assets/images/AvatarImage.png")}
+            imageSize={40}
+            textSize={14}
+          />
+        </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              borderRadius: 20,
+              marginRight: 8,
+              overflow: "hidden",
+            }}
+          >
+            <LinearGradient
+              colors={["#FF7C96", "#FF4268", "#FF5D02"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Premium</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <BlurBox h={30} w={98} title="362665" textSize={14} />
+        </View>
+      </View>
+
+      <View
+        style={{
+          position: "absolute",
+          flexDirection: "row",
+          gap: 12,
+          right: 26,
+          top: 70,
+        }}
+      >
+        <View style={{ alignItems: "center" }}>
+          <TouchableOpacity
+            style={{
+              borderRadius: 50,
+              overflow: "hidden",
+              marginBottom: -5,
+              elevation: 4,
+            }}
+            onPress={() => router.push("/store")}
+          >
+            <View
+              style={{
+                backgroundColor: "#FDD700",
+                borderColor: "#E2B511",
+                borderTopWidth: 2,
+                borderBottomWidth: 2,
+                borderLeftWidth: 2,
+                borderRightWidth: 2,
+                padding: 6,
+                borderRadius: 50,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image
+                source={require("../../assets/icons/Game shop red.png")}
+                style={{ width: 26, height: 26 }}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 12,
+              fontWeight: "bold",
+              textAlign: "center",
+              textShadowColor: "#E2B511",
+              textShadowOffset: { width: 1, height: 1 },
+              textShadowRadius: 1,
+              elevation: 1,
+              shadowColor: "#2953A7",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: 1,
+            }}
+          >
+            Cửa hàng
+          </Text>
+        </View>
+        {/* =============================== */}
+        <View style={{ alignItems: "center" }}>
+          <TouchableOpacity
+            style={{
+              borderRadius: 50,
+              overflow: "hidden",
+              marginBottom: -5,
+              elevation: 4,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: "#57AFE5",
+                borderColor: "#2953A7",
+                borderTopWidth: 2,
+                borderBottomWidth: 2,
+                borderLeftWidth: 2,
+                borderRightWidth: 2,
+                padding: 7,
+                borderRadius: 50,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Image
+                source={require("../../assets/icons/setting.png")}
+                style={{ width: 24, height: 24 }}
+                resizeMode="contain"
+              />
+            </View>
+          </TouchableOpacity>
+          <Text
+            style={{
+              color: "white",
+              fontSize: 12,
+              fontWeight: "bold",
+              textAlign: "center",
+              textShadowColor: "#2953A7",
+              textShadowOffset: { width: 1, height: 1 },
+              textShadowRadius: 1,
+              elevation: 1,
+              shadowColor: "#2953A7",
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 1,
+              shadowRadius: 1,
+            }}
+          >
+            Cài đặt
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          width: 160,
+          height: 260,
+          top: 130,
+          left: 360,
+          borderWidth: 2,
+          borderStyle: "dashed",
+          borderColor: "#A8A8A8",
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: 6,
+        }}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={{ fontSize: 40, fontWeight: "bold", color: "#555" }}>
+          +
+        </Text>
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+        supportedOrientations={["landscape", "portrait"]}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              width: "80%",
+              backgroundColor: "#fff",
+              borderRadius: 12,
+              padding: 20,
+              borderWidth: 2,
+              borderColor: "#C7B6F5",
+            }}
+          >
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12 }}
+            >
+              Tạo phòng mới
+            </Text>
+
+            {/* Nhập tên */}
+            <TextInput
+              placeholder="Nhập tên không gian ký ức"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 10,
+                marginBottom: 12,
+              }}
+            />
+
+            {/* Chủ đề */}
+            <TextInput
+              placeholder="Chủ đề không gian/Theme"
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                padding: 10,
+                marginBottom: 12,
+              }}
+            />
+
+            {/* Nút bấm */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                marginTop: 12,
+              }}
+            >
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#ccc",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                  marginRight: 8,
+                }}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text>Hủy</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#8b5cf6",
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 8,
+                }}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={{ color: "#fff" }}>Tạo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
