@@ -1,5 +1,6 @@
 import BlurBox from "@src/components/BlurBox";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -83,6 +84,7 @@ export default function HallScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => router.push("/store")}
           >
             <View
               style={{
@@ -202,6 +204,7 @@ export default function HallScreen() {
         animationType="fade"
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
+        supportedOrientations={["landscape", "portrait"]}
       >
         <View
           style={{
