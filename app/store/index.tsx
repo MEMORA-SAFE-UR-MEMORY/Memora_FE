@@ -1,4 +1,6 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import ShopCategory from "@src/components/ShopCategory";
+import { useShopItem } from "@src/hooks/useShopItem";
 import { useState } from "react";
 import {
   FlatList,
@@ -11,94 +13,12 @@ import {
 
 const Shop = () => {
   const puzzle = 10;
-  const shopItem = [
-    {
-      id: 1,
-      name: "Sticker thỏ",
-      image: require("../../assets/images/Bunny.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 2,
-      name: "Sticker gấu",
-      image: require("../../assets/images/Bear.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 3,
-      name: "Sticker cún",
-      image: require("../../assets/images/Dog.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 4,
-      name: "Sticker hoa",
-      image: require("../../assets/images/Flower.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 5,
-      name: "Sticker bút chì",
-      image: require("../../assets/images/Pencil.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 6,
-      name: "Sticker thước kẻ",
-      image: require("../../assets/images/Ruler.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 7,
-      name: "Sticker ông mặt trời",
-      image: require("../../assets/images/Sun.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 8,
-      name: "Sticker mây",
-      image: require("../../assets/images/Cloud.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 9,
-      name: "Sticker chuông",
-      image: require("../../assets/images/bell.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 10,
-      name: "Sticker cầu pha lê",
-      image: require("../../assets/images/crystal-ball.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 11,
-      name: "Sticker gậy kẹo",
-      image: require("../../assets/images/candy-cane.png"),
-      price: 10,
-      category: "Sticker",
-    },
-    {
-      id: 12,
-      name: "Sticker kẹo giáng sinh",
-      image: require("../../assets/images/christmas-candy.png"),
-      price: 10,
-      category: "Sticker",
-    },
-  ];
+  const { items, categories, getItemsByCategory } = useShopItem();
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [categoryOpen, setCategoryOpen] = useState(false);
+
+  const filteredItems = getItemsByCategory(selectedCategory);
 
   const openCategory = () => {
     setCategoryOpen(true);
@@ -129,7 +49,7 @@ const Shop = () => {
         </View>
         <FlatList
           numColumns={4}
-          data={shopItem}
+          data={filteredItems}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View>
@@ -173,7 +93,20 @@ const Shop = () => {
           bottom: 0,
           left: 307,
         }}
-      ></View>
+      >
+        <View
+          style={{ position: "absolute", bottom: -15, right: -50, width: 600 }}
+        >
+          <ShopCategory
+            isOpen={categoryOpen}
+            onToggle={openCategory}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            onClose={() => setCategoryOpen(false)}
+          />
+        </View>
+      </View>
     </View>
   );
 };
