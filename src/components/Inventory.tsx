@@ -1,18 +1,18 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
+import CategoryInven from "@src/components/CategoryInven";
+import useInventory from "@src/hooks/useInventory";
+import { Item } from "@src/types/item";
+import { useEffect, useRef } from "react";
 import {
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   View,
-  Dimensions,
-  Animated,
-  FlatList,
-  Image,
 } from "react-native";
-import { Entypo } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
-import useInventory from "@src/hooks/useInventory";
-import { Item } from "@src/types/item";
-import CategoryInven from "@src/components/CategoryInven";
 
 const { height, width } = Dimensions.get("window");
 
@@ -86,7 +86,7 @@ const Inventory = ({ onClose }: InventoryProps) => {
         />
 
         <Pressable onPress={handleClose} style={styles.closeButton}>
-          <Entypo name="circle-with-cross" size={25} color="white" />
+          <Ionicons name="close-circle" size={28} color="white" />
         </Pressable>
       </View>
 
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E9D8FF",
   },
   closeButton: {
-    padding: 4,
+    padding: 2,
     backgroundColor: "#D6B7FF",
     borderRadius: 20,
     alignItems: "center",

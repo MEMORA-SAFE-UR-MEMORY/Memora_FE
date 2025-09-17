@@ -13,6 +13,11 @@ import {
 
 export default function HallScreen() {
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleAddRoom = () => {
+    setModalVisible(false);
+    router.push("/room");
+  };
   return (
     <View style={{ flex: 1 }}>
       <View
@@ -282,7 +287,7 @@ export default function HallScreen() {
                   paddingVertical: 10,
                   borderRadius: 8,
                 }}
-                onPress={() => setModalVisible(false)}
+                onPress={handleAddRoom}
               >
                 <Text style={{ color: "#fff" }}>Tạo</Text>
               </TouchableOpacity>
