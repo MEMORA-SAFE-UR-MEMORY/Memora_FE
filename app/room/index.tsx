@@ -1,15 +1,27 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import useCustomFonts from "@src/hooks/useCustomFonts";
-import LoadingOverlay from "@src/components/LoadingOverlay";
-import { router } from "expo-router";
-import RoomMenu from "@src/components/RoomMenu";
+import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
+import LoadingOverlay from "@src/components/LoadingOverlay";
+import RoomMenu from "@src/components/RoomMenu";
+import useCustomFonts from "@src/hooks/useCustomFonts";
+import { router } from "expo-router";
 import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 const Room = () => {
   const fontsLoaded = useCustomFonts();
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleClose = () => {
+    console.log("Closing modal");
+    setIsModalOpen(false);
+  };
+
+  const handleOpenModal = () => {
+    console.log("Opening modal");
+    setIsModalOpen(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -31,6 +43,22 @@ const Room = () => {
       </View>
       {isInventoryOpen && (
         <Inventory onClose={() => setIsInventoryOpen(false)} />
+      )}
+
+      {/* Nút Thêm ký ức luôn hiển thị */}
+      <Pressable onPress={() => fontsLoaded && setIsModalOpen(true)}>
+        <View style={styles.addContainer}>
+          <Text
+            style={[styles.addText, !fontsLoaded && { fontFamily: undefined }]}
+          >
+            + Thêm ký ức
+          </Text>
+        </View>
+      </Pressable>
+
+      {/* Modal chỉ hiển thị khi fonts đã load và isModalOpen = true */}
+      {fontsLoaded && isModalOpen && (
+        <AddMemoryModal visible={true} onClose={() => setIsModalOpen(false)} />
       )}
     </View>
   );
@@ -55,6 +83,20 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 12,
     fontFamily: "Baloo2_medium",
+  },
+  addContainer: {
+    position: "absolute",
+    backgroundColor: "grey",
+    justifyContent: "center",
+    top: 20,
+    left: 20,
+  },
+  addText: {
+    fontFamily: "Baloo2_medium",
+    fontSize: 12,
+  },
+  modalContainer: {
+    flex: 1,
   },
 });
 
