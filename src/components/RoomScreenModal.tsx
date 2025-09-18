@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -44,9 +44,22 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
     { id: "friend", label: "Bạn bè" },
   ];
 
+  useEffect(() => {
+    if (!visible) {
+      setRoomName("");
+      setSelectedTheme("default");
+      setSelectedColor("");
+      setThemeDropdownOpen(false);
+    }
+  }, [visible]);
+
   const handleCreateRoom = () => {
     console.log("Creating room:", { roomName, selectedTheme, selectedColor });
     onConfirm();
+    setRoomName("");
+    setSelectedTheme("default");
+    setSelectedColor("");
+    setThemeDropdownOpen(false);
   };
 
   return (
@@ -148,7 +161,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                 }}
                 value={roomName}
                 onChangeText={setRoomName}
-                placeholder="Ví dụ: Nhà Tanjirou"
+                placeholder="Ví dụ: Ký ức tuổi thơ"
                 placeholderTextColor="#666"
               />
             </View>
