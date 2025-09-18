@@ -13,7 +13,7 @@ export default function HomeScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 18,
+          paddingTop: 22,
         }}
       >
         <TouchableOpacity>
@@ -70,7 +70,7 @@ export default function HomeScreen() {
       >
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.replace("/hall")}
+          onPress={() => router.push("/hall")}
         >
           <View
             style={{
@@ -123,6 +123,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => router.push("/store")}
           >
             <View
               style={{
