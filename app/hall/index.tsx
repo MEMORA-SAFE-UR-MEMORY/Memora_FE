@@ -1,5 +1,6 @@
 import BlurBox from "@src/components/BlurBox";
 import RoomScreenModal from "@src/components/RoomScreenModal";
+import SettingModal from "@src/components/SettingModal";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -8,6 +9,7 @@ import { Image, Text, TouchableOpacity, View } from "react-native";
 
 export default function HallScreen() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [settingVisible, setSettingVisible] = useState(false);
 
   const handleAddRoom = () => {
     setModalVisible(false);
@@ -135,6 +137,7 @@ export default function HallScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => setSettingVisible(true)}
           >
             <View
               style={{
@@ -202,6 +205,10 @@ export default function HallScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onConfirm={handleAddRoom}
+      />
+      <SettingModal
+        visible={settingVisible}
+        onClose={() => setSettingVisible(false)}
       />
     </View>
   );
