@@ -39,11 +39,12 @@ export default function HallScreen() {
         <TouchableOpacity>
           <BlurBox
             h={50}
-            w={170}
+            w={180}
             title="PLAYER INGAME"
             image={require("../../assets/images/AvatarImage.png")}
             imageSize={40}
-            textSize={14}
+            textSize={16}
+            fontFamily="Baloo2_semiBold"
           />
         </TouchableOpacity>
         <View
@@ -65,17 +66,52 @@ export default function HallScreen() {
               end={{ x: 1, y: 0 }}
               style={{
                 paddingHorizontal: 16,
-                paddingVertical: 10,
+                paddingVertical: 8,
                 borderRadius: 20,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Premium</Text>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: "Baloo2_semiBold",
+                  fontSize: 14,
+                }}
+              >
+                Premium
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
-          <BlurBox h={30} w={98} title="362665" textSize={14} />
+          <View
+            style={{
+              height: 34,
+              width: 98,
+              backgroundColor: "#FFFFFF",
+              borderColor: "#663530",
+              borderWidth: 2,
+              borderRadius: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: 12,
+              shadowColor: "#663530",
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 3,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#663530",
+                fontFamily: "Baloo2_bold",
+              }}
+            >
+              362665
+            </Text>
+          </View>
         </View>
         <Animated.View
           style={[
@@ -93,8 +129,8 @@ export default function HallScreen() {
             onPress={() => router.push("/home")}
             style={{
               backgroundColor: "white",
-              width: 54,
-              height: 54,
+              width: 48,
+              height: 48,
               borderRadius: 27,
               alignItems: "center",
               justifyContent: "center",
@@ -113,7 +149,7 @@ export default function HallScreen() {
             <View
               style={{
                 position: "absolute",
-                left: "-26%",
+                left: "-29%",
                 marginRight: 3,
                 top: "50%",
                 transform: [{ translateY: -10 }],
@@ -182,8 +218,8 @@ export default function HallScreen() {
           >
             <View
               style={{
-                backgroundColor: "#FDD700",
-                borderColor: "#E2B511",
+                backgroundColor: "#ffffffff",
+                borderColor: "#663530",
                 borderTopWidth: 2,
                 borderBottomWidth: 2,
                 borderLeftWidth: 2,
@@ -203,15 +239,14 @@ export default function HallScreen() {
           </TouchableOpacity>
           <Text
             style={{
-              color: "white",
-              fontSize: 12,
-              fontWeight: "bold",
+              color: "#663530",
+              fontSize: 14,
+              fontFamily: "Baloo2_bold",
               textAlign: "center",
-              textShadowColor: "#E2B511",
-              textShadowOffset: { width: 1, height: 1 },
+              textShadowColor: "#d0948dff",
+              // textShadowOffset: { width: 1, height: 1 },
               textShadowRadius: 1,
               elevation: 1,
-              shadowColor: "#2953A7",
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 1,
               shadowRadius: 1,
@@ -233,8 +268,8 @@ export default function HallScreen() {
           >
             <View
               style={{
-                backgroundColor: "#57AFE5",
-                borderColor: "#2953A7",
+                backgroundColor: "#663530",
+                borderColor: "#ffffff",
                 borderTopWidth: 2,
                 borderBottomWidth: 2,
                 borderLeftWidth: 2,
@@ -254,15 +289,14 @@ export default function HallScreen() {
           </TouchableOpacity>
           <Text
             style={{
-              color: "white",
-              fontSize: 12,
-              fontWeight: "bold",
+              color: "#663530",
+              fontSize: 14,
+              fontFamily: "Baloo2_bold",
               textAlign: "center",
-              textShadowColor: "#2953A7",
-              textShadowOffset: { width: 1, height: 1 },
+              textShadowColor: "#d0948dff",
+              // textShadowOffset: { width: 1, height: 1 },
               textShadowRadius: 1,
               elevation: 1,
-              shadowColor: "#2953A7",
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 1,
               shadowRadius: 1,

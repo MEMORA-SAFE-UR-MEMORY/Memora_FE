@@ -69,7 +69,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                 fontSize: 24,
                 fontWeight: "600",
                 color: "black",
-                fontFamily: "Baloo2_semiBold",
+                fontFamily: "Baloo2_bold",
                 textAlign: "center",
                 flex: 1,
               }}

@@ -105,7 +105,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             >
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_bold",
                   fontWeight: "600",
                   fontSize: 24,
                   color: "black",
@@ -136,7 +136,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
@@ -170,7 +170,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
@@ -267,7 +267,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
