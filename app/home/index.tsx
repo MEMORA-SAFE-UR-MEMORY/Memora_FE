@@ -16,7 +16,7 @@ export default function HomeScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 22,
+          paddingTop: 28,
         }}
       >
         <TouchableOpacity>
@@ -115,7 +115,7 @@ export default function HomeScreen() {
           flexDirection: "row",
           gap: 12,
           right: 26,
-          top: 70,
+          top: 75,
         }}
       >
         <View style={{ alignItems: "center" }}>
