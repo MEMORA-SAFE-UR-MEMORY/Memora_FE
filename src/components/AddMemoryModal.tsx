@@ -1,6 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import BtnBorder from "@src/components/BtnBorder";
+import ModalCalendar from "@src/components/ModalCalendar";
+import ScrollingText from "@src/components/ScrollingText";
+import { formatDate } from "@src/utils/format";
+import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -12,22 +18,80 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import ScrollingText from "./ScrollingText";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onSave: (data: {
+    title: string;
+    description: string;
+    image: string | null;
+    date: string;
+  }) => void;
 };
 
-const AddMemoryModal: React.FC<Props> = ({ visible, onClose }) => {
+const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
+  // Calendar
+  const handleCalendarOpen = () => {
+    setIsCalendarOpen(true);
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setIsCalendarOpen(false);
+  };
+
+  const handleCalendarClose = () => {
+    setIsCalendarOpen(false);
+  };
+
+  // Ảnh
+  const pickImage = async () => {
+    // Yêu cầu quyền truy cập vào thư viện ảnh
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      alert("Xin lỗi, chúng tôi cần quyền truy cập vào thư viện ảnh!");
+      return;
+    }
+
+    // Mở album ảnh
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  // Modal
   const handleSave = () => {
+    onSave({
+      title,
+      description,
+      image: selectedImage,
+      date: selectedDate,
+    });
     setTitle("");
     setDescription("");
+    setSelectedImage(null);
+    setSelectedDate("");
     onClose();
+  };
+
+  const isFormValid = () => {
+    return title.trim() !== "" && selectedDate !== "" && selectedImage !== null;
   };
 
   return (
@@ -92,15 +156,27 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose }) => {
                 <View style={styles.dateRow}>
                   <Text style={styles.label}>Ngày:</Text>
                   <View style={styles.dateInputs}>
-                    <TouchableOpacity style={styles.dateButton}>
-                      <Text style={styles.dateButtonText}>Năm ▼</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.dateButton}>
-                      <Text style={styles.dateButtonText}>Tháng ▼</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.dateButton}>
-                      <Text style={styles.dateButtonText}>Ngày ▼</Text>
-                    </TouchableOpacity>
+                    {isCalendarOpen ? (
+                      <View style={styles.calendarContainer}>
+                        <ModalCalendar
+                          onSelectDate={handleDateSelect}
+                          onClose={handleCalendarClose}
+                          initialDate={selectedDate}
+                        />
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.dateButton}
+                        onPress={handleCalendarOpen}
+                      >
+                        <Text style={styles.dateButtonText}>
+                          {selectedDate
+                            ? formatDate(selectedDate)
+                            : "Chọn ngày"}
+                        </Text>
+                        <Text style={styles.dateButtonText}>▼</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               </View>
@@ -119,14 +195,30 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose }) => {
 
               <View style={styles.fileRow}>
                 <Text style={styles.label}>Nhập tập tin: </Text>
-                <TouchableOpacity style={styles.fileButton}>
-                  <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
-                </TouchableOpacity>
+                {selectedImage ? (
+                  <Image
+                    source={{ uri: selectedImage }}
+                    style={styles.thumbnailImage}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    style={styles.fileButton}
+                    onPress={pickImage}
+                  >
+                    <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
-              <TouchableOpacity style={styles.addButton} onPress={handleSave}>
-                <Text style={styles.addButtonText}>Thêm</Text>
-              </TouchableOpacity>
+              <View style={styles.addButton}>
+                <BtnBorder
+                  text="Thêm"
+                  fontSize={15}
+                  colorType={isFormValid() ? "pink" : "grey"}
+                  onPress={handleSave}
+                  disabled={!isFormValid()}
+                />
+              </View>
             </View>
           </View>
         </TouchableWithoutFeedback>
@@ -165,13 +257,9 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    right: -10,
-    top: -10,
+    right: -20,
+    top: -20,
     padding: 5,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: "#666",
   },
   row1: {
     flexDirection: "row",
@@ -212,7 +300,7 @@ const styles = StyleSheet.create({
     width: "auto",
   },
   titleInput: {
-    padding: 10,
+    paddingHorizontal: 10,
     paddingRight: 45,
     fontFamily: "Baloo2_medium",
     fontSize: 14,
@@ -229,6 +317,8 @@ const styles = StyleSheet.create({
   dateRow: {
     marginBottom: 10,
     flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     flex: 1,
     gap: 10,
   },
@@ -239,11 +329,14 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     backgroundColor: "#B1E1FF",
-    padding: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     borderRadius: 20,
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    height: 40,
   },
   dateButtonText: {
     color: "#333333",
@@ -251,6 +344,14 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     fontFamily: "Baloo2_medium",
     fontSize: 14,
+  },
+  calendarContainer: {
+    position: "absolute",
+    top: -50,
+    right: -90,
+    zIndex: 1000,
+    width: 350,
+    height: 280,
   },
   descriptionRow: {
     marginBottom: 10,
@@ -261,7 +362,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 25,
-    padding: 10,
+    paddingHorizontal: 10,
     height: 100,
     textAlignVertical: "top",
     fontFamily: "Baloo2_medium",
@@ -284,21 +385,15 @@ const styles = StyleSheet.create({
     fontFamily: "Baloo2_medium",
     fontSize: 14,
   },
-  addButton: {
-    backgroundColor: "#FFBCDD",
-    padding: 5,
-    borderRadius: 25,
-    alignItems: "center",
-    width: 100,
-    alignSelf: "flex-end",
-    borderColor: "#EC4F9D",
-    borderBottomWidth: 3,
-    borderRightWidth: 2,
-    borderLeftWidth: 0.5,
+  thumbnailImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
   },
-  addButtonText: {
-    fontFamily: "Baloo2_semiBold",
-    fontSize: 15,
+  addButton: {
+    alignSelf: "flex-end",
   },
 });
 

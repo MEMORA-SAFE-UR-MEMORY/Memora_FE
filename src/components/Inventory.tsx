@@ -5,27 +5,31 @@ import { Item } from "@src/types/item";
 import { useEffect, useRef } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   Image,
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
-
-const { height, width } = Dimensions.get("window");
 
 type InventoryProps = {
   onClose: () => void;
 };
 
 const Inventory = ({ onClose }: InventoryProps) => {
+  const { width, height } = useWindowDimensions();
   const { categories, items, selectedCategory, setSelectedCategory } =
     useInventory();
 
-  const slideAnim = useRef(new Animated.Value(width * 0.35)).current;
+  const inventoryWidth = width * 0.35;
+  const slideAnim = useRef(new Animated.Value(inventoryWidth)).current;
   const listRef = useRef<FlatList<Item>>(null);
+
+  useEffect(() => {
+    slideAnim.setValue(inventoryWidth);
+  }, [width]);
 
   // slide in khi mount
   useEffect(() => {
@@ -38,7 +42,7 @@ const Inventory = ({ onClose }: InventoryProps) => {
 
   const handleClose = () => {
     Animated.timing(slideAnim, {
-      toValue: width * 0.35,
+      toValue: inventoryWidth,
       duration: 300,
       useNativeDriver: true,
     }).start(({ finished }) => {
@@ -71,6 +75,8 @@ const Inventory = ({ onClose }: InventoryProps) => {
       style={[
         styles.overlay,
         {
+          width: inventoryWidth,
+          height: height,
           transform: [{ translateX: slideAnim }],
         },
       ]}
@@ -110,8 +116,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "#fff",
-    width: width * 0.35,
-    height: height,
   },
   headerContainer: {
     flexDirection: "row",

@@ -129,9 +129,9 @@ const styles = StyleSheet.create({
     width: 1000, // Large width to accommodate long text
   },
   baseText: {
-    paddingVertical: 10,
     paddingHorizontal: 10,
     width: "auto",
+    fontFamily: "Baloo2_medium",
   },
 });
 

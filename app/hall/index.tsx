@@ -2,7 +2,6 @@ import BlurBox from "@src/components/BlurBox";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
-
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -168,7 +167,7 @@ export default function HallScreen() {
           flexDirection: "row",
           gap: 12,
           right: 26,
-          top: 70,
+          top: 75,
         }}
       >
         <View style={{ alignItems: "center" }}>
