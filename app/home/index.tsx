@@ -1,10 +1,13 @@
 import BlurBox from "@src/components/BlurBox";
+import SettingModal from "@src/components/SettingModal";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 
 export default function HomeScreen() {
+  const [settingVisible, setSettingVisible] = useState(false);
+
   return (
     <View style={{ flex: 1 }}>
       <View
@@ -13,7 +16,7 @@ export default function HomeScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 18,
+          paddingTop: 22,
         }}
       >
         <TouchableOpacity>
@@ -70,7 +73,7 @@ export default function HomeScreen() {
       >
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={() => router.replace("/hall")}
+          onPress={() => router.push("/hall")}
         >
           <View
             style={{
@@ -123,6 +126,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => router.push("/store")}
           >
             <View
               style={{
@@ -173,6 +177,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => setSettingVisible(true)}
           >
             <View
               style={{
@@ -215,6 +220,26 @@ export default function HomeScreen() {
           </Text>
         </View>
       </View>
+      {settingVisible && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 100,
+          }}
+        >
+          <SettingModal
+            visible={settingVisible}
+            onClose={() => setSettingVisible(false)}
+          />
+        </View>
+      )}
     </View>
   );
 }
