@@ -1,25 +1,24 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Animated,
-  Dimensions,
-  ActivityIndicator,
-} from "react-native";
-import * as Progress from "react-native-progress";
-import useCustomFonts from "@src/hooks/useCustomFonts";
 import { Entypo } from "@expo/vector-icons";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import useCustomFonts from "@src/hooks/useCustomFonts";
 import { router } from "expo-router";
-
-const { width } = Dimensions.get("window");
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import * as Progress from "react-native-progress";
 
 const Loading = () => {
   const [progress, setProgress] = useState(0);
   const progressAnim = new Animated.Value(0);
   const fontsLoaded = useCustomFonts();
+  const { width } = useWindowDimensions();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,6 +64,14 @@ const Loading = () => {
         </Text>
       </View>
 
+      <View style={styles.percentWrapper}>
+        <ActivityIndicator size="small" color="#fff" />
+        <Text style={[styles.percent, { marginBottom: -10 }]}>
+          {Math.round(progress * 100)}%
+        </Text>
+        <Text style={styles.percent}>Đang tải</Text>
+      </View>
+
       {/* Progress bar */}
       <View style={styles.progressWrapper}>
         <Progress.Bar
@@ -77,13 +84,6 @@ const Loading = () => {
           style={{ marginHorizontal: 0 }}
           borderRadius={0}
         />
-        <View style={styles.percentWrapper}>
-          <ActivityIndicator size="small" color="#fff" />
-          <Text style={[styles.percent, { marginBottom: -10 }]}>
-            {Math.round(progress * 100)}%
-          </Text>
-          <Text style={styles.percent}>Đang tải</Text>
-        </View>
       </View>
     </View>
   );
@@ -127,14 +127,15 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: "center",
     paddingBottom: 20,
+    overflow: "hidden",
   },
   percentWrapper: {
     position: "absolute",
-    bottom: 32,
+    bottom: 15,
     right: 20,
     alignItems: "center",
     flexDirection: "column",
-    gap: 1,
+    gap: 2,
   },
   percent: {
     fontSize: 14,

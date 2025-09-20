@@ -1,19 +1,17 @@
+import { Entypo } from "@expo/vector-icons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import React, { useRef } from "react";
 import {
-  ScrollView,
   Pressable,
-  Text,
-  View,
+  ScrollView,
   StyleSheet,
-  Dimensions,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
-import { Entypo } from "@expo/vector-icons";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-
-const { width } = Dimensions.get("window");
 
 type Category = {
   id: number;
@@ -36,6 +34,7 @@ const iconComponents: Record<string, any> = {
 };
 
 const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
+  const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
 
   const handleScrollRight = () => {
@@ -43,7 +42,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
   };
 
   return (
-    <View style={styles.scrollWrapper}>
+    <View style={[styles.scrollWrapper, { maxWidth: width * 0.26 }]}>
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -116,7 +115,6 @@ const styles = StyleSheet.create({
   scrollWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    maxWidth: width * 0.26,
   },
   categoryContainer: {
     flexDirection: "row",
