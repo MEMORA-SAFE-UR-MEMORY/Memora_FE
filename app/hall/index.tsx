@@ -1,18 +1,15 @@
 import BlurBox from "@src/components/BlurBox";
+import RoomScreenModal from "@src/components/RoomScreenModal";
+import SettingModal from "@src/components/SettingModal";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Image,
-  Modal,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 
 export default function HallScreen() {
   const [modalVisible, setModalVisible] = useState(false);
+  const [settingVisible, setSettingVisible] = useState(false);
 
   const handleAddRoom = () => {
     setModalVisible(false);
@@ -26,7 +23,7 @@ export default function HallScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 18,
+          paddingTop: 22,
         }}
       >
         <TouchableOpacity>
@@ -140,6 +137,7 @@ export default function HallScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
+            onPress={() => setSettingVisible(true)}
           >
             <View
               style={{
@@ -203,98 +201,15 @@ export default function HallScreen() {
           +
         </Text>
       </TouchableOpacity>
-
-      <Modal
+      <RoomScreenModal
         visible={modalVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-        supportedOrientations={["landscape", "portrait"]}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.4)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              width: "80%",
-              backgroundColor: "#fff",
-              borderRadius: 12,
-              padding: 20,
-              borderWidth: 2,
-              borderColor: "#C7B6F5",
-            }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12 }}
-            >
-              Tạo phòng mới
-            </Text>
-
-            {/* Nhập tên */}
-            <TextInput
-              placeholder="Nhập tên không gian ký ức"
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 10,
-                marginBottom: 12,
-              }}
-            />
-
-            {/* Chủ đề */}
-            <TextInput
-              placeholder="Chủ đề không gian/Theme"
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 8,
-                padding: 10,
-                marginBottom: 12,
-              }}
-            />
-
-            {/* Nút bấm */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                marginTop: 12,
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#ccc",
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                  marginRight: 8,
-                }}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text>Hủy</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#8b5cf6",
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: 8,
-                }}
-                onPress={handleAddRoom}
-              >
-                <Text style={{ color: "#fff" }}>Tạo</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onConfirm={handleAddRoom}
+      />
+      <SettingModal
+        visible={settingVisible}
+        onClose={() => setSettingVisible(false)}
+      />
     </View>
   );
 }
