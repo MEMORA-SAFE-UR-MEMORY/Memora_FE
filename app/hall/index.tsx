@@ -1,16 +1,27 @@
 import BlurBox from "@src/components/BlurBox";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
+import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HallScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
+  const { animatedStyle } = useFloatPulse({
+    amplitude: 10,
+    duration: 1600,
+    scaleTo: 1.07,
+  });
+
+  const safeTop = insets.top + 150;
+  const safeLeft = insets.left > 0 ? insets.left + 8 : 24;
   const handleAddRoom = () => {
     setModalVisible(false);
     router.push("/room");
@@ -23,7 +34,7 @@ export default function HallScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 22,
+          paddingTop: Math.max(22, insets.top),
         }}
       >
         <TouchableOpacity>
@@ -67,6 +78,88 @@ export default function HallScreen() {
 
           <BlurBox h={30} w={98} title="362665" textSize={14} />
         </View>
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: safeTop,
+              left: safeLeft,
+              zIndex: 20,
+            },
+            animatedStyle,
+          ]}
+        >
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push("/home")}
+            style={{
+              backgroundColor: "white",
+              width: 54,
+              height: 54,
+              borderRadius: 27,
+              alignItems: "center",
+              justifyContent: "center",
+              // Bóng iOS
+              shadowColor: "#663530",
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+              // Elevation Android
+              elevation: 6,
+              borderWidth: 2,
+              borderColor: "#663530",
+              position: "relative",
+            }}
+          >
+            <View
+              style={{
+                position: "absolute",
+                left: "-26%",
+                marginRight: 3,
+                top: "50%",
+                transform: [{ translateY: -10 }],
+                width: 0,
+                height: 0,
+              }}
+              pointerEvents="none"
+            >
+              <View
+                style={{
+                  position: "absolute",
+                  width: 0,
+                  height: 0,
+                  borderTopWidth: 10,
+                  borderBottomWidth: 10,
+                  borderRightWidth: 14,
+                  borderTopColor: "transparent",
+                  borderBottomColor: "transparent",
+                  borderRightColor: "#663530",
+                }}
+              />
+
+              <View
+                style={{
+                  position: "absolute",
+                  left: 2,
+                  top: 2,
+                  width: 0,
+                  height: 0,
+                  borderTopWidth: 8,
+                  borderBottomWidth: 8,
+                  borderRightWidth: 12,
+                  borderTopColor: "transparent",
+                  borderBottomColor: "transparent",
+                  borderRightColor: "white",
+                }}
+              />
+            </View>
+            <Image
+              source={require("../../assets/icons/Door.png")}
+              style={{ width: 28, height: 28 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </Animated.View>
       </View>
 
       <View
