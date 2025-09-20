@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, View, Animated } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useRef, useState, useEffect } from "react";
 import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 type RoomMenuProps = {
   onOpenInventory: () => void;
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    width: 240,
+    width: 250,
     paddingRight: 20,
   },
   divider: {

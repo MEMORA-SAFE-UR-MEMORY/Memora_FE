@@ -1,27 +1,36 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import MemoryModal from "@src/components/MemoryModal";
 import RoomMenu from "@src/components/RoomMenu";
 import useCustomFonts from "@src/hooks/useCustomFonts";
+import { useMemory } from "@src/hooks/useMemory";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-const Room = () => {
+const RoomContent = () => {
   const fontsLoaded = useCustomFonts();
+  const {
+    modalType,
+    selectedMemory,
+    openModal,
+    closeModal,
+    saveMemory,
+    updateMemory,
+    deleteMemory,
+  } = useMemory();
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleClose = () => {
-    console.log("Closing modal");
-    setIsModalOpen(false);
-  };
-
-  const handleOpenModal = () => {
-    console.log("Opening modal");
-    setIsModalOpen(true);
-  };
 
   return (
     <View style={styles.container}>
@@ -46,22 +55,65 @@ const Room = () => {
       )}
 
       {/* Nút Thêm ký ức luôn hiển thị */}
-      <Pressable onPress={() => fontsLoaded && setIsModalOpen(true)}>
-        <View style={styles.addContainer}>
-          <Text
-            style={[styles.addText, !fontsLoaded && { fontFamily: undefined }]}
-          >
-            + Thêm ký ức
-          </Text>
-        </View>
-      </Pressable>
+      <View style={styles.addContainerWrapper}>
+        <Pressable
+          onPress={openModal}
+          style={({ pressed }) => [
+            styles.pressableArea,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View style={styles.addContainer}>
+            {selectedMemory?.image ? (
+              <Image
+                source={{ uri: selectedMemory.image }}
+                style={styles.memoryImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <>
+                <MaterialCommunityIcons
+                  name="image-plus"
+                  size={24}
+                  color="black"
+                  style={styles.addIcon}
+                />
+                <Text style={styles.addText}>Thêm kỷ niệm</Text>
+              </>
+            )}
+          </View>
+        </Pressable>
+      </View>
 
-      {/* Modal chỉ hiển thị khi fonts đã load và isModalOpen = true */}
-      {fontsLoaded && isModalOpen && (
-        <AddMemoryModal visible={true} onClose={() => setIsModalOpen(false)} />
+      {fontsLoaded && modalType === "add" && (
+        <AddMemoryModal
+          visible={true}
+          onClose={closeModal}
+          onSave={saveMemory}
+        />
+      )}
+
+      {fontsLoaded && modalType === "view" && selectedMemory && (
+        <MemoryModal
+          onClose={closeModal}
+          memory={selectedMemory}
+          onUpdate={updateMemory}
+          onDelete={deleteMemory}
+        />
       )}
     </View>
   );
+};
+
+const Room = () => {
+  if (Platform.OS === "ios") {
+    return (
+      <SafeAreaProvider>
+        <RoomContent />
+      </SafeAreaProvider>
+    );
+  }
+  return <RoomContent />;
 };
 
 const styles = StyleSheet.create({
@@ -84,19 +136,40 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Baloo2_medium",
   },
-  addContainer: {
+  addContainerWrapper: {
     position: "absolute",
-    backgroundColor: "grey",
+    top: 50,
+    left: 100,
+    padding: 10,
+  },
+  pressableArea: {
+    padding: 10,
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+  addContainer: {
+    backgroundColor: "#EDE7E7",
     justifyContent: "center",
-    top: 20,
-    left: 20,
+    borderColor: "#DCCCEC",
+    borderWidth: 5,
+    height: 200,
+    width: 150,
+  },
+  addIcon: {
+    marginHorizontal: "auto",
   },
   addText: {
-    fontFamily: "Baloo2_medium",
+    fontFamily: "Baloo2_semiBold",
     fontSize: 12,
+    textAlign: "center",
   },
   modalContainer: {
     flex: 1,
+  },
+  memoryImage: {
+    width: "100%",
+    height: "100%",
   },
 });
 
