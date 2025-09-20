@@ -1,11 +1,5 @@
-import {
-  Text,
-  View,
-  Image,
-  ImageSourcePropType,
-  StyleSheet,
-} from "react-native";
 import { BlurView } from "expo-blur";
+import { Image, ImageSourcePropType, StyleSheet, Text } from "react-native";
 
 interface BlurBoxProps {
   h: number;
@@ -14,6 +8,8 @@ interface BlurBoxProps {
   image?: ImageSourcePropType;
   imageSize?: number;
   textSize?: number;
+  fontFamily?: string;
+  titleStyle?: import("react-native").TextStyle;
 }
 
 const BlurBox: React.FC<BlurBoxProps> = ({
@@ -23,6 +19,8 @@ const BlurBox: React.FC<BlurBoxProps> = ({
   image,
   imageSize = 24,
   textSize,
+  fontFamily,
+  titleStyle,
 }) => {
   return (
     <BlurView
@@ -46,7 +44,19 @@ const BlurBox: React.FC<BlurBoxProps> = ({
           }}
         />
       )}
-      <Text style={{ fontWeight: 500, fontSize: textSize }}>{title}</Text>
+      <Text
+        style={[
+          {
+            fontSize: textSize,
+            fontWeight: 500,
+            ...(fontFamily ? { fontFamily } : {}),
+          },
+          titleStyle,
+        ]}
+        numberOfLines={1}
+      >
+        {title}
+      </Text>
     </BlurView>
   );
 };
