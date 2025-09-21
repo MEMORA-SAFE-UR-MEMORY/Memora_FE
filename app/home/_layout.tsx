@@ -99,7 +99,15 @@ export default function HomeLayout() {
               headerShown: false,
               contentStyle: { backgroundColor: "transparent" },
             }}
-          />
+          >
+            <Stack.Screen
+              name="index"
+              options={{
+                headerShown: false,
+                gestureEnabled: false,
+              }}
+            />
+          </Stack>
         </View>
       </View>
     </SafeAreaProvider>
