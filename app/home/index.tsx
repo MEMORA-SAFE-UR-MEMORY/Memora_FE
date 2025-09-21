@@ -1,8 +1,8 @@
 import BlurBox from "@src/components/BlurBox";
 import PremiumButton from "@src/components/PremiumButton";
 import SettingModal from "@src/components/SettingModal";
-import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
-import { useShake } from "@src/hooks/useShakeOptions";
+import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
+import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -119,7 +119,7 @@ export default function HomeScreen() {
       >
         <TouchableOpacity
           activeOpacity={0.85}
-          onPress={() => router.push("/hall")}
+          onPress={() => router.replace("/hall")}
           style={{
             backgroundColor: "white",
             width: 48,
@@ -202,7 +202,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
-            onPress={() => router.push("/album")}
+            onPress={() => router.replace("/album")}
           >
             <View
               style={{

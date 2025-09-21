@@ -14,7 +14,7 @@ import {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (roomName: string, theme: string, color: string) => void;
 };
 
 const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
@@ -24,16 +24,16 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
 
   const colorOptions = [
-    { id: 1, color: "#ffadad" },
-    { id: 2, color: "#ffd6a5" },
-    { id: 3, color: "#fdffb6" },
-    { id: 4, color: "#caffbf" },
-    { id: 5, color: "#9bf6ff" },
-    { id: 6, color: "#a0c4ff" },
-    { id: 7, color: "#bdb2ff" },
-    { id: 8, color: "#ffc6ff" },
-    { id: 9, color: "#493b97ff" },
-    { id: 10, color: "#310a12ff" },
+    { id: 1, color: "#FBC393" },
+    { id: 2, color: "#F9B8AE" },
+    { id: 3, color: "#F7BECD" },
+    { id: 4, color: "#876F57" },
+    { id: 5, color: "#EAD6B7" },
+    { id: 6, color: "#dec8e0" },
+    { id: 7, color: "#F6E6AC" },
+    { id: 8, color: "#BAE2FB" },
+    { id: 9, color: "#8AB7C7" },
+    { id: 10, color: "#DDE5A9" },
   ];
 
   const themeOptions = [
@@ -55,7 +55,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
 
   const handleCreateRoom = () => {
     console.log("Creating room:", { roomName, selectedTheme, selectedColor });
-    onConfirm();
+    onConfirm(roomName, selectedTheme, selectedColor);
     setRoomName("");
     setSelectedTheme("default");
     setSelectedColor("");

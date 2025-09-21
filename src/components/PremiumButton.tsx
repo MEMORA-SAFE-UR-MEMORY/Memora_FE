@@ -1,4 +1,4 @@
-import { useShimmerSweep } from "@src/hooks/useShimmerSweep";
+import { useShimmerSweep } from "@src/hooks/transitions/useShimmerSweep";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
