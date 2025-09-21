@@ -1,17 +1,40 @@
 import BlurBox from "@src/components/BlurBox";
+import PremiumButton from "@src/components/PremiumButton";
 import SettingModal from "@src/components/SettingModal";
 import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
-import { LinearGradient } from "expo-linear-gradient";
+import { useShake } from "@src/hooks/useShakeOptions";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Image,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
+
+  const headerPaddingTop = isLandscape
+    ? Math.min(Math.max(12, insets.top), 32)
+    : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
+
   const { animatedStyle } = useFloatPulse({
     amplitude: 10,
     duration: 1600,
     scaleTo: 1.07,
+  });
+  const { animatedStyle: albumShake } = useShake({
+    angle: 8,
+    translate: 3,
+    duration: 140,
   });
 
   const TRI_OUTER = 10;
@@ -19,6 +42,7 @@ export default function HomeScreen() {
   const TRI_OUTER_RIGHT = 14;
   const TRI_INNER_RIGHT = 12;
   const TRI_GAP = 2;
+  const BORDER_WIDTH = 2;
 
   return (
     <View style={{ flex: 1 }}>
@@ -28,8 +52,9 @@ export default function HomeScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: 28,
+          paddingTop: headerPaddingTop,
         }}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <TouchableOpacity>
           <BlurBox
@@ -48,36 +73,7 @@ export default function HomeScreen() {
             alignItems: "center",
           }}
         >
-          <TouchableOpacity
-            style={{
-              borderRadius: 20,
-              marginRight: 8,
-              overflow: "hidden",
-            }}
-          >
-            <LinearGradient
-              colors={["#FF7C96", "#FF4268", "#FF5D02"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 20,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "Baloo2_semiBold",
-                  fontSize: 14,
-                }}
-              >
-                Premium
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <PremiumButton onPress={() => console.log("Go to premium")} />
 
           <View
             style={{
@@ -115,7 +111,7 @@ export default function HomeScreen() {
           {
             position: "absolute",
             left: "50%",
-            top: "54%",
+            top: "55%",
             zIndex: 20,
           },
           animatedStyle,
@@ -146,8 +142,8 @@ export default function HomeScreen() {
             style={{
               position: "absolute",
               left: "-29%",
-              marginRight: -2, // = -borderWidth để liền mạch
-              top: "50%",
+              marginRight: -BORDER_WIDTH,
+              top: "29%",
               transform: [{ translateY: -TRI_OUTER }],
               width: 0,
               height: 0,
@@ -196,9 +192,61 @@ export default function HomeScreen() {
           flexDirection: "row",
           gap: 12,
           right: 26,
-          top: 75,
+          marginTop: headerHeight + 4,
         }}
       >
+        <View style={{ alignItems: "center" }}>
+          <TouchableOpacity
+            style={{
+              borderRadius: 50,
+              marginBottom: -5,
+              elevation: 4,
+            }}
+            onPress={() => router.push("/album")}
+          >
+            <View
+              style={{
+                backgroundColor: "#ffffff",
+                borderColor: "#663530",
+                borderWidth: 2,
+                width: 41,
+                height: 41,
+                borderRadius: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Animated.View style={albumShake}>
+                <Image
+                  source={require("../../assets/icons/Album.png")}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    marginTop: -4,
+                  }}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            </View>
+          </TouchableOpacity>
+          <Text
+            style={{
+              color: "#663530",
+              fontSize: 15,
+              fontFamily: "Baloo2_bold",
+              textAlign: "center",
+              textShadowColor: "#d0948dff",
+              textShadowRadius: 1,
+              elevation: 1,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.25,
+              shadowRadius: 1,
+            }}
+          >
+            Album
+          </Text>
+        </View>
+        {/* =============================== */}
         <View style={{ alignItems: "center" }}>
           <TouchableOpacity
             style={{
@@ -237,11 +285,10 @@ export default function HomeScreen() {
               fontFamily: "Baloo2_bold",
               textAlign: "center",
               textShadowColor: "#d0948dff",
-              // textShadowOffset: { width: 1, height: 1 },
               textShadowRadius: 1,
               elevation: 1,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
+              shadowOpacity: 0.25,
               shadowRadius: 1,
             }}
           >
@@ -262,7 +309,7 @@ export default function HomeScreen() {
             <View
               style={{
                 backgroundColor: "#663530",
-                borderColor: "#ffffff",
+                borderColor: "#663530",
                 borderTopWidth: 2,
                 borderBottomWidth: 2,
                 borderLeftWidth: 2,
@@ -287,11 +334,10 @@ export default function HomeScreen() {
               fontFamily: "Baloo2_bold",
               textAlign: "center",
               textShadowColor: "#d0948dff",
-              // textShadowOffset: { width: 1, height: 1 },
               textShadowRadius: 1,
               elevation: 1,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
+              shadowOpacity: 0.25,
               shadowRadius: 1,
             }}
           >
