@@ -1,17 +1,27 @@
 import BlurBox from "@src/components/BlurBox";
+import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Image,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function HallScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const { animatedStyle } = useFloatPulse({
     amplitude: 10,
@@ -19,12 +29,20 @@ export default function HallScreen() {
     scaleTo: 1.07,
   });
 
-  const safeTop = insets.top + 150;
-  const safeLeft = insets.left > 0 ? insets.left + 8 : 24;
+  const headerPaddingTop = isLandscape
+    ? Math.min(Math.max(12, insets.top), 32)
+    : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
+
+  const safeTop = isLandscape
+    ? headerPaddingTop + height * 0.45
+    : headerPaddingTop + 150;
+  const safeLeft = (insets.left > 0 ? insets.left : 16) + (isLandscape ? 4 : 8);
+
   const handleAddRoom = () => {
     setModalVisible(false);
     router.push("/room");
   };
+
   return (
     <View style={{ flex: 1 }}>
       <View
@@ -33,8 +51,9 @@ export default function HallScreen() {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: 26,
-          paddingTop: Math.max(22, insets.top),
+          paddingTop: headerPaddingTop,
         }}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <TouchableOpacity>
           <BlurBox
@@ -53,36 +72,7 @@ export default function HallScreen() {
             alignItems: "center",
           }}
         >
-          <TouchableOpacity
-            style={{
-              borderRadius: 20,
-              marginRight: 8,
-              overflow: "hidden",
-            }}
-          >
-            <LinearGradient
-              colors={["#FF7C96", "#FF4268", "#FF5D02"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderRadius: 20,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: "Baloo2_semiBold",
-                  fontSize: 14,
-                }}
-              >
-                Premium
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <PremiumButton onPress={() => console.log("Go to premium")} />
 
           <View
             style={{
@@ -150,8 +140,8 @@ export default function HallScreen() {
               style={{
                 position: "absolute",
                 left: "-29%",
-                marginRight: 3,
-                top: "50%",
+                marginRight: -2,
+                top: "29%",
                 transform: [{ translateY: -10 }],
                 width: 0,
                 height: 0,
@@ -203,7 +193,7 @@ export default function HallScreen() {
           flexDirection: "row",
           gap: 12,
           right: 26,
-          top: 75,
+          marginTop: headerHeight + 4,
         }}
       >
         <View style={{ alignItems: "center" }}>
@@ -244,11 +234,10 @@ export default function HallScreen() {
               fontFamily: "Baloo2_bold",
               textAlign: "center",
               textShadowColor: "#d0948dff",
-              // textShadowOffset: { width: 1, height: 1 },
               textShadowRadius: 1,
               elevation: 1,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
+              shadowOpacity: 0.25,
               shadowRadius: 1,
             }}
           >
@@ -269,7 +258,7 @@ export default function HallScreen() {
             <View
               style={{
                 backgroundColor: "#663530",
-                borderColor: "#ffffff",
+                borderColor: "#663530",
                 borderTopWidth: 2,
                 borderBottomWidth: 2,
                 borderLeftWidth: 2,
@@ -294,11 +283,11 @@ export default function HallScreen() {
               fontFamily: "Baloo2_bold",
               textAlign: "center",
               textShadowColor: "#d0948dff",
-              // textShadowOffset: { width: 1, height: 1 },
+
               textShadowRadius: 1,
               elevation: 1,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
+              shadowOpacity: 0.25,
               shadowRadius: 1,
             }}
           >
