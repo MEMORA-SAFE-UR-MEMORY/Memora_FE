@@ -1,51 +1,66 @@
-// hooks/useInventory.ts
+import { EmptyItem, Item, RealItem } from "@src/types/item";
 import { useMemo, useState } from "react";
-import { Item, RealItem, EmptyItem } from "@src/types/item";
 
 const useInventory = () => {
   const categories = [
     {
       id: 1,
+      name: "Khung",
+      iconPackage: "MaterialCommunityIcons",
+      iconName: "image-frame",
+    },
+    {
+      id: 2,
       name: "Sticker",
       iconPackage: "MaterialCommunityIcons",
       iconName: "sticker-emoji",
     },
-    { id: 2, name: "Ảnh", iconPackage: "FontAwesome6", iconName: "image" },
-    { id: 3, name: "Ghế", iconPackage: "FontAwesome6", iconName: "chair" },
-    { id: 4, name: "Bàn", iconPackage: "MaterialIcons", iconName: "table-bar" },
-    { id: 5, name: "Giường", iconPackage: "Ionicons", iconName: "bed" },
+    {
+      id: 3,
+      name: "Tường",
+      iconPackage: "MaterialCommunityIcons",
+      iconName: "mirror-variant",
+    },
+    { id: 4, name: "Sàn", iconPackage: "FontAwesome6", iconName: "chair" },
+    {
+      id: 5,
+      name: "Kệ",
+      iconPackage: "MaterialCommunityIcons",
+      iconName: "bookshelf",
+    },
+    { id: 6, name: "Đèn", iconPackage: "FontAwesome6", iconName: "lightbulb" },
   ];
 
   const items: RealItem[] = [
     {
       id: "1",
       categoryId: 1,
-      name: "Sticker 1",
-      url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQcljdiuUsIN7IXwXrUi9wNozpc6CqR6tNK_g&s",
+      name: "Khung 1",
+      url: require("../../assets/images/Frame_1.png"),
     },
     {
       id: "2",
       categoryId: 1,
-      name: "Sticker 2",
-      url: "https://cdn-media.sforum.vn/storage/app/media/ctv_seo3/meme-meo-cuoi-5.jpg",
+      name: "Khung 2",
+      url: require("../../assets/images/Frame_2.png"),
     },
     {
       id: "3",
       categoryId: 1,
-      name: "Sticker 3",
-      url: "https://i.pinimg.com/564x/c8/cc/68/c8cc6816a2448d0a03a5e46e932ce7a9.jpg",
+      name: "Khung 3",
+      url: require("../../assets/images/Frame_3.png"),
     },
     {
       id: "4",
-      categoryId: 2,
-      name: "Ảnh 1",
-      url: "https://cdn11.dienmaycholon.vn/filewebdmclnew/public/userupload/files/Image%20FP_2024/anh-meo-13.png",
+      categoryId: 1,
+      name: "Khung 4",
+      url: require("../../assets/images/Frame_4.png"),
     },
     {
       id: "5",
       categoryId: 2,
-      name: "Ảnh 2",
-      url: "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/03/anh-meo-bua-50.jpg",
+      name: "Sticker Thỏ",
+      url: require("../../assets/images/Bunny.png"),
     },
   ];
 

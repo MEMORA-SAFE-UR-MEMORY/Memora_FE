@@ -61,10 +61,7 @@ const Inventory = ({ onClose }: InventoryProps) => {
 
     return (
       <View style={styles.cardContainer}>
-        <Image
-          source={{ uri: item.url }}
-          style={{ width: 100, height: 80, borderRadius: 10 }}
-        />
+        <Image source={item.url} style={styles.cardImage} />
         <Text style={styles.cardText}>{item.name}</Text>
       </View>
     );
@@ -131,6 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 20,
   },
   cardContainer: {
     flex: 1,
@@ -139,6 +137,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F2EF",
     borderRadius: 25,
     alignItems: "center",
+  },
+  cardImage: {
+    width: 100,
+    height: 80,
+    borderRadius: 10,
+    resizeMode: "contain",
   },
   cardText: {
     fontFamily: "Baloo2",

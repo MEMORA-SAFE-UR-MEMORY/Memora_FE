@@ -1,8 +1,10 @@
+import { ImageSourcePropType } from "react-native";
+
 export type RealItem = {
   id: string;
   categoryId: number;
   name: string;
-  url: string;
+  url: ImageSourcePropType;
 };
 
 export type EmptyItem = {

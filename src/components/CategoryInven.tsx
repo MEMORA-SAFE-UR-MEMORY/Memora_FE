@@ -68,24 +68,18 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
                   color="white"
                 />
               </View>
-              {isSelected ? (
+              {isSelected && (
                 <View style={styles.textOverlayWrapper}>
-                  <Text
-                    style={styles.textOverlay}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {category.name}
-                  </Text>
+                  <View style={styles.textOverlayContainer}>
+                    <Text
+                      style={styles.textOverlay}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {category.name}
+                    </Text>
+                  </View>
                 </View>
-              ) : (
-                <Text
-                  style={styles.categoryText}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {category.name}
-                </Text>
               )}
             </Pressable>
           );
@@ -94,7 +88,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
 
       {/* Nút play */}
       <Pressable
-        style={{ alignSelf: "center", marginLeft: 5 }}
+        style={{ alignSelf: "center", marginLeft: 5, marginBottom: 20, }}
         onPress={handleScrollRight}
       >
         <View style={{ position: "relative" }}>
@@ -117,6 +111,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   categoryContainer: {
+    paddingLeft: 10,
     flexDirection: "row",
     alignItems: "flex-start",
   },
@@ -125,6 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     marginRight: 15,
     position: "relative",
+    height: 65,
   },
   categoryText: {
     color: "white",
@@ -135,28 +131,37 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginTop: 8,
     height: 30,
+    alignItems: "center",
   },
   iconWrapper: {
-    height: 45,
-    width: 45,
-    borderRadius: 22,
+    height: 50,
+    width: 50,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#D6B7FF",
+    paddingBottom: 10,
   },
   textOverlayWrapper: {
     position: "absolute",
-    top: 38,
+    top: 35,
+    // Sử dụng left/right thay vì left: 0, right: 0 để text có thể vượt ra ngoài
+    left: -50, // Cho phép text mở rộng sang trái
+    right: -50, // Cho phép text mở rộng sang phải
+    alignItems: "center",
+    zIndex: 10,
+  },
+  textOverlayContainer: {
     backgroundColor: "white",
     borderRadius: 20,
     paddingHorizontal: 8,
     alignSelf: "center",
-    maxWidth: 70,
   },
   textOverlay: {
     fontSize: 12,
     fontFamily: "Baloo2_medium",
     color: "#D6B7FF",
+    textAlign: "center",
   },
 });
 
