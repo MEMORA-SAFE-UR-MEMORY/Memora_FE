@@ -1,3 +1,4 @@
+import { useMusic } from "@src/context/MusicContext";
 import { ChevronRight } from "lucide-react-native";
 import React from "react";
 import {
@@ -16,14 +17,18 @@ type Props = {
 };
 
 const SettingModal = ({ visible, onClose }: Props) => {
+  const { isPlaying, toggleMusic } = useMusic();
+
   const basicSettings = [
     {
       label: "Nhạc nền",
-      isEnabled: false,
+      isEnabled: isPlaying,
+      onToggle: toggleMusic,
     },
     {
       label: "Tự động lưu thiết kế của bạn",
       isEnabled: true,
+      onToggle: () => {},
     },
   ];
 
@@ -153,7 +158,10 @@ const SettingModal = ({ visible, onClose }: Props) => {
                       >
                         {setting.label}
                       </Text>
-                      <CustomSwitch defaultValue={setting.isEnabled} />
+                      <CustomSwitch
+                        value={setting.isEnabled}
+                        onToggle={setting.onToggle}
+                      />
                     </View>
                   ))}
                 </View>
