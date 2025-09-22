@@ -345,7 +345,9 @@ const SettingModal = ({ visible, onClose }: Props) => {
                 >
                   {/* Facebook */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://www.facebook.com/")}
+                    onPress={() =>
+                      Linking.openURL("https://www.facebook.com/auraOfMemory/")
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/facebook.png")}
