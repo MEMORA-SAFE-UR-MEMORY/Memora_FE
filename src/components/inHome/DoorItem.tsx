@@ -1,13 +1,30 @@
-import { Door } from "@src/hooks/inHome/useDoors";
 import React from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ImageSourcePropType,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-type Props = {
-  door: Door;
-  onPress: () => void;
+export type UIDoor = {
+  id: number;
+  name: string;
+  img_url?: string | null;
+  image?: ImageSourcePropType;
+  color_hex?: string;
+  theme_id?: number | null;
 };
 
+type Props = {
+  door: UIDoor;
+  onPress: () => void;
+};
 export default function DoorItem({ door, onPress }: Props) {
+  const source: ImageSourcePropType = door.img_url
+    ? { uri: door.img_url }
+    : (door.image ?? require("../../../assets/images/doors/default.png"));
+
   return (
     <TouchableOpacity
       style={{
@@ -21,7 +38,7 @@ export default function DoorItem({ door, onPress }: Props) {
     >
       <View style={{ width: "100%", height: "100%", position: "relative" }}>
         <Image
-          source={door.image}
+          source={source}
           style={{
             width: "100%",
             height: "100%",
@@ -29,6 +46,9 @@ export default function DoorItem({ door, onPress }: Props) {
             // marginLeft: 12,
           }}
           resizeMode="contain"
+          onError={(e) => {
+            console.log("Image load error:", door.img_url, e.nativeEvent.error);
+          }}
         />
         <Text
           style={{
