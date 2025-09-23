@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     marginRight: 15,
     position: "relative",
-    height: 65,
+    height: 55,
   },
   categoryText: {
     color: "white",

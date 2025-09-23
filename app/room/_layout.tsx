@@ -1,26 +1,29 @@
 import { Stack } from "expo-router";
-import { ImageBackground, StyleSheet, } from "react-native";
+import { ImageBackground, StyleSheet } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ImageBackground
-        source={{
-          uri: "https://w0.peakpx.com/wallpaper/404/720/HD-wallpaper-anime-suzume-no-tojimari.jpg",
-        }}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "transparent" },
-            animation: "fade",
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ImageBackground
+          source={{
+            uri: "https://w0.peakpx.com/wallpaper/404/720/HD-wallpaper-anime-suzume-no-tojimari.jpg",
           }}
-        />
-      </ImageBackground>
-    </SafeAreaProvider>
+          style={styles.background}
+          resizeMode="cover"
+        >
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+              animation: "fade",
+            }}
+          />
+        </ImageBackground>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import BtnBorder from "@src/components/BtnBorder";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
+import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
@@ -22,12 +23,7 @@ import {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  }) => void;
+  onSave: (data: Memory) => void;
 };
 
 const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
@@ -78,6 +74,7 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
   // Modal
   const handleSave = () => {
     onSave({
+      id: Date.now().toString(),
       title,
       description,
       image: selectedImage,

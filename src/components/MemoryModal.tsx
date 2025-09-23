@@ -1,6 +1,9 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import InfoMemory from "@src/components/InfoMemory";
+import ModalConfirm from "@src/components/ModalConfirm";
 import ModalMenu from "@src/components/ModalMenu";
 import UpdateMemory from "@src/components/UpdateMemory";
+import { Memory } from "@src/types/memory";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -9,27 +12,24 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import InfoMemory from "./InfoMemory";
-import ModalConfirm from "./ModalConfirm";
 
 type Props = {
+  visible: boolean;
   onClose: () => void;
-  memory: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  };
-  onUpdate: (data: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  }) => void;
+  memory: Memory;
+  onUpdate: (data: Memory) => void;
   onDelete: () => void;
+  onFrameRemoved?: boolean;
 };
 
-const MemoryModal = ({ onClose, memory, onUpdate, onDelete }: Props) => {
+const MemoryModal = ({
+  visible,
+  onClose,
+  memory,
+  onUpdate,
+  onDelete,
+  onFrameRemoved,
+}: Props) => {
   const { width, height } = useWindowDimensions();
   const [selected, setSelected] = useState<number>(1);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -38,40 +38,62 @@ const MemoryModal = ({ onClose, memory, onUpdate, onDelete }: Props) => {
   const modalAnim = useRef(new Animated.Value(modalWidth)).current; // MemoryModal
   const menuAnim = useRef(new Animated.Value(modalWidth)).current; // ModalMenu
 
-  // Khi mount: menu -> modal
+  // Khi visible thay đổi → animate in/out
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(menuAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(modalAnim, {
-        toValue: 0,
-        duration: 300,
-        delay: 200, // delay nhẹ
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+    if (visible) {
+      // Slide in
+      Animated.parallel([
+        Animated.timing(menuAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalAnim, {
+          toValue: 0,
+          duration: 300,
+          delay: 200, // delay nhẹ
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Slide out
+      Animated.parallel([
+        Animated.timing(modalAnim, {
+          toValue: modalWidth,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuAnim, {
+          toValue: modalWidth,
+          duration: 300,
+          delay: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) onClose();
+      });
+    }
+  }, [visible]);
 
   const handleClose = () => {
-    // Khi đóng: modal -> menu
-    Animated.parallel([
-      Animated.timing(modalAnim, {
-        toValue: modalWidth,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(menuAnim, {
-        toValue: modalWidth,
-        duration: 300,
-        delay: 200, // delay nhẹ
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) onClose();
-    });
+    if (visible) {
+      // để trigger slide out
+      Animated.parallel([
+        Animated.timing(modalAnim, {
+          toValue: modalWidth,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuAnim, {
+          toValue: modalWidth,
+          duration: 300,
+          delay: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) onClose();
+      });
+    }
   };
 
   const handleDelete = () => {
@@ -79,6 +101,18 @@ const MemoryModal = ({ onClose, memory, onUpdate, onDelete }: Props) => {
     onDelete();
     handleClose();
   };
+
+  useEffect(() => {
+    setSelected(1);
+  }, [memory.id]);
+
+  useEffect(() => {
+  if (onFrameRemoved) {
+    handleClose(); // chạy animation slide out
+  }
+}, [onFrameRemoved]);
+
+  if (!visible) return null;
 
   return (
     <Animated.View
@@ -139,6 +173,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "#fff",
     padding: 5,
+    zIndex: 200,
   },
   closeButton: {
     position: "absolute",

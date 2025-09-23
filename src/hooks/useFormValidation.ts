@@ -1,4 +1,4 @@
-import { Memory } from "@src/hooks/useMemory";
+import { Memory } from "@src/types/memory";
 
 export const useFormValidation = (data: Memory, original?: Memory) => {
   const isFormValid =

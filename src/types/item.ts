@@ -13,3 +13,11 @@ export type EmptyItem = {
 };
 
 export type Item = RealItem | EmptyItem;
+
+export type PlacedItem = {
+  id: string;
+  type: "frame" | "sticker" | "furniture";
+  frameUrl: any;
+  x: number;
+  y: number;
+};

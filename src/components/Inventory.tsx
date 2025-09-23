@@ -16,9 +16,10 @@ import {
 
 type InventoryProps = {
   onClose: () => void;
+  onItemSelect: (frameUrl: any) => void;
 };
 
-const Inventory = ({ onClose }: InventoryProps) => {
+const Inventory = ({ onClose, onItemSelect }: InventoryProps) => {
   const { width, height } = useWindowDimensions();
   const { categories, items, selectedCategory, setSelectedCategory } =
     useInventory();
@@ -50,6 +51,15 @@ const Inventory = ({ onClose }: InventoryProps) => {
     });
   };
 
+  const handleItemPress = (item: Item) => {
+    if ("empty" in item) return;
+
+    // Only handle frame items for now
+    if (item.categoryId === 1) {
+      onItemSelect(item.url);
+    }
+  };
+
   const renderItem = ({ item }: { item: Item }) => {
     if ("empty" in item) {
       return (
@@ -60,10 +70,16 @@ const Inventory = ({ onClose }: InventoryProps) => {
     }
 
     return (
-      <View style={styles.cardContainer}>
+      <Pressable
+        onPress={() => handleItemPress(item)}
+        style={({ pressed }) => [
+          styles.cardContainer,
+          pressed && styles.pressed,
+        ]}
+      >
         <Image source={item.url} style={styles.cardImage} />
         <Text style={styles.cardText}>{item.name}</Text>
-      </View>
+      </Pressable>
     );
   };
 
@@ -109,17 +125,17 @@ const Inventory = ({ onClose }: InventoryProps) => {
 const styles = StyleSheet.create({
   overlay: {
     position: "absolute",
-    top: 0,
     right: 0,
-    bottom: 0,
+    top: 0,
     backgroundColor: "#fff",
+    zIndex: 100,
   },
   headerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
     backgroundColor: "#E9D8FF",
   },
   closeButton: {
@@ -138,17 +154,20 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: "center",
   },
+  pressed: {
+    backgroundColor: "#EADBD6",
+    transform: [{ scale: 0.95 }],
+  },
   cardImage: {
-    width: 100,
-    height: 80,
-    borderRadius: 10,
+    width: "80%",
+    height: "70%",
     resizeMode: "contain",
   },
   cardText: {
-    fontFamily: "Baloo2",
     fontSize: 12,
     textAlign: "center",
-    marginTop: 6,
+    marginTop: 5,
+    fontFamily: "Baloo2_medium",
   },
 });
 

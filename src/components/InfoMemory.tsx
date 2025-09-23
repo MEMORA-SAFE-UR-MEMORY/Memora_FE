@@ -1,14 +1,10 @@
 import { FontAwesome6 } from "@expo/vector-icons";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 type Props = {
-  memory: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  };
+  memory: Memory;
 };
 
 const InfoMemory = ({ memory }: Props) => {

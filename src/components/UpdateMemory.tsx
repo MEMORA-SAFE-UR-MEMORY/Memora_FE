@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import BtnBorder from "@src/components/BtnBorder";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
+import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
@@ -16,29 +18,19 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import BtnBorder from "./BtnBorder";
 
 type Props = {
-  memory: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  };
-  onUpdate: (data: {
-    title: string;
-    description: string;
-    image: string | null;
-    date: string;
-  }) => void;
+  memory: Memory;
+  onUpdate: (data: Memory) => void;
 };
 
 const UpdateMemory = ({ memory, onUpdate }: Props) => {
+  const id = memory.id;
   const [title, setTitle] = useState(memory.title);
   const [description, setDescription] = useState(memory.description ?? "");
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(
-    memory.image
+    memory.image ?? null
   );
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
@@ -83,6 +75,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
   // Modal
   const handleUpdate = () => {
     const updatedMemory = {
+      id,
       title,
       description,
       image: selectedImage,

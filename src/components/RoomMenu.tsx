@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   textIcon: {
-    marginTop: -8,
+    marginTop: -5,
     color: "white",
     fontSize: 12,
     fontFamily: "Baloo2_medium",
