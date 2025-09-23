@@ -4,7 +4,7 @@ import DoorItem from "@src/components/inHome/DoorItem";
 import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
-import { Door, useDoors } from "@src/hooks/inHome/useDoors";
+
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -18,17 +18,19 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRooms } from "services/rooms/hook";
 
 export default function HallScreen() {
-  const { doors, addDoor } = useDoors([
-    {
-      id: "default",
-      color: "#ffffff",
-      image: require("../../assets/images/doors/default.png"),
-      name: "Phòng mặc định",
-      theme: "default",
-    },
-  ]);
+  const { rooms, loading, addRoom } = useRooms();
+  // const { doors, addDoor } = useDoors([
+  //   {
+  //     id: "default",
+  //     color: "#ffffff",
+  //     image: require("../../assets/images/doors/default.png"),
+  //     name: "Phòng mặc định",
+  //     theme: "default",
+  //   },
+  // ]);
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -52,33 +54,20 @@ export default function HallScreen() {
     : headerPaddingTop + 150;
   const safeLeft = (insets.left > 0 ? insets.left : 16) + (isLandscape ? 4 : 8);
 
-  const handleConfirm = (roomName: string, theme: string, color: string) => {
-    const imageMap: Record<string, any> = {
-      "#FBC393": require("../../assets/images/doors/cửa cam.png"),
-      "#F9B8AE": require("../../assets/images/doors/cửa đỏ.png"),
-      "#F7BECD": require("../../assets/images/doors/cửa hồng.png"),
-      "#876F57": require("../../assets/images/doors/default.png"),
-      "#EAD6B7": require("../../assets/images/doors/cửa nâu sáng.png"),
-      "#dec8e0": require("../../assets/images/doors/cửa tím.png"),
-      "#F6E6AC": require("../../assets/images/doors/cửa vàng.png"),
-      "#BAE2FB": require("../../assets/images/doors/cửa xanh dương.png"),
-      "#8AB7C7": require("../../assets/images/doors/cửa xanh trầm.png"),
-      "#DDE5A9": require("../../assets/images/doors/cửa xanh lá.png"),
-    };
-
-    const newDoor: Door = {
-      id: Date.now().toString(),
-      name: roomName,
-      theme,
-      color,
-      image:
-        imageMap[color] || require("../../assets/images/doors/default.png"),
-    };
-
-    addDoor(newDoor);
-    setModalVisible(false);
+  const handleConfirm = async (
+    roomName: string,
+    theme: string,
+    doorId: number
+  ) => {
+    try {
+      await addRoom(roomName, theme, doorId);
+      setModalVisible(false);
+    } catch (e) {
+      console.log("Create room failed:", e);
+    }
   };
 
+  if (loading) return <Text>Loading…</Text>;
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
@@ -92,11 +81,16 @@ export default function HallScreen() {
         }}
         style={{ zIndex: 1 }}
       >
-        {doors.map((door) => (
+        {rooms.map((room) => (
           <DoorItem
-            key={door.id}
-            door={door}
-            onPress={() => console.log("Go to room", door.id)}
+            key={room.id}
+            door={{
+              id: room.door?.id ?? room.door_id,
+              name: room.room_name,
+              img_url: room.door?.img_url,
+              color_hex: room.door?.color_hex,
+            }}
+            onPress={() => console.log("Go to room", room.id)}
           />
         ))}
 
@@ -153,8 +147,23 @@ export default function HallScreen() {
                 shadowRadius: 4,
                 shadowOffset: { width: 0, height: 2 },
                 elevation: 3,
+                marginLeft: 16,
+                position: "relative",
               }}
             >
+              <Image
+                source={require("../../assets/icons/money.png")}
+                style={{
+                  width: 50,
+                  height: 50,
+                  position: "absolute",
+                  left: -28,
+                  top: -10,
+                  transform: [{ rotate: "-30deg" }],
+                }}
+                resizeMode="contain"
+              />
+
               <Text
                 style={{
                   fontSize: 16,

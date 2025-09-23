@@ -91,8 +91,23 @@ export default function HomeScreen() {
               shadowRadius: 4,
               shadowOffset: { width: 0, height: 2 },
               elevation: 3,
+              marginLeft: 16,
+              position: "relative",
             }}
           >
+            <Image
+              source={require("../../assets/icons/money.png")}
+              style={{
+                width: 50,
+                height: 50,
+                position: "absolute",
+                left: -28,
+                top: -10,
+                transform: [{ rotate: "-30deg" }],
+              }}
+              resizeMode="contain"
+            />
+
             <Text
               style={{
                 fontSize: 16,
@@ -202,7 +217,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
-            onPress={() => router.replace("/album")}
+            // onPress={() => router.replace("/album")}
           >
             <View
               style={{

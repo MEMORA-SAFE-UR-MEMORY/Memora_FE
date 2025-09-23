@@ -358,7 +358,11 @@ const SettingModal = ({ visible, onClose }: Props) => {
 
                   {/* Instagram */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://instagram.com/")}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://www.instagram.com/memora__official/"
+                      )
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/instagram.png")}
@@ -369,7 +373,11 @@ const SettingModal = ({ visible, onClose }: Props) => {
 
                   {/* TikTok */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://tiktok.com/")}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://www.tiktok.com/@memora__official"
+                      )
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/tiktok.png")}
@@ -423,7 +431,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                   </View>
 
                   {/* Xóa tài khoản */}
-                  <View style={{ flex: 1, position: "relative" }}>
+                  {/* <View style={{ flex: 1, position: "relative" }}>
                     <View
                       style={{
                         position: "absolute",
@@ -454,7 +462,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                         Xóa tài khoản
                       </Text>
                     </TouchableOpacity>
-                  </View>
+                  </View> */}
                 </View>
               </View>
             </View>

@@ -1,10 +1,18 @@
 import Cloud from "@src/components/login/Cloud";
 import { Stack } from "expo-router";
-import { Image, StyleSheet, useWindowDimensions, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function HomeLayout() {
   const { width } = useWindowDimensions();
+  const [loading, setLoading] = useState(true);
 
   const BG = require("../../assets/images/loginScreen/nen_troi.png");
   const HOUSE = require("../../assets/images/loginScreen/nhà.png");
@@ -14,6 +22,19 @@ export default function HomeLayout() {
     <SafeAreaProvider>
       <View style={{ flex: 1 }}>
         {/* BACKGROUND LAYER */}
+        {loading && (
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 100,
+              backgroundColor: "rgba(255,255,255,0.6)",
+            }}
+          >
+            <ActivityIndicator size="large" color="#D2A4FF" />
+          </View>
+        )}
         <View style={StyleSheet.absoluteFill}>
           {/* Nền trời */}
           <Image
@@ -25,16 +46,26 @@ export default function HomeLayout() {
               height: "100%",
               transform: [{ scale: 1 }],
             }}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => setLoading(false)}
           />
 
           {/* Mây */}
+          <Cloud
+            source={CLOUD}
+            top={-20}
+            height={140}
+            direction="ltr"
+            duration={32000}
+            initialDelay={-8000}
+          />
           <Cloud
             source={CLOUD}
             top={30}
             height={160}
             direction="rtl"
             duration={32000}
-            initialDelay={0}
+            initialDelay={-10000}
           />
           <Cloud
             source={CLOUD}
@@ -42,7 +73,7 @@ export default function HomeLayout() {
             height={180}
             direction="ltr"
             duration={32000}
-            initialDelay={0}
+            initialDelay={-5000}
           />
           <Cloud
             source={CLOUD}
@@ -50,7 +81,7 @@ export default function HomeLayout() {
             height={170}
             direction="ltr"
             duration={34000}
-            initialDelay={1500}
+            initialDelay={-15000}
           />
           <Cloud
             source={CLOUD}
@@ -58,7 +89,7 @@ export default function HomeLayout() {
             height={200}
             direction="rtl"
             duration={33000}
-            initialDelay={0}
+            initialDelay={-8000}
           />
           <Cloud
             source={CLOUD}
@@ -66,7 +97,7 @@ export default function HomeLayout() {
             height={165}
             direction="ltr"
             duration={35000}
-            initialDelay={1500}
+            initialDelay={-12000}
           />
           <Cloud
             source={CLOUD}
@@ -74,7 +105,7 @@ export default function HomeLayout() {
             height={190}
             direction="rtl"
             duration={36000}
-            initialDelay={3000}
+            initialDelay={-18000}
           />
 
           {/* Nhà */}
@@ -90,6 +121,8 @@ export default function HomeLayout() {
               alignSelf: "center",
               zIndex: 5,
             }}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => setLoading(false)}
           />
         </View>
 
