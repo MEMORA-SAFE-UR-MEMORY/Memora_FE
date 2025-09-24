@@ -10,31 +10,22 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useDoors } from "services/rooms/hook";
+import { Door } from "services/rooms/type";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (roomName: string, theme: string, doorId: number) => void;
 };
 
 const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  const { doors, loading } = useDoors();
+
+  const [selectedDoorId, setSelectedDoorId] = useState<number | null>(null);
   const [roomName, setRoomName] = useState<string>("");
   const [selectedTheme, setSelectedTheme] = useState<string>("default");
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
-
-  const colorOptions = [
-    { id: 1, color: "#ffadad" },
-    { id: 2, color: "#ffd6a5" },
-    { id: 3, color: "#fdffb6" },
-    { id: 4, color: "#caffbf" },
-    { id: 5, color: "#9bf6ff" },
-    { id: 6, color: "#a0c4ff" },
-    { id: 7, color: "#bdb2ff" },
-    { id: 8, color: "#ffc6ff" },
-    { id: 9, color: "#493b97ff" },
-    { id: 10, color: "#310a12ff" },
-  ];
 
   const themeOptions = [
     { id: "default", label: "Mặc định" },
@@ -48,18 +39,36 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
     if (!visible) {
       setRoomName("");
       setSelectedTheme("default");
-      setSelectedColor("");
       setThemeDropdownOpen(false);
+      setSelectedDoorId(null);
     }
   }, [visible]);
 
   const handleCreateRoom = () => {
-    console.log("Creating room:", { roomName, selectedTheme, selectedColor });
-    onConfirm();
-    setRoomName("");
-    setSelectedTheme("default");
-    setSelectedColor("");
-    setThemeDropdownOpen(false);
+    if (!roomName || !selectedDoorId) {
+      return;
+    }
+    onConfirm(roomName, selectedTheme, selectedDoorId);
+  };
+
+  const renderDoorSwatch = (door: Door) => {
+    const active = selectedDoorId === door.id;
+    return (
+      <TouchableOpacity
+        key={door.id}
+        onPress={() => setSelectedDoorId(door.id)}
+        activeOpacity={0.9}
+        style={{
+          width: 82,
+          height: 28,
+          borderRadius: 4,
+          backgroundColor: door.color_hex ?? "#cccccc",
+          borderWidth: active ? 2 : 0,
+          borderColor: "#7c3aed",
+          marginBottom: 8,
+        }}
+      />
+    );
   };
 
   return (
@@ -105,7 +114,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             >
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_bold",
                   fontWeight: "600",
                   fontSize: 24,
                   color: "black",
@@ -136,7 +145,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
@@ -170,7 +179,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
@@ -267,7 +276,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             <View style={{ marginBottom: 20 }}>
               <Text
                 style={{
-                  fontFamily: "Baloo2_medium",
+                  fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
@@ -276,37 +285,26 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
               >
                 Màu cửa
               </Text>
-              <View style={{ gap: 8 }}>
-                {[0, 1].map((row) => (
-                  <View
-                    key={row}
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: row === 0 ? 8 : 0,
-                    }}
-                  >
-                    {colorOptions
-                      .slice(row * 5, row * 5 + 5)
-                      .map((colorOption) => (
-                        <TouchableOpacity
-                          key={colorOption.id}
-                          style={[
-                            {
-                              width: 82,
-                              height: 28,
-                              backgroundColor: colorOption.color,
-                              borderWidth:
-                                selectedColor === colorOption.color ? 2 : 0,
-                              borderColor: "#7c3aed",
-                            },
-                          ]}
-                          onPress={() => setSelectedColor(colorOption.color)}
-                        />
-                      ))}
-                  </View>
-                ))}
-              </View>
+              {loading ? (
+                <Text>Đang tải danh sách cửa…</Text>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  {[0, 1].map((row) => (
+                    <View
+                      key={row}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        marginBottom: row === 0 ? 8 : 0,
+                      }}
+                    >
+                      {doors
+                        .slice(row * 5, row * 5 + 5)
+                        .map((door) => renderDoorSwatch(door))}
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
             {/* Action Buttons */}
@@ -352,7 +350,9 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   borderColor: "#e8d7ff",
                   minWidth: 80,
                   alignItems: "center",
+                  opacity: !roomName || !selectedDoorId ? 0.6 : 1,
                 }}
+                disabled={!roomName || !selectedDoorId}
                 onPress={handleCreateRoom}
               >
                 <Text

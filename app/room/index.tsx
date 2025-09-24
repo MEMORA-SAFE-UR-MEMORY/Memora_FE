@@ -104,7 +104,7 @@ const Room = () => {
           <Pressable
             style={styles.icon}
             onPress={() => {
-              router.replace("/");
+              router.replace("/home");
             }}
           >
             <FontAwesome name="home" size={35} color="white" />

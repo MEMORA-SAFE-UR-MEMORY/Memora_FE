@@ -1,27 +1,24 @@
-import React, { useState } from "react";
+import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
-  defaultValue?: boolean;
+  value: boolean;
+  onToggle: () => void;
 };
 
-const CustomSwitch = ({ defaultValue = false }: Props) => {
-  const [isEnabled, setIsEnabled] = useState(defaultValue);
-
-  const toggleSwitch = () => setIsEnabled(!isEnabled);
-
+const CustomSwitch = ({ value, onToggle }: Props) => {
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      onPress={toggleSwitch}
+      onPress={onToggle}
       style={[
         styles.switch,
-        { backgroundColor: isEnabled ? "#d1a4ff" : "#78788029" },
+        { backgroundColor: value ? "#d1a4ff" : "#78788029" },
       ]}
     >
-      <View style={[styles.knob, { left: isEnabled ? 57 : 5 }]} />
-      <Text style={[styles.switchText, { color: isEnabled ? "#fff" : "#666" }]}>
-        {isEnabled ? "Mở" : "Tắt"}
+      <View style={[styles.knob, { left: value ? 57 : 5 }]} />
+      <Text style={[styles.switchText, { color: value ? "#fff" : "#666" }]}>
+        {value ? "Mở" : "Tắt"}
       </Text>
     </TouchableOpacity>
   );

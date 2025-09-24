@@ -1,3 +1,4 @@
+import { useMusic } from "@src/context/MusicContext";
 import { ChevronRight } from "lucide-react-native";
 import React from "react";
 import {
@@ -16,14 +17,18 @@ type Props = {
 };
 
 const SettingModal = ({ visible, onClose }: Props) => {
+  const { isPlaying, toggleMusic } = useMusic();
+
   const basicSettings = [
     {
       label: "Nhạc nền",
-      isEnabled: false,
+      isEnabled: isPlaying,
+      onToggle: toggleMusic,
     },
     {
       label: "Tự động lưu thiết kế của bạn",
       isEnabled: true,
+      onToggle: () => {},
     },
   ];
 
@@ -69,7 +74,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                 fontSize: 24,
                 fontWeight: "600",
                 color: "black",
-                fontFamily: "Baloo2_semiBold",
+                fontFamily: "Baloo2_bold",
                 textAlign: "center",
                 flex: 1,
               }}
@@ -153,7 +158,10 @@ const SettingModal = ({ visible, onClose }: Props) => {
                       >
                         {setting.label}
                       </Text>
-                      <CustomSwitch defaultValue={setting.isEnabled} />
+                      <CustomSwitch
+                        value={setting.isEnabled}
+                        onToggle={setting.onToggle}
+                      />
                     </View>
                   ))}
                 </View>
@@ -337,7 +345,9 @@ const SettingModal = ({ visible, onClose }: Props) => {
                 >
                   {/* Facebook */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://www.facebook.com/")}
+                    onPress={() =>
+                      Linking.openURL("https://www.facebook.com/auraOfMemory/")
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/facebook.png")}
@@ -348,7 +358,11 @@ const SettingModal = ({ visible, onClose }: Props) => {
 
                   {/* Instagram */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://instagram.com/")}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://www.instagram.com/memora__official/"
+                      )
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/instagram.png")}
@@ -359,7 +373,11 @@ const SettingModal = ({ visible, onClose }: Props) => {
 
                   {/* TikTok */}
                   <TouchableOpacity
-                    onPress={() => Linking.openURL("https://tiktok.com/")}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://www.tiktok.com/@memora__official"
+                      )
+                    }
                   >
                     <Image
                       source={require("../../assets/icons/tiktok.png")}
@@ -413,7 +431,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                   </View>
 
                   {/* Xóa tài khoản */}
-                  <View style={{ flex: 1, position: "relative" }}>
+                  {/* <View style={{ flex: 1, position: "relative" }}>
                     <View
                       style={{
                         position: "absolute",
@@ -444,7 +462,7 @@ const SettingModal = ({ visible, onClose }: Props) => {
                         Xóa tài khoản
                       </Text>
                     </TouchableOpacity>
-                  </View>
+                  </View> */}
                 </View>
               </View>
             </View>

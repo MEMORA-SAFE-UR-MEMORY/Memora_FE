@@ -1,17 +1,43 @@
 import BlurBox from "@src/components/BlurBox";
+import AddDoorButton from "@src/components/inHome/AddDoorButton";
+import DoorItem from "@src/components/inHome/DoorItem";
+import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
-import { useFloatPulse } from "@src/hooks/useFloatPulseOptions";
-import { LinearGradient } from "expo-linear-gradient";
+
+import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRooms } from "services/rooms/hook";
 
 export default function HallScreen() {
+  const { rooms, loading, addRoom } = useRooms();
+  // const { doors, addDoor } = useDoors([
+  //   {
+  //     id: "default",
+  //     color: "#ffffff",
+  //     image: require("../../assets/images/doors/default.png"),
+  //     name: "Phòng mặc định",
+  //     theme: "default",
+  //   },
+  // ]);
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const { animatedStyle } = useFloatPulse({
     amplitude: 10,
@@ -19,284 +45,317 @@ export default function HallScreen() {
     scaleTo: 1.07,
   });
 
-  const safeTop = insets.top + 150;
-  const safeLeft = insets.left > 0 ? insets.left + 8 : 24;
-  const handleAddRoom = () => {
-    setModalVisible(false);
-    router.push("/room");
+  const headerPaddingTop = isLandscape
+    ? Math.min(Math.max(12, insets.top), 32)
+    : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
+
+  const safeTop = isLandscape
+    ? headerPaddingTop + height * 0.45
+    : headerPaddingTop + 150;
+  const safeLeft = (insets.left > 0 ? insets.left : 16) + (isLandscape ? 4 : 8);
+
+  const handleConfirm = async (
+    roomName: string,
+    theme: string,
+    doorId: number
+  ) => {
+    try {
+      await addRoom(roomName, theme, doorId);
+      setModalVisible(false);
+    } catch (e) {
+      console.log("Create room failed:", e);
+    }
   };
+
+  if (loading) return <Text>Loading…</Text>;
   return (
     <View style={{ flex: 1 }}>
+      {/* ============ DANH SÁCH CỬA ============ */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{
+          gap: 24,
+          padding: 26,
+          alignItems: "flex-end",
+        }}
+        style={{ zIndex: 1 }}
+      >
+        {rooms.map((room) => (
+          <DoorItem
+            key={room.id}
+            door={{
+              id: room.door?.id ?? room.door_id,
+              name: room.room_name,
+              img_url: room.door?.img_url,
+              color_hex: room.door?.color_hex,
+            }}
+            onPress={() => router.replace("/room")}
+          />
+        ))}
+
+        <AddDoorButton onPress={() => setModalVisible(true)} />
+      </ScrollView>
+
+      {/* ============ HEADER + NÚT ============ */}
       <View
         style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingHorizontal: 26,
-          paddingTop: Math.max(22, insets.top),
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
         }}
       >
-        <TouchableOpacity>
-          <BlurBox
-            h={50}
-            w={170}
-            title="PLAYER INGAME"
-            image={require("../../assets/images/AvatarImage.png")}
-            imageSize={40}
-            textSize={14}
-          />
-        </TouchableOpacity>
+        {/* ========== HEADER ========== */}
         <View
           style={{
             flexDirection: "row",
+            justifyContent: "space-between",
             alignItems: "center",
+            paddingHorizontal: 26,
+            paddingTop: headerPaddingTop,
           }}
+          onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
         >
-          <TouchableOpacity
-            style={{
-              borderRadius: 20,
-              marginRight: 8,
-              overflow: "hidden",
-            }}
-          >
-            <LinearGradient
-              colors={["#FF7C96", "#FF4268", "#FF5D02"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 20,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Premium</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <BlurBox h={30} w={98} title="362665" textSize={14} />
-        </View>
-        <Animated.View
-          style={[
-            {
-              position: "absolute",
-              top: safeTop,
-              left: safeLeft,
-              zIndex: 20,
-            },
-            animatedStyle,
-          ]}
-        >
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => router.push("/home")}
-            style={{
-              backgroundColor: "white",
-              width: 54,
-              height: 54,
-              borderRadius: 27,
-              alignItems: "center",
-              justifyContent: "center",
-              // Bóng iOS
-              shadowColor: "#663530",
-              shadowOpacity: 0.35,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              // Elevation Android
-              elevation: 6,
-              borderWidth: 2,
-              borderColor: "#663530",
-              position: "relative",
-            }}
-          >
-            <View
-              style={{
-                position: "absolute",
-                left: "-26%",
-                marginRight: 3,
-                top: "50%",
-                transform: [{ translateY: -10 }],
-                width: 0,
-                height: 0,
-              }}
-              pointerEvents="none"
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  width: 0,
-                  height: 0,
-                  borderTopWidth: 10,
-                  borderBottomWidth: 10,
-                  borderRightWidth: 14,
-                  borderTopColor: "transparent",
-                  borderBottomColor: "transparent",
-                  borderRightColor: "#663530",
-                }}
-              />
-
-              <View
-                style={{
-                  position: "absolute",
-                  left: 2,
-                  top: 2,
-                  width: 0,
-                  height: 0,
-                  borderTopWidth: 8,
-                  borderBottomWidth: 8,
-                  borderRightWidth: 12,
-                  borderTopColor: "transparent",
-                  borderBottomColor: "transparent",
-                  borderRightColor: "white",
-                }}
-              />
-            </View>
-            <Image
-              source={require("../../assets/icons/Door.png")}
-              style={{ width: 28, height: 28 }}
-              resizeMode="contain"
+          <TouchableOpacity>
+            <BlurBox
+              h={50}
+              w={180}
+              title="PLAYER INGAME"
+              image={require("../../assets/images/AvatarImage.png")}
+              imageSize={40}
+              textSize={16}
+              fontFamily="Baloo2_semiBold"
             />
           </TouchableOpacity>
-        </Animated.View>
-      </View>
-
-      <View
-        style={{
-          position: "absolute",
-          flexDirection: "row",
-          gap: 12,
-          right: 26,
-          top: 75,
-        }}
-      >
-        <View style={{ alignItems: "center" }}>
-          <TouchableOpacity
-            style={{
-              borderRadius: 50,
-              overflow: "hidden",
-              marginBottom: -5,
-              elevation: 4,
-            }}
-            onPress={() => router.push("/store")}
-          >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <PremiumButton onPress={() => console.log("Go to premium")} />
             <View
               style={{
-                backgroundColor: "#FDD700",
-                borderColor: "#E2B511",
-                borderTopWidth: 2,
-                borderBottomWidth: 2,
-                borderLeftWidth: 2,
-                borderRightWidth: 2,
-                padding: 6,
-                borderRadius: 50,
+                height: 34,
+                width: 98,
+                backgroundColor: "#FFFFFF",
+                borderColor: "#663530",
+                borderWidth: 2,
+                borderRadius: 40,
                 alignItems: "center",
                 justifyContent: "center",
+                paddingHorizontal: 12,
+                shadowColor: "#663530",
+                shadowOpacity: 0.25,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 3,
+                marginLeft: 16,
+                position: "relative",
               }}
             >
               <Image
-                source={require("../../assets/icons/Game shop red.png")}
-                style={{ width: 26, height: 26 }}
+                source={require("../../assets/icons/money.png")}
+                style={{
+                  width: 50,
+                  height: 50,
+                  position: "absolute",
+                  left: -28,
+                  top: -10,
+                  transform: [{ rotate: "-30deg" }],
+                }}
                 resizeMode="contain"
               />
+
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: "#663530",
+                  fontFamily: "Baloo2_bold",
+                }}
+              >
+                362665
+              </Text>
             </View>
-          </TouchableOpacity>
-          <Text
-            style={{
-              color: "white",
-              fontSize: 12,
-              fontWeight: "bold",
-              textAlign: "center",
-              textShadowColor: "#E2B511",
-              textShadowOffset: { width: 1, height: 1 },
-              textShadowRadius: 1,
-              elevation: 1,
-              shadowColor: "#2953A7",
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
-              shadowRadius: 1,
-            }}
+          </View>
+
+          <Animated.View
+            style={[
+              {
+                position: "absolute",
+                top: safeTop,
+                left: safeLeft,
+                zIndex: 20,
+              },
+              animatedStyle,
+            ]}
           >
-            Cửa hàng
-          </Text>
-        </View>
-        {/* =============================== */}
-        <View style={{ alignItems: "center" }}>
-          <TouchableOpacity
-            style={{
-              borderRadius: 50,
-              overflow: "hidden",
-              marginBottom: -5,
-              elevation: 4,
-            }}
-            onPress={() => setSettingVisible(true)}
-          >
-            <View
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.replace("/home")}
               style={{
-                backgroundColor: "#57AFE5",
-                borderColor: "#2953A7",
-                borderTopWidth: 2,
-                borderBottomWidth: 2,
-                borderLeftWidth: 2,
-                borderRightWidth: 2,
-                padding: 7,
-                borderRadius: 50,
+                backgroundColor: "white",
+                width: 48,
+                height: 48,
+                borderRadius: 27,
                 alignItems: "center",
                 justifyContent: "center",
+                shadowColor: "#663530",
+                shadowOpacity: 0.35,
+                shadowRadius: 6,
+                shadowOffset: { width: 0, height: 2 },
+                elevation: 6,
+                borderWidth: 2,
+                borderColor: "#663530",
               }}
             >
+              <View
+                style={{
+                  position: "absolute",
+                  left: "-29%",
+                  marginRight: -2,
+                  top: "29%",
+                  transform: [{ translateY: -10 }],
+                  width: 0,
+                  height: 0,
+                }}
+                pointerEvents="none"
+              >
+                <View
+                  style={{
+                    position: "absolute",
+                    width: 0,
+                    height: 0,
+                    borderTopWidth: 10,
+                    borderBottomWidth: 10,
+                    borderRightWidth: 14,
+                    borderTopColor: "transparent",
+                    borderBottomColor: "transparent",
+                    borderRightColor: "#663530",
+                  }}
+                />
+                <View
+                  style={{
+                    position: "absolute",
+                    left: 2,
+                    top: 2,
+                    width: 0,
+                    height: 0,
+                    borderTopWidth: 8,
+                    borderBottomWidth: 8,
+                    borderRightWidth: 12,
+                    borderTopColor: "transparent",
+                    borderBottomColor: "transparent",
+                    borderRightColor: "white",
+                  }}
+                />
+              </View>
               <Image
-                source={require("../../assets/icons/setting.png")}
-                style={{ width: 24, height: 24 }}
+                source={require("../../assets/icons/Door.png")}
+                style={{ width: 28, height: 28 }}
                 resizeMode="contain"
               />
-            </View>
-          </TouchableOpacity>
-          <Text
-            style={{
-              color: "white",
-              fontSize: 12,
-              fontWeight: "bold",
-              textAlign: "center",
-              textShadowColor: "#2953A7",
-              textShadowOffset: { width: 1, height: 1 },
-              textShadowRadius: 1,
-              elevation: 1,
-              shadowColor: "#2953A7",
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 1,
-              shadowRadius: 1,
-            }}
-          >
-            Cài đặt
-          </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
+        {/* Nút cửa hàng + cài đặt */}
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 12,
+            right: 26,
+            marginTop: headerHeight + 4,
+            position: "absolute",
+            alignSelf: "flex-end",
+          }}
+        >
+          {/* ========== CỬA HÀNG ========== */}
+          <View style={{ alignItems: "center" }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                overflow: "hidden",
+                marginBottom: -5,
+                elevation: 4,
+              }}
+              onPress={() => router.push("/store")}
+            >
+              <View
+                style={{
+                  backgroundColor: "#ffffffff",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  padding: 6,
+                  borderRadius: 50,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Image
+                  source={require("../../assets/icons/Game shop red.png")}
+                  style={{ width: 26, height: 26 }}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: "#663530",
+                fontSize: 14,
+                fontFamily: "Baloo2_bold",
+                textAlign: "center",
+              }}
+            >
+              Cửa hàng
+            </Text>
+          </View>
+
+          {/* ========== CÀI ĐẶT ========== */}
+          <View style={{ alignItems: "center" }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                overflow: "hidden",
+                marginBottom: -5,
+                elevation: 4,
+              }}
+              onPress={() => setSettingVisible(true)}
+            >
+              <View
+                style={{
+                  backgroundColor: "#663530",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  padding: 7,
+                  borderRadius: 50,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Image
+                  source={require("../../assets/icons/setting.png")}
+                  style={{ width: 24, height: 24 }}
+                  resizeMode="contain"
+                />
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: "#663530",
+                fontSize: 14,
+                fontFamily: "Baloo2_bold",
+                textAlign: "center",
+              }}
+            >
+              Cài đặt
+            </Text>
+          </View>
         </View>
       </View>
 
-      <TouchableOpacity
-        style={{
-          position: "absolute",
-          width: 160,
-          height: 260,
-          top: 130,
-          left: 360,
-          borderWidth: 2,
-          borderStyle: "dashed",
-          borderColor: "#A8A8A8",
-          justifyContent: "center",
-          alignItems: "center",
-          borderRadius: 6,
-        }}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={{ fontSize: 40, fontWeight: "bold", color: "#555" }}>
-          +
-        </Text>
-      </TouchableOpacity>
+      {/* ========== MODALS ========== */}
       <RoomScreenModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onConfirm={handleAddRoom}
+        onConfirm={handleConfirm}
       />
       <SettingModal
         visible={settingVisible}
