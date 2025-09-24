@@ -67,7 +67,6 @@ export default function HallScreen() {
     }
   };
 
-  if (loading) return <Text>Loading…</Text>;
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
