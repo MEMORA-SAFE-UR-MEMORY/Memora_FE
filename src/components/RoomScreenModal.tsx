@@ -176,7 +176,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             </View>
 
             {/* Theme Selection */}
-            <View style={{ marginBottom: 20 }}>
+            <View style={{ marginBottom: 6 }}>
               <Text
                 style={{
                   fontFamily: "Baloo2_semiBold",
@@ -273,14 +273,14 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             </View>
 
             {/* Color Selection */}
-            <View style={{ marginBottom: 20 }}>
+            <View style={{ marginBottom: 12 }}>
               <Text
                 style={{
                   fontFamily: "Baloo2_semiBold",
                   fontWeight: "600",
                   fontSize: 16,
                   color: "black",
-                  marginBottom: 8,
+                  marginBottom: 10,
                 }}
               >
                 Màu cửa
@@ -288,7 +288,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
               {loading ? (
                 <Text>Đang tải danh sách cửa…</Text>
               ) : (
-                <View style={{ gap: 8 }}>
+                <View style={{ gap: 2 }}>
                   {[0, 1].map((row) => (
                     <View
                       key={row}
