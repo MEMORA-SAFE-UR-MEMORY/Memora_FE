@@ -1,34 +1,46 @@
+import RoomBg from "@src/components/RoomBg";
+import { InventoryProvider } from "@src/context/InventoryContext";
+import { useRoom } from "@src/hooks/useRoom";
 import { Stack } from "expo-router";
-import { ImageBackground, StyleSheet } from "react-native";
+import { useEffect } from "react";
+import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
+  const id = 1;
+  const { roomDetail, loading, getRoomDetail } = useRoom();
+
+  useEffect(() => {
+    getRoomDetail(id);
+  }, [id]);
+
+  if (loading || !roomDetail) return null;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <ImageBackground
-          source={{
-            uri: "https://w0.peakpx.com/wallpaper/404/720/HD-wallpaper-anime-suzume-no-tojimari.jpg",
-          }}
-          style={styles.background}
-          resizeMode="cover"
-        >
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-              animation: "fade",
-            }}
-          />
-        </ImageBackground>
+        <InventoryProvider>
+          <RoomBg
+            wallUrl={roomDetail.theme.wallUrl}
+            floorUrl={roomDetail.theme.floorUrl}
+          >
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
+                animation: "fade",
+              }}
+            />
+          </RoomBg>
+        </InventoryProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  background: {
+  container: {
     flex: 1,
     width: "100%",
     height: "100%",

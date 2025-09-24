@@ -43,12 +43,12 @@ const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
   return (
     <View>
       <Animated.View
-        style={[styles.menuIcon, { opacity: menuIconOpacity }]}
+        style={[{ opacity: menuIconOpacity }]}
         pointerEvents={isMenuOpen ? "none" : "auto"}
       >
-        <Pressable onPress={() => setIsMenuOpen(true)}>
+        <Pressable style={styles.menuIcon} onPress={() => setIsMenuOpen(true)}>
           <Entypo name="menu" size={35} color="white" />
-          <Text style={styles.textIcon}>Menu</Text>
+          <Text style={styles.menuText}>Menu</Text>
         </Pressable>
       </Animated.View>
 
@@ -95,6 +95,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     paddingHorizontal: 20,
+  },
+  menuText: {
+    marginTop: -10,
+    color: "white",
+    fontSize: 12,
+    fontFamily: "Baloo2_medium",
   },
   textIcon: {
     marginTop: -5,

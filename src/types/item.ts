@@ -1,23 +1,38 @@
 import { ImageSourcePropType } from "react-native";
 
-export type RealItem = {
-  id: string;
-  categoryId: number;
+export type Item = {
+  id: number;
   name: string;
-  url: ImageSourcePropType;
+  puzzlePrice: number;
+  categoryId: number;
+  imageUrl: ImageSourcePropType;
+  createdAt: string;
 };
 
-export type EmptyItem = {
+export interface InventoryItem {
+  id: number;
+  quantity: number;
+  item: Item;
+}
+
+export interface EmptyInventoryItem {
   id: string;
   empty: true;
-};
+}
 
-export type Item = RealItem | EmptyItem;
+export type InventoryList = InventoryItem | EmptyInventoryItem;
 
-export type PlacedItem = {
-  id: string;
-  type: "frame" | "sticker" | "furniture";
-  frameUrl: any;
+export interface UserInventory {
+  userId: string;
+  items: InventoryItem[];
+}
+
+export interface RoomItem {
+  id: number;
   x: number;
   y: number;
-};
+  zIndex: number;
+  rotation?: number;
+  userImageUrl?: string;
+  item: Item;
+}

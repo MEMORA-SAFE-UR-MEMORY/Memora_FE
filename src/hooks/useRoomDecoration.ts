@@ -1,59 +1,77 @@
 // hooks/useRoomDecoration.ts
-import { PlacedItem } from "@src/types/item";
+import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { useCallback, useState } from "react";
 
-export const useRoomDecoration = () => {
-  const [placedItems, setPlacedItems] = useState<PlacedItem[]>([]);
+type UseRoomDecorationParams = {
+  decreaseQuantity: (itemId: number) => void;
+  increaseQuantity: (itemId: number) => void;
+};
+
+export const useRoomDecoration = ({
+  decreaseQuantity,
+  increaseQuantity,
+}: UseRoomDecorationParams) => {
+  const [placedItems, setPlacedItems] = useState<RoomItem[]>([]);
   const [placedItemMemories, setPlacedItemMemories] = useState<
-    Record<string, Memory>
+    Record<number, Memory>
   >({});
 
+  // Thêm item vào phòng
   const placeItem = useCallback(
-    (frameUrl: any, initialX: number = 100, initialY: number = 100) => {
-      const newItem: PlacedItem = {
-        id: `placed-${Date.now()}`,
-        type: "frame",
-        frameUrl,
-        x: initialX,
-        y: initialY,
+    (newItem: Omit<RoomItem, "id">): RoomItem => {
+      const roomItem: RoomItem = {
+        ...newItem,
+        id: Date.now(),
       };
-      setPlacedItems((prev) => [...prev, newItem]);
-      return newItem.id;
+      setPlacedItems((prev) => [...prev, roomItem]);
+
+      decreaseQuantity(newItem.item.id);
+
+      return roomItem;
     },
-    []
+    [decreaseQuantity]
   );
 
-  const moveItem = useCallback((id: string, x: number, y: number) => {
+  const moveItem = useCallback((id: number, x: number, y: number) => {
     setPlacedItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, x, y } : item))
     );
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setPlacedItems((prev) => prev.filter((item) => item.id !== id));
-    setPlacedItemMemories((prev) => {
-      const newMemories = { ...prev };
-      delete newMemories[id];
-      return newMemories;
-    });
-  }, []);
+  const removeItem = useCallback(
+    (id: number) => {
+      setPlacedItems((prev) => {
+        const target = prev.find((it) => it.id === id);
+        if (target) {
+          increaseQuantity(target.item.id);
+        }
+        return prev.filter((item) => item.id !== id);
+      });
+      setPlacedItemMemories((prev) => {
+        const newMemories = { ...prev };
+        delete newMemories[id];
+        return newMemories;
+      });
+    },
+    [increaseQuantity]
+  );
 
-  const setItemMemory = useCallback((itemId: string, memory: Memory) => {
+  const setItemMemory = useCallback((itemId: number, memory: Memory) => {
     setPlacedItemMemories((prev) => ({
       ...prev,
       [itemId]: memory,
     }));
   }, []);
 
-  const updateItemMemory = useCallback((itemId: string, memory: Memory) => {
+  const updateItemMemory = useCallback((itemId: number, memory: Memory) => {
     setPlacedItemMemories((prev) => ({
       ...prev,
       [itemId]: memory,
     }));
   }, []);
 
-  const deleteItemMemory = useCallback((itemId: string) => {
+  const deleteItemMemory = useCallback((itemId: number) => {
     setPlacedItemMemories((prev) => {
       const newMemories = { ...prev };
       delete newMemories[itemId];

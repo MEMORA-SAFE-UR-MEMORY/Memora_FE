@@ -74,11 +74,13 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
   // Modal
   const handleSave = () => {
     onSave({
-      id: Date.now().toString(),
+      id: Date.now(),
+      roomId: 0, 
       title,
       description,
       image: selectedImage,
       date: selectedDate,
+      createdAt: new Date().toISOString(),
     });
     setTitle("");
     setDescription("");

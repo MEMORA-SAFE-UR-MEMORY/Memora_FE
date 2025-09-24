@@ -1,13 +1,15 @@
-// hooks/useMemory.ts - Enhanced version with room decoration logic
+import { useInventory } from "@src/context/InventoryContext";
 import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
+import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { useState } from "react";
 import { useWindowDimensions } from "react-native";
 
 type ModalType = "add" | "view" | null;
 
-export const useMemory = () => {
-  // Room decoration integration
+export const useMemory = (scrollX: number = 0) => {
+  const { decreaseQuantity, increaseQuantity } = useInventory();
+
   const {
     placedItems,
     placedItemMemories,
@@ -17,11 +19,11 @@ export const useMemory = () => {
     updateItemMemory,
     deleteItemMemory,
     removeItem,
-  } = useRoomDecoration();
+  } = useRoomDecoration({ decreaseQuantity, increaseQuantity });
 
   const { width, height } = useWindowDimensions();
 
-  // Trash
+  // Trash zone state
   const [trashLayout, setTrashLayout] = useState<{
     x: number;
     y: number;
@@ -31,32 +33,28 @@ export const useMemory = () => {
   const [isTrashActive, setIsTrashActive] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
 
-  // Inventory state
+  // Inventory modal
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
-  // Modal state
+  // Memory modal
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
-  const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const [activeFrameId, setActiveFrameId] = useState<number | null>(null);
 
   // Inventory controls
-  const openInventory = () => {
-    setIsInventoryOpen(true);
-  };
-  const closeInventory = () => {
-    setIsInventoryOpen(false);
-  };
+  const openInventory = () => setIsInventoryOpen(true);
+  const closeInventory = () => setIsInventoryOpen(false);
 
   // Modal controls
   const openModal = (
     type: "add" | "view",
     memory?: Memory,
-    frameId?: string
+    frameId?: number
   ) => {
     setTimeout(() => {
       setModalType(type);
-      setSelectedMemory(memory || null);
-      setActiveFrameId(frameId || null);
+      setSelectedMemory(memory ?? null);
+      setActiveFrameId(frameId ?? null);
     }, 300);
   };
 
@@ -66,20 +64,28 @@ export const useMemory = () => {
     setActiveFrameId(null);
   };
 
-  // Item placement
-  const handleItemSelect = (frameUrl: any) => {
+  // Khi chọn item từ inventory → spawn vào Room
+  const handleItemSelect = (inventoryItem: InventoryItem) => {
     const frameSize = 120; // khung 120x120
     const visibleWidth = width * 0.65;
 
     // căn giữa frame trong vùng 65%
-    const spawnX = (visibleWidth - frameSize) / 2;
+    const spawnX = scrollX + (visibleWidth - frameSize) / 2;
     const spawnY = height / 3;
 
-    placeItem(frameUrl, spawnX, spawnY);
+    const newRoomItem: Omit<RoomItem, "id"> = {
+      x: spawnX,
+      y: spawnY,
+      zIndex: placedItems.length + 1,
+      item: inventoryItem.item,
+    };
+
+    const placed = placeItem(newRoomItem); // trả về RoomItem { id: number, ... }
+    return placed.id;
   };
 
-  // Frame interaction
-  const handleFramePress = (frameId: string) => {
+  // Khi bấm vào frame (có thể có hoặc chưa có Memory)
+  const handleFramePress = (frameId: number) => {
     setActiveFrameId(frameId);
     const memory = placedItemMemories[frameId];
 
@@ -92,21 +98,21 @@ export const useMemory = () => {
 
   // Memory operations
   const handleSaveMemory = (memory: Memory) => {
-    if (activeFrameId) {
+    if (activeFrameId !== null) {
       setItemMemory(activeFrameId, memory);
     }
     closeModal();
   };
 
   const handleUpdateMemory = (memory: Memory) => {
-    if (activeFrameId) {
+    if (activeFrameId !== null) {
       updateItemMemory(activeFrameId, memory);
     }
     setSelectedMemory(memory);
   };
 
   const handleDeleteMemory = () => {
-    if (activeFrameId) {
+    if (activeFrameId !== null) {
       deleteItemMemory(activeFrameId);
     }
     setTimeout(() => {
@@ -114,8 +120,8 @@ export const useMemory = () => {
     }, 300);
   };
 
-  // Xóa frame
-  const removeItemWithModalCheck = (id: string) => {
+  // Xóa item khỏi room
+  const removeItemWithModalCheck = (id: number) => {
     removeItem(id);
 
     if (activeFrameId === id) {
@@ -138,11 +144,11 @@ export const useMemory = () => {
     showTrash,
     setShowTrash,
 
-    // Inventory controls
+    // Inventory
     openInventory,
     closeInventory,
 
-    // Modal controls
+    // Modal
     openModal,
     closeModal,
 
