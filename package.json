@@ -41,6 +41,7 @@
     "expo-system-ui": "~5.0.11",
     "expo-web-browser": "~14.2.0",
     "i18next": "^25.4.2",
+    "jwt-decode": "^4.0.0",
     "lucide-react-native": "^0.544.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
