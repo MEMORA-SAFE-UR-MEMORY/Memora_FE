@@ -1,6 +1,7 @@
 import { useMusic } from "@src/context/MusicContext";
+import { useLogin } from "@src/hooks/useLogin";
 import { ChevronRight } from "lucide-react-native";
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
   Linking,
@@ -20,6 +21,8 @@ type Props = {
 
 const SettingModal = ({ visible, onClose }: Props) => {
   const { isPlaying, toggleMusic } = useMusic();
+  const { handleLogout, loading } = useLogin();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
   const isSmall = Math.min(width, height) <= 414;
@@ -36,6 +39,12 @@ const SettingModal = ({ visible, onClose }: Props) => {
       onToggle: () => {},
     },
   ];
+
+  const onLogout = async () => {
+    setIsLoggingOut(true);
+    await handleLogout();
+    setIsLoggingOut(false);
+  };
 
   return (
     <Modal
@@ -345,6 +354,8 @@ const SettingModal = ({ visible, onClose }: Props) => {
                           paddingVertical: 6,
                           paddingHorizontal: 24,
                         }}
+                        onPress={onLogout}
+                        disabled={isLoggingOut}
                       >
                         <Text
                           style={{

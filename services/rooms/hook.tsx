@@ -42,7 +42,7 @@ export function useRooms() {
       try {
         // const uid = await getCurrentUserId();
         // chưa có auth nên để tạm hihi
-        const uid = "9459cc55-0a45-4395-98cb-e2d6915ca2d8";
+        const uid = "624392ba-9915-4052-a9b5-db5cba35ab0e";
         if (!uid) {
           setLoading(false);
           return;
