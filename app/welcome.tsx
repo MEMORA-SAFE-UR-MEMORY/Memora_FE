@@ -4,13 +4,16 @@ import {
   Text,
   View,
   InteractionManager,
+  TouchableOpacity,
 } from "react-native";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { router } from "expo-router";
+import { useLogin } from "@src/hooks/useLogin";
 
 const Welcome = () => {
   const fontsLoaded = useCustomFonts();
+  const { handleLogout, loading } = useLogin();
 
   const handlePlay = () => {
     InteractionManager.runAfterInteractions(() => {
@@ -20,8 +23,16 @@ const Welcome = () => {
 
   return (
     <View style={styles.container}>
-
       {!fontsLoaded && <LoadingOverlay />}
+      {loading && <LoadingOverlay />}
+
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={handleLogout}
+        disabled={loading}
+      >
+        <Text style={styles.logoutText}>Đăng xuất</Text>
+      </TouchableOpacity>
 
       <View style={styles.bottomContent}>
         <View style={styles.startContainer}>
@@ -67,6 +78,21 @@ const styles = StyleSheet.create({
   copyText: {
     fontFamily: "Baloo2",
     color: "#252525",
+  },
+  logoutButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    backgroundColor: "#A6E3FF",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 1,
+  },
+  logoutText: {
+    fontFamily: "Baloo2_semiBold",
+    color: "#000000",
+    fontSize: 16,
   },
 });
 

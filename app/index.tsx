@@ -6,6 +6,7 @@ import {
   Image,
   Alert,
   InteractionManager,
+  ActivityIndicator,
 } from "react-native";
 import BlurBox from "@src/components/BlurBox";
 import { AntDesign } from "@expo/vector-icons";
@@ -13,11 +14,13 @@ import { useState, useCallback } from "react";
 import LoginModal from "@src/components/LoginModal";
 import RegisterModal from "@src/components/RegisterModal";
 import { router } from "expo-router";
+import { useAuth } from "@src/hooks/useAuth";
 
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [registerVisible, setRegisterVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { loading } = useAuth();
 
   const handleRegisterPress = useCallback(() => {
     setTimeout(() => {
@@ -58,6 +61,14 @@ export default function Home() {
     }, 3000);
   }, []);
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#A6E3FF" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* <View>
@@ -82,7 +93,9 @@ export default function Home() {
             textSize={16}
           />
         </TouchableOpacity>
-        <BlurBox h={43} w={259} title="Chơi ngay" textSize={16} />
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <BlurBox h={43} w={259} title="Chơi ngay" textSize={16} />
+        </TouchableOpacity>
       </View>
       <View
         style={{
@@ -100,8 +113,7 @@ export default function Home() {
         onClose={() => setModalVisible(false)}
         onRegisterPress={handleRegisterPress}
         onForgotPasswordPress={handleForgotPassword}
-        onLogin={handleLogin}
-        loading={isLoading}
+        onLoginSuccess={handleLogin}
       />
       <RegisterModal
         visible={registerVisible}
@@ -115,5 +127,9 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
+import { useRegister } from "@src/hooks/useRegister";
+import CustomAlert from "./CustomAlert";
 
 interface RegisterModalProps {
   visible: boolean;
@@ -30,6 +32,62 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const { handleRegister, loading, error } = useRegister();
+
+  // Thêm hàm reset form
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setShowAlert(false);
+    setAlertMessage("");
+  };
+
+  // Modify onClose handler
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      showCustomAlert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showCustomAlert("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    const result = await handleRegister(email, password);
+    if (result) {
+      showCustomAlert("Đăng ký thành công!");
+      setShowAlert(true);
+      // Close modal after alert is closed
+      const timer = setTimeout(() => {
+        handleClose(); // Thay vì onClose()
+        clearTimeout(timer);
+      }, 1500);
+    } else {
+      showCustomAlert(error || "Đăng ký thất bại!");
+    }
+  };
+
+  // Modify để handle login press với reset form
+  const handleLoginPress = () => {
+    resetForm();
+    onLoginPress();
+  };
 
   return (
     <SafeAreaProvider>
@@ -38,7 +96,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
           animationType="fade"
           transparent={true}
           visible={visible}
-          onRequestClose={onClose}
+          onRequestClose={handleClose} // Thay đổi này
           supportedOrientations={["portrait", "landscape"]}
         >
           <View style={styles.modalContainer}>
@@ -47,18 +105,21 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
               style={{ flex: 1 }}
             >
               <ScrollView showsVerticalScrollIndicator={false}>
-                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleClose} // Thay đổi này
+                >
                   <Ionicons name="close" size={24} color="black" />
                 </TouchableOpacity>
                 <Text style={styles.title}>Tạo tài khoản mới!</Text>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>E-mail</Text>
+                  <Text style={styles.label}>Username</Text>
                   <TextInput
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="Nhập email của bạn"
-                    keyboardType="email-address"
+                    placeholder="Nhập tên đăng nhập của bạn"
+                    keyboardType="default"
                     style={styles.input}
                   />
                 </View>
@@ -107,18 +168,31 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                   </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity onPress={onLoginPress}>
+                <TouchableOpacity onPress={handleLoginPress}>
+                  {/* Thay đổi này */}
                   <Text style={styles.linkText}>
                     Đã có tài khoản? Đăng nhập
                   </Text>
                 </TouchableOpacity>
 
                 <View style={styles.buttonContainer}>
-                  <Button h={44} w={493} title="Đăng ký" color="A6E3FF" />
+                  <Button
+                    h={44}
+                    w={493}
+                    title={loading ? "Đang đăng ký..." : "Đăng ký"}
+                    color="A6E3FF"
+                    onPress={handleSubmit}
+                    disabled={loading}
+                  />
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
           </View>
+          <CustomAlert
+            visible={showAlert}
+            onClose={() => setShowAlert(false)}
+            message={alertMessage}
+          />
         </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
