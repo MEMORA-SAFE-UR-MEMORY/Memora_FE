@@ -1,4 +1,5 @@
 import Cloud from "@src/components/login/Cloud";
+import { MusicProvider } from "@src/context/MusicContext";
 import { Stack } from "expo-router";
 import { useState } from "react";
 import {
@@ -20,130 +21,133 @@ export default function HomeLayout() {
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1 }}>
-        {/* BACKGROUND LAYER */}
-        {loading && (
-          <View
-            style={{
-              ...StyleSheet.absoluteFillObject,
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 100,
-              backgroundColor: "rgba(255,255,255,0.6)",
-            }}
-          >
-            <ActivityIndicator size="large" color="#D2A4FF" />
-          </View>
-        )}
-        <View style={StyleSheet.absoluteFill}>
-          {/* Nền trời */}
-          <Image
-            source={BG}
-            resizeMode="cover"
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              transform: [{ scale: 1 }],
-            }}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-          />
-
-          {/* Mây */}
-          <Cloud
-            source={CLOUD}
-            top={-20}
-            height={140}
-            direction="ltr"
-            duration={32000}
-            initialDelay={-80000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={30}
-            height={160}
-            direction="rtl"
-            duration={32000}
-            initialDelay={-10000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={20}
-            height={180}
-            direction="ltr"
-            duration={32000}
-            initialDelay={-50000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={50}
-            height={170}
-            direction="ltr"
-            duration={34000}
-            initialDelay={-15000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={40}
-            height={200}
-            direction="rtl"
-            duration={33000}
-            initialDelay={-8000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={70}
-            height={165}
-            direction="ltr"
-            duration={35000}
-            initialDelay={-12000}
-          />
-          <Cloud
-            source={CLOUD}
-            top={60}
-            height={190}
-            direction="rtl"
-            duration={36000}
-            initialDelay={-18000}
-          />
-
-          {/* Nhà */}
-          <Image
-            source={HOUSE}
-            resizeMode="contain"
-            style={{
-              position: "absolute",
-              bottom: 0,
-              width,
-              height: undefined,
-              aspectRatio: 1365 / 768,
-              alignSelf: "center",
-              zIndex: 5,
-            }}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-          />
-        </View>
-
-        <View style={{ flex: 1, zIndex: 30 }}>
-          <Stack
-            screenOptions={{
-              animation: "fade",
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-            }}
-          >
-            <Stack.Screen
-              name="index"
-              options={{
-                headerShown: false,
-                gestureEnabled: false,
+      <MusicProvider>
+        <View style={{ flex: 1 }}>
+          {/* BACKGROUND LAYER */}
+          {loading && (
+            <View
+              style={{
+                ...StyleSheet.absoluteFillObject,
+                justifyContent: "center",
+                alignItems: "center",
+                zIndex: 100,
+                backgroundColor: "rgba(255,255,255,0.6)",
               }}
+            >
+              <ActivityIndicator size="large" color="#D2A4FF" />
+            </View>
+          )}
+          <View style={StyleSheet.absoluteFill}>
+            {/* Nền trời */}
+            <Image
+              source={BG}
+              resizeMode="cover"
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                transform: [{ scale: 1 }],
+              }}
+              onLoadStart={() => setLoading(true)}
+              onLoadEnd={() => setLoading(false)}
             />
-          </Stack>
+
+            {/* Mây */}
+            <Cloud
+              source={CLOUD}
+              top={-20}
+              height={140}
+              direction="ltr"
+              duration={32000}
+              initialDelay={-80000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={30}
+              height={160}
+              direction="rtl"
+              duration={32000}
+              initialDelay={-10000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={20}
+              height={180}
+              direction="ltr"
+              duration={32000}
+              initialDelay={-50000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={50}
+              height={170}
+              direction="ltr"
+              duration={34000}
+              initialDelay={-15000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={40}
+              height={200}
+              direction="rtl"
+              duration={33000}
+              initialDelay={-8000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={70}
+              height={165}
+              direction="ltr"
+              duration={35000}
+              initialDelay={-12000}
+            />
+            <Cloud
+              source={CLOUD}
+              top={60}
+              height={190}
+              direction="rtl"
+              duration={36000}
+              initialDelay={-18000}
+            />
+
+            {/* Nhà */}
+            <Image
+              source={HOUSE}
+              resizeMode="contain"
+              style={{
+                position: "absolute",
+                bottom: 0,
+                width,
+                height: undefined,
+                aspectRatio: 1365 / 768,
+                alignSelf: "center",
+                zIndex: 5,
+              }}
+              onLoadStart={() => setLoading(true)}
+              onLoadEnd={() => setLoading(false)}
+            />
+          </View>
+
+          <View style={{ flex: 1, zIndex: 30 }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
+                animation: "fade",
+              }}
+            >
+              <Stack.Screen
+                name="index"
+                options={{
+                  headerShown: false,
+                  gestureEnabled: false,
+                  animation: "fade",
+                }}
+              />
+            </Stack>
+          </View>
         </View>
-      </View>
+      </MusicProvider>
     </SafeAreaProvider>
   );
 }
