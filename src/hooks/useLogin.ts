@@ -10,16 +10,17 @@ export const useLogin = () => {
 
   const handleLogin = async (userName: string, password: string) => {
     setLoading(true);
-    setError(null);
     try {
       const data = await loginUser(userName, password);
 
-      // nếu backend trả token thì lưu lại
       if (data?.accessToken) {
         await AsyncStorage.setItem("auth_token", data.accessToken);
-      }
-      if (data?.refreshToken) {
-        await AsyncStorage.setItem("refresh_token", data.refreshToken);
+        if (data?.refreshToken) {
+          await AsyncStorage.setItem("refresh_token", data.refreshToken);
+        }
+        // Add delay before navigation
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        router.replace("/welcome");
       }
 
       return data;
@@ -32,17 +33,13 @@ export const useLogin = () => {
   };
 
   const handleLogout = async () => {
-    setLoading(true);
     try {
-      // Remove tokens from storage
       await AsyncStorage.multiRemove(["auth_token", "refresh_token"]);
-
-      // Navigate back to login screen
+      // Add delay before navigation
+      await new Promise((resolve) => setTimeout(resolve, 100));
       router.replace("/");
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 

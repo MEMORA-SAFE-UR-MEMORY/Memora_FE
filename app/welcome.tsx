@@ -6,6 +6,7 @@ import {
   InteractionManager,
   TouchableOpacity,
 } from "react-native";
+import { useState } from "react";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { router } from "expo-router";
@@ -14,6 +15,7 @@ import { useLogin } from "@src/hooks/useLogin";
 const Welcome = () => {
   const fontsLoaded = useCustomFonts();
   const { handleLogout, loading } = useLogin();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handlePlay = () => {
     InteractionManager.runAfterInteractions(() => {
@@ -21,15 +23,24 @@ const Welcome = () => {
     });
   };
 
+  const onLogout = async () => {
+    setIsLoggingOut(true);
+    await handleLogout();
+    setIsLoggingOut(false);
+  };
+
+  if (!fontsLoaded) {
+    return <LoadingOverlay />;
+  }
+
   return (
     <View style={styles.container}>
-      {!fontsLoaded && <LoadingOverlay />}
-      {loading && <LoadingOverlay />}
+      {isLoggingOut && <LoadingOverlay />}
 
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={handleLogout}
-        disabled={loading}
+        onPress={onLogout}
+        disabled={isLoggingOut}
       >
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
