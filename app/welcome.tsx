@@ -6,16 +6,34 @@ import {
   InteractionManager,
   TouchableOpacity,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Add useEffect
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { router } from "expo-router";
 import { useLogin } from "@src/hooks/useLogin";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Add this
 
 const Welcome = () => {
   const fontsLoaded = useCustomFonts();
   const { handleLogout, loading } = useLogin();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const getUserFromStorage = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setUserData(user);
+        }
+      } catch (error) {
+        console.error("Error getting user from storage:", error);
+      }
+    };
+
+    getUserFromStorage();
+  }, []);
 
   const handlePlay = () => {
     InteractionManager.runAfterInteractions(() => {
@@ -29,7 +47,7 @@ const Welcome = () => {
     setIsLoggingOut(false);
   };
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !userData) {
     return <LoadingOverlay />;
   }
 
@@ -48,7 +66,9 @@ const Welcome = () => {
       <View style={styles.bottomContent}>
         <View style={styles.startContainer}>
           <Pressable onPress={handlePlay}>
-            <Text style={styles.startText}>Chạm để bắt đầu.</Text>
+            <Text style={styles.startText}>
+              Xin chào {userData?.username}, Chạm để bắt đầu.
+            </Text>
           </Pressable>
         </View>
 
@@ -104,6 +124,15 @@ const styles = StyleSheet.create({
     fontFamily: "Baloo2_semiBold",
     color: "#000000",
     fontSize: 16,
+  },
+
+  welcomeText: {
+    fontFamily: "Baloo2_semiBold",
+    fontSize: 18,
+    color: "#000000",
+    textShadowColor: "#fff",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

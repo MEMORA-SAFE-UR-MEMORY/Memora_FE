@@ -129,6 +129,7 @@ export default function HomeLayout() {
         <View style={{ flex: 1, zIndex: 30 }}>
           <Stack
             screenOptions={{
+              animation: "fade",
               headerShown: false,
               contentStyle: { backgroundColor: "transparent" },
             }}
