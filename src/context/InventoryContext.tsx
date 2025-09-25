@@ -11,7 +11,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 
 type InventoryContextType = {
   categories: CategoryWithIcon[];
-  items: InventoryList[]; 
+  items: InventoryList[];
   selectedCategory: number;
   setSelectedCategory: (id: number) => void;
   increaseQuantity: (id: number) => void;
@@ -48,7 +48,13 @@ export const InventoryProvider = ({
           name: "Khung 1",
           puzzlePrice: 100,
           categoryId: 1,
+          type: "frame",
           imageUrl: require("../../assets/frames/frame-circle.png"),
+          dimension: {
+            id: 4,
+            w: 150,
+            h: 150,
+          },
           createdAt: "2025-09-01",
         },
       },
@@ -60,7 +66,13 @@ export const InventoryProvider = ({
           name: "Khung 2",
           puzzlePrice: 120,
           categoryId: 1,
+          type: "frame",
           imageUrl: require("../../assets/frames/frame-tourism-1.png"),
+          dimension: {
+            id: 3,
+            w: 130,
+            h: 150,
+          },
           createdAt: "2025-09-01",
         },
       },
@@ -72,7 +84,13 @@ export const InventoryProvider = ({
           name: "Khung 3",
           puzzlePrice: 50,
           categoryId: 1,
+          type: "frame",
           imageUrl: require("../../assets/frames/frame-lace.png"),
+          dimension: {
+            id: 2,
+            w: 150,
+            h: 130,
+          },
           createdAt: "2025-09-01",
         },
       },
@@ -84,7 +102,13 @@ export const InventoryProvider = ({
           name: "Sticker Thỏ",
           puzzlePrice: 50,
           categoryId: 2,
+          type: "decor",
           imageUrl: require("../../assets/images/Bunny.png"),
+          dimension: {
+            id: 6,
+            w: 70,
+            h: 70,
+          },
           createdAt: "2025-09-01",
         },
       },
@@ -96,7 +120,49 @@ export const InventoryProvider = ({
           name: "Sticker Mây",
           puzzlePrice: 50,
           categoryId: 2,
+          type: "decor",
           imageUrl: require("../../assets/images/Cloud.png"),
+          dimension: {
+            id: 6,
+            w: 70,
+            h: 70,
+          },
+          createdAt: "2025-09-01",
+        },
+      },
+      {
+        id: 6,
+        quantity: 3,
+        item: {
+          id: 6,
+          name: "Lọ Hoa",
+          puzzlePrice: 50,
+          categoryId: 4,
+          type: "decor",
+          imageUrl: require("../../assets/images/Flower.png"),
+          dimension: {
+            id: 1,
+            w: 90,
+            h: 90,
+          },
+          createdAt: "2025-09-01",
+        },
+      },
+      {
+        id: 7,
+        quantity: 3,
+        item: {
+          id: 7,
+          name: "Cầu Tuyết",
+          puzzlePrice: 50,
+          categoryId: 5,
+          type: "decor",
+          imageUrl: require("../../assets/images/crystal-ball.png"),
+          dimension: {
+            id: 5,
+            w: 50,
+            h: 50,
+          },
           createdAt: "2025-09-01",
         },
       },

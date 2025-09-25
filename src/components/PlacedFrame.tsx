@@ -1,8 +1,8 @@
-// components/PlacedFrame.tsx
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -21,6 +21,8 @@ import Animated, {
 type PlacedFrameProps = {
   item: RoomItem;
   onMove: (id: number, x: number, y: number) => void;
+  onRotate: (id: number, rotation: number) => void;
+  bringToFront: (id: number) => void;
   onPress: () => void;
   onDelete: (id: number) => void;
   trashLayout?: { x: number; y: number; w: number; h: number } | null;
@@ -37,11 +39,11 @@ function clamp(val: number, min: number, max: number): number {
   return Math.min(Math.max(val, min), max);
 }
 
-const FRAME_SIZE = 120;
-
 const PlacedFrame = ({
   item,
   onMove,
+  onRotate,
+  bringToFront,
   onPress,
   onDelete,
   trashLayout,
@@ -53,118 +55,231 @@ const PlacedFrame = ({
   scrollX,
 }: PlacedFrameProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-
   const maxWidth = roomWidth || screenWidth;
   const maxHeight = roomHeight || screenHeight;
 
   const translationX = useSharedValue(item.x ?? 0);
   const translationY = useSharedValue(item.y ?? 0);
+  const rotation = useSharedValue(item.rotation ?? 0);
 
   const prevTranslationX = useSharedValue(0);
   const prevTranslationY = useSharedValue(0);
 
-  const animatedStyles = useAnimatedStyle(() => ({
+  const isRotatingByIcon = useSharedValue(false);
+  const startAngle = useSharedValue(0);
+  const startRotation = useSharedValue(0);
+
+  const [showRotateIcon, setShowRotateIcon] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    if (showRotateIcon && !isRotating) {
+      timer = setTimeout(() => {
+        setShowRotateIcon(false);
+      }, 3000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showRotateIcon, isRotating]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translationX.value },
       { translateY: translationY.value },
+      { rotate: `${rotation.value}rad` },
     ],
   }));
 
+  // Pan gesture (move hoặc kéo icon để xoay)
   const pan = Gesture.Pan()
     .minDistance(1)
-    .onStart(() => {
-      prevTranslationX.value = translationX.value;
-      prevTranslationY.value = translationY.value;
-      runOnJS(setShowTrash)(true);
-    })
-    .onUpdate((event) => {
-      const maxTranslateX = maxWidth - FRAME_SIZE;
-      const maxTranslateY = maxHeight - FRAME_SIZE;
-
-      translationX.value = clamp(
-        prevTranslationX.value + event.translationX,
-        0,
-        maxTranslateX
-      );
-      translationY.value = clamp(
-        prevTranslationY.value + event.translationY,
-        0,
-        maxTranslateY
-      );
-
-      const frameCenterX = translationX.value - scrollX + FRAME_SIZE / 2;
-      const frameCenterY = translationY.value + FRAME_SIZE / 2;
+    .onStart((event) => {
+      // check nếu bấm vào icon rotate
+      const touchX = event.x;
+      const touchY = event.y;
+      const iconX = item.item.dimension.w - 24; // icon nằm góc phải trên
+      const iconY = 0;
 
       if (
-        trashLayout &&
-        frameCenterX > trashLayout.x &&
-        frameCenterX < trashLayout.x + trashLayout.w &&
-        frameCenterY > trashLayout.y &&
-        frameCenterY < trashLayout.y + trashLayout.h
+        item.item.categoryId !== 1 &&
+        showRotateIcon &&
+        touchX >= iconX - 30 &&
+        touchX <= iconX + 30 &&
+        touchY >= iconY - 30 &&
+        touchY <= iconY + 30
       ) {
-        runOnJS(setTrashActive)(true);
+        isRotatingByIcon.value = true;
+        runOnJS(setIsRotating)(true);
+
+        const centerX = item.item.dimension.w / 2;
+        const centerY = item.item.dimension.h / 2;
+        const dx = event.x - centerX;
+        const dy = event.y - centerY;
+        startAngle.value = Math.atan2(dy, dx);
+        startRotation.value = rotation.value;
       } else {
-        runOnJS(setTrashActive)(false);
+        isRotatingByIcon.value = false;
+        prevTranslationX.value = translationX.value;
+        prevTranslationY.value = translationY.value;
+      }
+
+      runOnJS(setShowTrash)(true);
+      runOnJS(bringToFront)(item.id);
+    })
+    .onUpdate((event) => {
+      if (isRotatingByIcon.value) {
+        const centerX = item.item.dimension.w / 2;
+        const centerY = item.item.dimension.h / 2;
+        const dx = event.x - centerX;
+        const dy = event.y - centerY;
+        const currentAngle = Math.atan2(dy, dx);
+
+        // Chênh lệch góc so với ban đầu
+        const delta = currentAngle - startAngle.value;
+        rotation.value = startRotation.value + delta;
+      } else {
+        const maxTranslateX = maxWidth - item.item.dimension.w;
+        const maxTranslateY = maxHeight - item.item.dimension.h;
+
+        translationX.value = clamp(
+          prevTranslationX.value + event.translationX,
+          0,
+          maxTranslateX
+        );
+        translationY.value = clamp(
+          prevTranslationY.value + event.translationY,
+          0,
+          maxTranslateY
+        );
+
+        const frameCenterX =
+          translationX.value - scrollX + item.item.dimension.w / 2;
+        const frameCenterY = translationY.value + item.item.dimension.h / 2;
+
+        if (
+          trashLayout &&
+          frameCenterX > trashLayout.x &&
+          frameCenterX < trashLayout.x + trashLayout.w &&
+          frameCenterY > trashLayout.y &&
+          frameCenterY < trashLayout.y + trashLayout.h
+        ) {
+          runOnJS(setTrashActive)(true);
+        } else {
+          runOnJS(setTrashActive)(false);
+        }
       }
     })
     .onEnd(() => {
-      const frameCenterX = translationX.value - scrollX + FRAME_SIZE / 2;
-      const frameCenterY = translationY.value + FRAME_SIZE / 2;
+      if (isRotatingByIcon.value) {
+        runOnJS(onRotate)(item.id, rotation.value);
+        runOnJS(setIsRotating)(false);
+      } else {
+        const frameCenterX =
+          translationX.value - scrollX + item.item.dimension.w / 2;
+        const frameCenterY = translationY.value + item.item.dimension.h / 2;
 
-      if (
-        trashLayout &&
-        frameCenterX > trashLayout.x &&
-        frameCenterX < trashLayout.x + trashLayout.w &&
-        frameCenterY > trashLayout.y &&
-        frameCenterY < trashLayout.y + trashLayout.h
-      ) {
-        runOnJS(onDelete)(item.id);
-        runOnJS(setTrashActive)(false);
-        runOnJS(setShowTrash)(false);
-        return;
+        if (
+          trashLayout &&
+          frameCenterX > trashLayout.x &&
+          frameCenterX < trashLayout.x + trashLayout.w &&
+          frameCenterY > trashLayout.y &&
+          frameCenterY < trashLayout.y + trashLayout.h
+        ) {
+          runOnJS(onDelete)(item.id);
+          runOnJS(setTrashActive)(false);
+          runOnJS(setShowTrash)(false);
+          return;
+        }
+
+        runOnJS(onMove)(item.id, translationX.value, translationY.value);
       }
-
-      runOnJS(onMove)(item.id, translationX.value, translationY.value);
       runOnJS(setTrashActive)(false);
       runOnJS(setShowTrash)(false);
     });
 
+  // Rotation gesture (xoay bằng 2 ngón)
+  const rotate = Gesture.Rotation()
+    .onUpdate((event) => {
+      if (item.item.categoryId !== 1) {
+        rotation.value = (item.rotation ?? 0) + event.rotation;
+      }
+    })
+    .onEnd(() => {
+      if (item.item.categoryId !== 1) {
+        runOnJS(onRotate)(item.id, rotation.value);
+      }
+    });
+
+  const composed = Gesture.Simultaneous(pan, rotate);
+
   const handlePress = () => {
-    try {
-      console.log("PlacedFrame pressed:", item.id);
+    if (item.item.categoryId !== 1) {
+      setShowRotateIcon((prev) => !prev);
+    } else {
       onPress();
-    } catch (error) {
-      console.error("Error in handlePress:", error);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     translationX.value = item.x ?? 0;
     translationY.value = item.y ?? 0;
-  }, [item.x, item.y]);
+    rotation.value = item.rotation ?? 0;
+  }, [item.x, item.y, item.rotation]);
 
   return (
-    <GestureDetector gesture={pan}>
-      <Animated.View style={[styles.container, animatedStyles]}>
-        <Image source={item.item.imageUrl} style={styles.frameImage} />
-        <Pressable onPress={handlePress} style={styles.contentArea}>
-          {memory?.image ? (
-            <Image
-              source={{ uri: memory.image }}
-              style={styles.memoryImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.emptyContent}>
-              <MaterialCommunityIcons
-                name="image-plus"
-                size={20}
-                color="#666"
+    <GestureDetector gesture={composed}>
+      <Animated.View
+        style={[
+          styles.container,
+          animatedStyle,
+          {
+            width: item.item.dimension.w,
+            height: item.item.dimension.h,
+            zIndex: item.zIndex,
+          },
+        ]}
+      >
+        {item.item.categoryId !== 1 ? (
+          <>
+            {showRotateIcon && (
+              <View style={styles.rotateIcon}>
+                <FontAwesome6 name="arrows-rotate" size={20} color="white" />
+              </View>
+            )}
+            <Pressable onPress={handlePress} style={{ flex: 1 }}>
+              <Image
+                source={item.item.imageUrl}
+                style={styles.itemImage}
+                resizeMode="contain"
               />
-              <Text style={styles.emptyText}>Thêm kỷ niệm</Text>
-            </View>
-          )}
-        </Pressable>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Image source={item.item.imageUrl} style={styles.frameImage} />
+            <Pressable onPress={handlePress} style={styles.contentArea}>
+              {memory?.image ? (
+                <Image
+                  source={{ uri: memory.image }}
+                  style={styles.memoryImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.emptyContent}>
+                  <MaterialCommunityIcons
+                    name="image-plus"
+                    size={20}
+                    color="#666"
+                  />
+                  <Text style={styles.emptyText}>Thêm kỷ niệm</Text>
+                </View>
+              )}
+            </Pressable>
+          </>
+        )}
       </Animated.View>
     </GestureDetector>
   );
@@ -173,9 +288,11 @@ const PlacedFrame = ({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    width: FRAME_SIZE,
-    height: FRAME_SIZE,
-    zIndex: 10,
+  },
+  itemImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
   },
   frameImage: {
     width: "100%",
@@ -186,6 +303,23 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  rotateIcon: {
+    position: "absolute",
+    top: -36,
+    left: "50%",
+    transform: [{ translateX: -12 }],
+    backgroundColor: "#E9D8FF",
+    borderRadius: 20,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "#D6B7FF",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+  },
+
   contentArea: {
     position: "absolute",
     top: 10,

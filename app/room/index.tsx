@@ -40,6 +40,8 @@ const Room = () => {
     closeModal,
     handleItemSelect,
     moveItem,
+    updateRotation,
+    bringToFront,
     handleFramePress,
     handleSaveMemory,
     handleUpdateMemory,
@@ -82,6 +84,8 @@ const Room = () => {
               key={item.id}
               item={item}
               onMove={moveItem}
+              bringToFront={bringToFront}
+              onRotate={updateRotation}
               onPress={() => handleFramePress(item.id)}
               onDelete={removeItem}
               trashLayout={trashLayout}
