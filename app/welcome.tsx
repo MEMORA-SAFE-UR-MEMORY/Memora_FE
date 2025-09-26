@@ -12,10 +12,12 @@ import LoadingOverlay from "@src/components/LoadingOverlay";
 import { router } from "expo-router";
 import { useLogin } from "@src/hooks/useLogin";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // Add this
+import { useAuth } from "@src/hooks/useAuth";
 
 const Welcome = () => {
   const fontsLoaded = useCustomFonts();
-  const { handleLogout, loading } = useLogin();
+  const { handleLogout } = useLogin();
+  const { loading } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userData, setUserData] = useState(null);
 
@@ -47,7 +49,7 @@ const Welcome = () => {
     setIsLoggingOut(false);
   };
 
-  if (!fontsLoaded || !userData) {
+  if (!fontsLoaded || loading) {
     return <LoadingOverlay />;
   }
 
