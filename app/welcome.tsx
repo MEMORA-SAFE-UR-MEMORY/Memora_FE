@@ -51,6 +51,10 @@ const Welcome = () => {
     return <LoadingOverlay />;
   }
 
+  if (!userData) {
+    await handleLogout();
+  }
+
   return (
     <View style={styles.container}>
       {isLoggingOut && <LoadingOverlay />}
