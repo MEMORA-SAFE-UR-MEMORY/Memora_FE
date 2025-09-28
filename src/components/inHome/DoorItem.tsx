@@ -21,9 +21,15 @@ type Props = {
   door: UIDoor;
   onPress: () => void;
   onLongPress: () => void;
+  onImageLoaded?: () => void;
 };
 
-export default function DoorItem({ door, onPress, onLongPress }: Props) {
+export default function DoorItem({
+  door,
+  onPress,
+  onLongPress,
+  onImageLoaded,
+}: Props) {
   const { width, height } = useWindowDimensions();
   const shortest = Math.min(width, height);
 
@@ -80,9 +86,8 @@ export default function DoorItem({ door, onPress, onLongPress }: Props) {
             // marginLeft: 12,
           }}
           resizeMode="contain"
-          onError={(e) => {
-            console.log("Image load error:", door.img_url, e.nativeEvent.error);
-          }}
+          onLoadEnd={onImageLoaded}
+          onError={onImageLoaded}
         />
         <Text
           style={{

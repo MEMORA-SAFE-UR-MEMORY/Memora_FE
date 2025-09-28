@@ -1,12 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
-import AddDoorButton from "@src/components/inHome/AddDoorButton";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
-import DoorItem from "@src/components/inHome/DoorItem";
+import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
-import { useScrollX } from "@src/context/ScrollXContext";
 
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { router } from "expo-router";
@@ -27,17 +25,9 @@ type User = {
 };
 
 export default function HallScreen() {
-  const { rooms, loading, addRoom, removeRoom } = useRooms();
+  const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
   const [userData, setUserData] = useState<User | null>(null);
-  // const { doors, addDoor } = useDoors([
-  //   {
-  //     id: "default",
-  //     color: "#ffffff",
-  //     image: require("../../assets/images/doors/default.png"),
-  //     name: "Phòng mặc định",
-  //     theme: "default",
-  //   },
-  // ]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -51,7 +41,6 @@ export default function HallScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
-  const { scrollX, setContentWidth } = useScrollX();
 
   useEffect(() => {
     const getUserFromStorage = async () => {
@@ -65,7 +54,6 @@ export default function HallScreen() {
         console.error("Error getting user from storage:", error);
       }
     };
-
     getUserFromStorage();
   }, []);
 
@@ -121,38 +109,13 @@ export default function HallScreen() {
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
-      <Animated.ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: true }
-        )}
-        onContentSizeChange={(w, _h) => setContentWidth(w)}
-        scrollEventThrottle={16}
-        contentContainerStyle={{
-          gap: 24,
-          padding: 26,
-          alignItems: "flex-end",
-        }}
-        style={{ zIndex: 1 }}
-      >
-        {rooms.map((room) => (
-          <DoorItem
-            key={room.id}
-            door={{
-              id: room.door?.id ?? room.door_id,
-              name: room.room_name,
-              img_url: room.door?.img_url,
-              color_hex: room.door?.color_hex,
-            }}
-            onPress={() => router.replace("/room")}
-            onLongPress={() => openDeleteModal(room.id, room.room_name)}
-          />
-        ))}
-
-        <AddDoorButton onPress={() => setModalVisible(true)} />
-      </Animated.ScrollView>
+      <DoorsScroller
+        rooms={rooms}
+        roomsLoading={roomsLoading}
+        onDoorPress={() => router.replace("/room")}
+        onDoorLongPress={(room) => openDeleteModal(room.id, room.room_name)}
+        onAddDoorPress={() => setModalVisible(true)}
+      />
 
       {/* ============ HEADER + NÚT ============ */}
       <View
@@ -219,7 +182,6 @@ export default function HallScreen() {
                 }}
                 resizeMode="contain"
               />
-
               <Text
                 style={{
                   fontSize: 16,
@@ -323,7 +285,7 @@ export default function HallScreen() {
             alignSelf: "flex-end",
           }}
         >
-          {/* ========== CỬA HÀNG ========== */}
+          {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{
@@ -364,7 +326,7 @@ export default function HallScreen() {
             </Text>
           </View>
 
-          {/* ========== CÀI ĐẶT ========== */}
+          {/* CÀI ĐẶT */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{

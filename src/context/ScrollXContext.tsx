@@ -4,6 +4,7 @@ import { Animated } from "react-native";
 type ScrollCtx = {
   scrollX: Animated.Value;
   setContentWidth: (w: number) => void;
+  setHallReady: (ready: boolean) => void;
 };
 
 export const ScrollXContext = createContext<ScrollCtx | null>(null);
