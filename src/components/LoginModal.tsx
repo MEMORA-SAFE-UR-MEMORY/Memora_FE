@@ -14,14 +14,15 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
 import { router } from "expo-router";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import { useLogin } from "@src/hooks/useLogin";
+import CustomAlert from "./CustomAlert";
 
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
   onRegisterPress: () => void;
   onForgotPasswordPress: () => void;
-  onLogin: () => void;
-  loading?: boolean;
+  onLoginSuccess?: () => void;
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({
@@ -29,12 +30,57 @@ const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onRegisterPress,
   onForgotPasswordPress,
-  onLogin,
-  loading = false,
+  onLoginSuccess,
 }) => {
-  const [email, onChangeEmail] = useState("");
-  const [password, onChangePassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const { handleLogin, loading, error } = useLogin();
+
+  const resetForm = () => {
+    setEmail("");
+    setPassword("");
+    setShowPassword(false);
+    setShowAlert(false);
+    setAlertMessage("");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      showCustomAlert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    const result = await handleLogin(email, password);
+    if (result) {
+      showCustomAlert("Đăng nhập thành công!");
+      const timer = setTimeout(() => {
+        handleClose();
+        onLoginSuccess?.();
+        clearTimeout(timer);
+      }, 1500);
+    } else {
+      showCustomAlert(error || "Đăng nhập thất bại!");
+    }
+  };
+
+  const handleRegisterPress = () => {
+    resetForm();
+    onRegisterPress();
+  };
 
   return (
     <SafeAreaProvider>
@@ -42,9 +88,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <Modal
           animationType="fade"
           transparent={true}
-          onDismiss={onClose}
           visible={visible}
-          onRequestClose={onClose}
+          onRequestClose={handleClose}
           supportedOrientations={["portrait", "landscape"]}
         >
           {loading && <LoadingOverlay />}
@@ -79,7 +124,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     padding: 8,
                     zIndex: 1,
                   }}
-                  onPress={onClose}
+                  onPress={handleClose}
                 >
                   <Ionicons name="close" size={24} color="black" />
                 </TouchableOpacity>
@@ -91,12 +136,12 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 </Text>
                 <View style={{ marginTop: 18 }}>
                   <Text style={{ fontSize: 16, fontWeight: "500" }}>
-                    E-mail
+                    Username
                   </Text>
                   <TextInput
-                    onChangeText={onChangeEmail}
                     value={email}
-                    placeholder="Nhập email của bạn"
+                    onChangeText={setEmail}
+                    placeholder="Nhập tên đăng nhập của bạn"
                     keyboardType="default"
                     style={{
                       height: 46,
@@ -113,8 +158,8 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     Mật khẩu
                   </Text>
                   <TextInput
-                    onChangeText={onChangePassword}
                     value={password}
+                    onChangeText={setPassword}
                     placeholder="Nhập mật khẩu của bạn"
                     keyboardType="default"
                     secureTextEntry={!showPassword}
@@ -150,7 +195,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     gap: 10,
                   }}
                 >
-                  <TouchableOpacity onPress={onRegisterPress}>
+                  <TouchableOpacity onPress={handleRegisterPress}>
                     <Text style={{ textDecorationLine: "underline" }}>
                       Chưa có tài khoản?
                     </Text>
@@ -165,11 +210,17 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   <Button
                     h={44}
                     w={493}
-                    title={"Đăng nhập"}
-                    color={"A6E3FF"}
-                    onPress={onLogin}
+                    title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                    color="A6E3FF"
+                    onPress={handleSubmit}
+                    disabled={loading}
                   />
                 </View>
+                <CustomAlert
+                  visible={showAlert}
+                  onClose={() => setShowAlert(false)}
+                  message={alertMessage}
+                />
               </ScrollView>
             </KeyboardAvoidingView>
           </View>
