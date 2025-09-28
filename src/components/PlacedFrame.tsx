@@ -259,11 +259,6 @@ const PlacedFrame = ({
         ) : (
           <>
             <Pressable onPress={handlePress} style={styles.contentArea}>
-              <Image
-                source={item.item.imageUrl}
-                style={styles.frameImage}
-                resizeMode="contain"
-              />
               {item.item.slots?.map((slot) => (
                 <FrameView
                   key={slot.slotId}
@@ -273,6 +268,11 @@ const PlacedFrame = ({
                   frameHeight={item.item.dimension.h}
                 />
               ))}
+              <Image
+                source={item.item.imageUrl}
+                style={styles.frameImage}
+                resizeMode="contain"
+              />
             </Pressable>
           </>
         )}

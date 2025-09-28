@@ -315,7 +315,7 @@ export const InventoryProvider = ({
             {
               slotId: 1,
               x: 6,
-              y: 14,
+              y: 13,
               w: 128,
               h: 128,
               shape: {
