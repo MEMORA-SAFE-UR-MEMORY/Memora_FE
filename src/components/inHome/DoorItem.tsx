@@ -20,8 +20,16 @@ export type UIDoor = {
 type Props = {
   door: UIDoor;
   onPress: () => void;
+  onLongPress: () => void;
+  onImageLoaded?: () => void;
 };
-export default function DoorItem({ door, onPress }: Props) {
+
+export default function DoorItem({
+  door,
+  onPress,
+  onLongPress,
+  onImageLoaded,
+}: Props) {
   const { width, height } = useWindowDimensions();
   const shortest = Math.min(width, height);
 
@@ -65,6 +73,7 @@ export default function DoorItem({ door, onPress }: Props) {
         justifyContent: "flex-end",
       }}
       onPress={onPress}
+      onLongPress={onLongPress}
       activeOpacity={0.9}
     >
       <View style={{ width: "100%", height: "100%", position: "relative" }}>
@@ -77,9 +86,8 @@ export default function DoorItem({ door, onPress }: Props) {
             // marginLeft: 12,
           }}
           resizeMode="contain"
-          onError={(e) => {
-            console.log("Image load error:", door.img_url, e.nativeEvent.error);
-          }}
+          onLoadEnd={onImageLoaded}
+          onError={onImageLoaded}
         />
         <Text
           style={{

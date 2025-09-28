@@ -3,7 +3,8 @@ import { Image, ImageSourcePropType, StyleSheet, Text } from "react-native";
 
 interface BlurBoxProps {
   h: number;
-  w: number;
+  w?: number;
+  maxW?: number;
   title: string;
   image?: ImageSourcePropType;
   imageSize?: number;
@@ -15,6 +16,7 @@ interface BlurBoxProps {
 const BlurBox: React.FC<BlurBoxProps> = ({
   h,
   w,
+  maxW,
   title,
   image,
   imageSize = 24,
@@ -30,7 +32,8 @@ const BlurBox: React.FC<BlurBoxProps> = ({
         styles.blurContainer,
         {
           height: h,
-          width: w,
+          ...(w ? { width: w } : {}),
+          ...(maxW ? { maxWidth: maxW } : {}),
         },
       ]}
     >
@@ -72,6 +75,7 @@ const styles = StyleSheet.create({
     borderColor: "white",
     borderWidth: 0.8,
     gap: 8,
+    alignSelf: "flex-start",
   },
 });
 

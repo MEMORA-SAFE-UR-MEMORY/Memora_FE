@@ -15,6 +15,8 @@ export const useMemory = (scrollX: number = 0) => {
     placedItemMemories,
     placeItem,
     moveItem,
+    updateRotation,
+    bringToFront,
     setItemMemory,
     updateItemMemory,
     deleteItemMemory,
@@ -155,6 +157,8 @@ export const useMemory = (scrollX: number = 0) => {
     // Item operations
     handleItemSelect,
     moveItem,
+    updateRotation,
+    bringToFront,
     removeItem: removeItemWithModalCheck,
 
     // Frame interactions

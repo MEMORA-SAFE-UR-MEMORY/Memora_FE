@@ -1,10 +1,11 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import PremiumButton from "@src/components/PremiumButton";
 import SettingModal from "@src/components/SettingModal";
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -15,9 +16,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+type User = {
+  username: string;
+};
+
 export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [userData, setUserData] = useState<User | null>(null);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -36,6 +42,22 @@ export default function HomeScreen() {
     translate: 3,
     duration: 140,
   });
+
+  useEffect(() => {
+    const getUserFromStorage = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setUserData(user);
+        }
+      } catch (error) {
+        console.error("Error getting user from storage:", error);
+      }
+    };
+
+    getUserFromStorage();
+  }, []);
 
   const TRI_OUTER = 10;
   const TRI_INNER = 8;
@@ -59,8 +81,7 @@ export default function HomeScreen() {
         <TouchableOpacity>
           <BlurBox
             h={50}
-            w={180}
-            title="PLAYER INGAME"
+            title={userData?.username ?? "Guest"}
             image={require("../../assets/images/AvatarImage.png")}
             imageSize={40}
             textSize={16}

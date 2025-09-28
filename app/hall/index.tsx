@@ -1,17 +1,17 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
-import AddDoorButton from "@src/components/inHome/AddDoorButton";
-import DoorItem from "@src/components/inHome/DoorItem";
+import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
+import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   Image,
-  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -20,24 +20,42 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
 
+type User = {
+  username: string;
+};
+
 export default function HallScreen() {
-  const { rooms, loading, addRoom } = useRooms();
-  // const { doors, addDoor } = useDoors([
-  //   {
-  //     id: "default",
-  //     color: "#ffffff",
-  //     image: require("../../assets/images/doors/default.png"),
-  //     name: "Phòng mặc định",
-  //     theme: "default",
-  //   },
-  // ]);
+  const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
+  const [userData, setUserData] = useState<User | null>(null);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(0);
 
+  // Delete modal state
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const [selectedRoomName, setSelectedRoomName] = useState<string>("");
+
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+
+  useEffect(() => {
+    const getUserFromStorage = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setUserData(user);
+        }
+      } catch (error) {
+        console.error("Error getting user from storage:", error);
+      }
+    };
+    getUserFromStorage();
+  }, []);
 
   const { animatedStyle } = useFloatPulse({
     amplitude: 10,
@@ -67,34 +85,37 @@ export default function HallScreen() {
     }
   };
 
+  const openDeleteModal = (roomId: number, roomName: string) => {
+    setSelectedRoomId(roomId);
+    setSelectedRoomName(roomName);
+    setDeleteVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedRoomId) return;
+    try {
+      setDeleting(true);
+      await removeRoom(selectedRoomId);
+      setDeleteVisible(false);
+      setSelectedRoomId(null);
+      setSelectedRoomName("");
+    } catch (e) {
+      console.log("Delete room failed:", e);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: 24,
-          padding: 26,
-          alignItems: "flex-end",
-        }}
-        style={{ zIndex: 1 }}
-      >
-        {rooms.map((room) => (
-          <DoorItem
-            key={room.id}
-            door={{
-              id: room.door?.id ?? room.door_id,
-              name: room.room_name,
-              img_url: room.door?.img_url,
-              color_hex: room.door?.color_hex,
-            }}
-            onPress={() => router.replace("/room")}
-          />
-        ))}
-
-        <AddDoorButton onPress={() => setModalVisible(true)} />
-      </ScrollView>
+      <DoorsScroller
+        rooms={rooms}
+        roomsLoading={roomsLoading}
+        onDoorPress={() => router.replace("/room")}
+        onDoorLongPress={(room) => openDeleteModal(room.id, room.room_name)}
+        onAddDoorPress={() => setModalVisible(true)}
+      />
 
       {/* ============ HEADER + NÚT ============ */}
       <View
@@ -120,8 +141,7 @@ export default function HallScreen() {
           <TouchableOpacity>
             <BlurBox
               h={50}
-              w={180}
-              title="PLAYER INGAME"
+              title={userData?.username ?? "Guest"}
               image={require("../../assets/images/AvatarImage.png")}
               imageSize={40}
               textSize={16}
@@ -162,7 +182,6 @@ export default function HallScreen() {
                 }}
                 resizeMode="contain"
               />
-
               <Text
                 style={{
                   fontSize: 16,
@@ -266,7 +285,7 @@ export default function HallScreen() {
             alignSelf: "flex-end",
           }}
         >
-          {/* ========== CỬA HÀNG ========== */}
+          {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{
@@ -307,7 +326,7 @@ export default function HallScreen() {
             </Text>
           </View>
 
-          {/* ========== CÀI ĐẶT ========== */}
+          {/* CÀI ĐẶT */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{
@@ -359,6 +378,13 @@ export default function HallScreen() {
       <SettingModal
         visible={settingVisible}
         onClose={() => setSettingVisible(false)}
+      />
+      <ConfirmDeleteModal
+        visible={deleteVisible}
+        roomName={selectedRoomName}
+        onCancel={() => setDeleteVisible(false)}
+        onConfirm={confirmDelete}
+        loading={deleting}
       />
     </View>
   );

@@ -63,3 +63,8 @@ export async function createRoom(payload: {
     door: (data as any).door ?? undefined,
   } as Room;
 }
+
+export async function deleteRoom(roomId: number): Promise<void> {
+  const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+  if (error) throw error;
+}
