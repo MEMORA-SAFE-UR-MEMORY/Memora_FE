@@ -2,11 +2,13 @@ import { useEffect, useRef } from "react";
 import { Animated, Easing } from "react-native";
 
 interface FloatPulseOptions {
-  amplitude?: number; // độ cao dao động (px)
-  duration?: number; // thời gian 1 nửa chu kỳ
-  scaleTo?: number; // phóng to tối đa
-  autoStart?: boolean;
+  amplitude?: number;
+  duration?: number;
+  scaleTo?: number;
+  useNativeDriver?: boolean;
+  isInteraction?: boolean;
   easing?: (value: number) => number;
+  autoStart?: boolean;
 }
 
 export function useFloatPulse(options: FloatPulseOptions = {}) {
@@ -14,8 +16,10 @@ export function useFloatPulse(options: FloatPulseOptions = {}) {
     amplitude = 10,
     duration = 1800,
     scaleTo = 1.05,
+    useNativeDriver = true,
+    isInteraction = false,
+    easing = Easing.inOut(Easing.ease),
     autoStart = true,
-    easing = Easing.inOut(Easing.quad),
   } = options;
 
   const progress = useRef(new Animated.Value(0)).current;
@@ -28,19 +32,21 @@ export function useFloatPulse(options: FloatPulseOptions = {}) {
           toValue: 1,
           duration,
           easing,
-          useNativeDriver: true,
+          useNativeDriver,
+          isInteraction,
         }),
         Animated.timing(progress, {
           toValue: 0,
           duration,
           easing,
-          useNativeDriver: true,
+          useNativeDriver,
+          isInteraction,
         }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, [progress, duration, easing, autoStart]);
+  }, [progress, duration, easing, autoStart, useNativeDriver, isInteraction]);
 
   const translateY = progress.interpolate({
     inputRange: [0, 1],

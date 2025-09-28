@@ -1,13 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
+import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import IntoHouseButton from "@src/components/inHome/intoHouseButton";
 import PremiumButton from "@src/components/PremiumButton";
 import SettingModal from "@src/components/SettingModal";
-import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Image,
@@ -18,7 +19,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDeleteAccount } from "services/users/hook";
-import { useWalletGetAndUpdate } from "services/wallet/hook";
+import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
 type User = {
   username: string;
@@ -28,7 +29,18 @@ export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const { deleteAccount, loading } = useDeleteAccount();
-  const { wallet, loading: walletLoading } = useWalletGetAndUpdate();
+  const { wallet, loading: walletLoading } = useWalletGet();
+  const {
+    canClaim,
+    timeLeft,
+    claim,
+    claiming,
+    loading: dailyLoading,
+  } = useDailyReward();
+  const goHall = useCallback(() => router.replace("/hall"), []);
+
+  const [dailyVisible, setDailyVisible] = useState(false);
+  const [holdDailyModal, setHoldDailyModal] = useState(false);
 
   const [headerHeight, setHeaderHeight] = useState(0);
   const [userData, setUserData] = useState<User | null>(null);
@@ -42,11 +54,6 @@ export default function HomeScreen() {
     ? Math.min(Math.max(12, insets.top), 32)
     : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
 
-  const { animatedStyle } = useFloatPulse({
-    amplitude: 10,
-    duration: 1600,
-    scaleTo: 1.07,
-  });
   const { animatedStyle: albumShake } = useShake({
     angle: 8,
     translate: 3,
@@ -69,6 +76,17 @@ export default function HomeScreen() {
     getUserFromStorage();
   }, []);
 
+  useEffect(() => {
+    if (!dailyLoading && !holdDailyModal) {
+      setDailyVisible(canClaim);
+    }
+  }, [canClaim, dailyLoading, holdDailyModal]);
+
+  const handleClaimDaily = async () => {
+    await claim(100);
+    // Don't close here; DailyRewardModal will close after confetti finishes
+  };
+
   const { handleLogout } = useLogin();
 
   const handleConfirmDelete = async () => {
@@ -83,12 +101,11 @@ export default function HomeScreen() {
     }
   };
 
-  const TRI_OUTER = 10;
-  const TRI_INNER = 8;
-  const TRI_OUTER_RIGHT = 14;
-  const TRI_INNER_RIGHT = 12;
-  const TRI_GAP = 2;
-  const BORDER_WIDTH = 2;
+  const intoHousePos = useMemo(() => {
+    const leftPx = width * 0.5;
+    const topPx = height * 0.55;
+    return { left: leftPx, top: topPx } as const;
+  }, [width, height]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -166,86 +183,7 @@ export default function HomeScreen() {
         </View>
       </View>
       {/* Into house */}
-      <Animated.View
-        style={[
-          {
-            position: "absolute",
-            left: "50%",
-            top: "55%",
-            zIndex: 20,
-          },
-          animatedStyle,
-        ]}
-      >
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => router.replace("/hall")}
-          style={{
-            backgroundColor: "white",
-            width: 48,
-            height: 48,
-            borderRadius: 27,
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: "#663530",
-            shadowOpacity: 0.35,
-            shadowRadius: 6,
-            shadowOffset: { width: 0, height: 2 },
-            elevation: 6,
-            borderWidth: 2,
-            borderColor: "#663530",
-            position: "relative",
-          }}
-        >
-          {/* Tam giác viền bám chặt mép nút */}
-          <View
-            style={{
-              position: "absolute",
-              left: "-29%",
-              marginRight: -BORDER_WIDTH,
-              top: "29%",
-              transform: [{ translateY: -TRI_OUTER }],
-              width: 0,
-              height: 0,
-            }}
-            pointerEvents="none"
-          >
-            <View
-              style={{
-                position: "absolute",
-                width: 0,
-                height: 0,
-                borderTopWidth: TRI_OUTER,
-                borderBottomWidth: TRI_OUTER,
-                borderRightWidth: TRI_OUTER_RIGHT,
-                borderTopColor: "transparent",
-                borderBottomColor: "transparent",
-                borderRightColor: "#663530",
-              }}
-            />
-            <View
-              style={{
-                position: "absolute",
-                left: TRI_GAP,
-                top: TRI_GAP,
-                width: 0,
-                height: 0,
-                borderTopWidth: TRI_INNER,
-                borderBottomWidth: TRI_INNER,
-                borderRightWidth: TRI_INNER_RIGHT,
-                borderTopColor: "transparent",
-                borderBottomColor: "transparent",
-                borderRightColor: "white",
-              }}
-            />
-          </View>
-          <Image
-            source={require("../../assets/icons/Door.png")}
-            style={{ width: 28, height: 28 }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      </Animated.View>
+      <IntoHouseButton onPress={goHall} containerStyle={intoHousePos} />
       <View
         style={{
           position: "absolute",
@@ -305,6 +243,93 @@ export default function HomeScreen() {
           >
             Album
           </Text>
+        </View>
+        {/* ====== QUÀ NGÀY ====== */}
+        <View style={{ alignItems: "center" }}>
+          <TouchableOpacity
+            style={{
+              borderRadius: 50,
+              marginBottom: -5,
+              elevation: 4,
+              opacity: dailyLoading ? 0.6 : 1,
+            }}
+            onPress={() => setDailyVisible(true)}
+            disabled={dailyLoading}
+          >
+            <View
+              style={{
+                backgroundColor: canClaim ? "#E9D8FF" : "#f2f2f2",
+                borderColor: "#663530",
+                borderWidth: 2,
+                width: 41,
+                height: 41,
+                borderRadius: 20,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Animated.View style={albumShake}>
+                <Image
+                  source={require("../../assets/icons/gift.png")}
+                  style={{ width: 34, height: 34, marginTop: -4 }}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+
+              {canClaim && (
+                <View
+                  style={{
+                    position: "absolute",
+                    right: -16,
+                    top: -6,
+                    minWidth: 18,
+                    height: 18,
+                    paddingHorizontal: 4,
+                    borderRadius: 9,
+                    backgroundColor: "#ef4444",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 2,
+                    borderColor: "white",
+                  }}
+                >
+                  <Text
+                    style={{ color: "white", fontSize: 10, fontWeight: "700" }}
+                  >
+                    +100
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          <Text
+            style={{
+              color: "#663530",
+              fontSize: 14,
+              fontFamily: "Baloo2_bold",
+              textAlign: "center",
+              textShadowColor: "#d0948dff",
+              textShadowRadius: 1,
+              elevation: 1,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.25,
+              shadowRadius: 1,
+            }}
+          >
+            Quà ngày
+          </Text>
+          {!canClaim && !dailyLoading && (
+            <Text
+              style={{
+                color: "#8b8b8b",
+                fontSize: 12,
+                fontFamily: "Baloo2_medium",
+                marginTop: -2,
+              }}
+            >
+              {timeLeft}
+            </Text>
+          )}
         </View>
         {/* =============================== */}
         <View style={{ alignItems: "center" }}>
@@ -405,6 +430,16 @@ export default function HomeScreen() {
           </Text>
         </View>
       </View>
+
+      <DailyRewardModal
+        visible={dailyVisible}
+        canClaim={canClaim}
+        timeLeft={timeLeft}
+        onClose={() => setDailyVisible(false)}
+        onClaim={handleClaimDaily}
+        claiming={claiming}
+        onCelebration={setHoldDailyModal}
+      />
 
       <SettingModal
         visible={settingVisible}
