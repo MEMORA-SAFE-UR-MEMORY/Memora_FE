@@ -22,7 +22,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
 import { useDeleteAccount } from "services/users/hook";
-import { useWalletGetAndUpdate } from "services/wallet/hook";
+import { useWalletGet } from "services/wallet/hook";
 
 type User = {
   username: string;
@@ -30,7 +30,7 @@ type User = {
 
 export default function HallScreen() {
   const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
-  const { wallet, loading: walletLoading } = useWalletGetAndUpdate();
+  const { wallet, loading: walletLoading } = useWalletGet();
   const [userData, setUserData] = useState<User | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
