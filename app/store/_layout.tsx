@@ -1,16 +1,21 @@
 import { Stack } from "expo-router";
 import { ImageBackground, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function StoreLayout() {
   return (
-    <SafeAreaProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "white" },
-        }}
-      />
-    </SafeAreaProvider>
+    <ImageBackground
+      source={require("../../assets/images/inHomeScreen/wall.png")}
+      style={{ flex: 1, width: "100%", height: "100%" }}
+      resizeMode="cover"
+    >
+      <View style={{ flex: 1 }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
+      </View>
+    </ImageBackground>
   );
 }
