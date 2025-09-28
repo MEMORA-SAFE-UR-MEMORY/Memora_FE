@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
+import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import PremiumButton from "@src/components/PremiumButton";
@@ -19,6 +20,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
+import { useDeleteAccount } from "services/users/hook";
 
 type User = {
   username: string;
@@ -30,11 +32,13 @@ export default function HallScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
 
   // Delete modal state
-  const [deleteVisible, setDeleteVisible] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
+  const [deletingRoom, setDeletingRoom] = useState(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [selectedRoomName, setSelectedRoomName] = useState<string>("");
 
@@ -88,21 +92,31 @@ export default function HallScreen() {
   const openDeleteModal = (roomId: number, roomName: string) => {
     setSelectedRoomId(roomId);
     setSelectedRoomName(roomName);
-    setDeleteVisible(true);
+    setDeleteRoomVisible(true);
   };
 
   const confirmDelete = async () => {
     if (!selectedRoomId) return;
     try {
-      setDeleting(true);
+      setDeletingRoom(true);
       await removeRoom(selectedRoomId);
-      setDeleteVisible(false);
+      setDeleteRoomVisible(false);
       setSelectedRoomId(null);
       setSelectedRoomName("");
     } catch (e) {
       console.log("Delete room failed:", e);
     } finally {
-      setDeleting(false);
+      setDeletingRoom(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteAccount();
+      setDeleteAccountVisible(false);
+      router.replace("/");
+    } catch (e) {
+      console.log("Delete account failed:", e);
     }
   };
 
@@ -378,13 +392,20 @@ export default function HallScreen() {
       <SettingModal
         visible={settingVisible}
         onClose={() => setSettingVisible(false)}
+        onOpenDeleteAccount={() => setDeleteAccountVisible(true)}
       />
       <ConfirmDeleteModal
-        visible={deleteVisible}
+        visible={deleteRoomVisible}
         roomName={selectedRoomName}
-        onCancel={() => setDeleteVisible(false)}
+        onCancel={() => setDeleteRoomVisible(false)}
         onConfirm={confirmDelete}
-        loading={deleting}
+        loading={deletingRoom}
+      />
+      <ConfirmDeleteAccountModal
+        visible={deleteAccountVisible}
+        onCancel={() => setDeleteAccountVisible(false)}
+        onConfirm={handleConfirmDelete}
+        loading={loading}
       />
     </View>
   );
