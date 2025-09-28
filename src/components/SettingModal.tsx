@@ -17,9 +17,10 @@ import CustomSwitch from "./CustomSwitch";
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onOpenDeleteAccount: () => void;
 };
 
-const SettingModal = ({ visible, onClose }: Props) => {
+const SettingModal = ({ visible, onClose, onOpenDeleteAccount }: Props) => {
   const { isPlaying, toggleMusic } = useMusic();
   const { handleLogout, loading } = useLogin();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -488,6 +489,11 @@ const SettingModal = ({ visible, onClose }: Props) => {
                             paddingVertical: 6,
                             alignItems: "center",
                           }}
+                          onPress={() =>
+                            Linking.openURL(
+                              "mailto:support@memora.app?subject=Ho%20tro"
+                            )
+                          }
                         >
                           <Text
                             style={{
@@ -498,6 +504,44 @@ const SettingModal = ({ visible, onClose }: Props) => {
                             }}
                           >
                             Hỗ trợ
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Xóa tài khoản */}
+                      <View style={{ flex: 1, position: "relative" }}>
+                        <View
+                          style={{
+                            position: "absolute",
+                            bottom: isSmall ? -7 : -6,
+                            left: 0,
+                            right: 0,
+                            height: isSmall ? 38 : 40,
+                            borderRadius: 12,
+                            backgroundColor: "#E35D6A",
+                          }}
+                        />
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: "#FF8A8A",
+                            borderRadius: 12,
+                            paddingVertical: 6,
+                            alignItems: "center",
+                          }}
+                          onPress={() => {
+                            onClose();
+                            setTimeout(onOpenDeleteAccount, 200);
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: isSmall ? 13 : 14,
+                              fontWeight: "600",
+                              fontFamily: "Baloo2_medium",
+                              color: "white",
+                            }}
+                          >
+                            Xóa tài khoản
                           </Text>
                         </TouchableOpacity>
                       </View>

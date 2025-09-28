@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
+import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import PremiumButton from "@src/components/PremiumButton";
@@ -7,6 +8,7 @@ import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
+import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -19,6 +21,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
+import { useDeleteAccount } from "services/users/hook";
+import { useWalletGetAndUpdate } from "services/wallet/hook";
 
 type User = {
   username: string;
@@ -26,21 +30,25 @@ type User = {
 
 export default function HallScreen() {
   const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
+  const { wallet, loading: walletLoading } = useWalletGetAndUpdate();
   const [userData, setUserData] = useState<User | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
 
   // Delete modal state
-  const [deleteVisible, setDeleteVisible] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
+  const [deletingRoom, setDeletingRoom] = useState(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
   const [selectedRoomName, setSelectedRoomName] = useState<string>("");
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+  const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
   useEffect(() => {
     const getUserFromStorage = async () => {
@@ -88,21 +96,35 @@ export default function HallScreen() {
   const openDeleteModal = (roomId: number, roomName: string) => {
     setSelectedRoomId(roomId);
     setSelectedRoomName(roomName);
-    setDeleteVisible(true);
+    setDeleteRoomVisible(true);
   };
 
   const confirmDelete = async () => {
     if (!selectedRoomId) return;
     try {
-      setDeleting(true);
+      setDeletingRoom(true);
       await removeRoom(selectedRoomId);
-      setDeleteVisible(false);
+      setDeleteRoomVisible(false);
       setSelectedRoomId(null);
       setSelectedRoomName("");
     } catch (e) {
       console.log("Delete room failed:", e);
     } finally {
-      setDeleting(false);
+      setDeletingRoom(false);
+    }
+  };
+  const { handleLogout } = useLogin();
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteAccount();
+      setDeleteAccountVisible(false);
+      setUserData(null);
+
+      await new Promise((r) => setTimeout(r, 100));
+      await handleLogout();
+    } catch (e) {
+      console.log("Delete account failed:", e);
     }
   };
 
@@ -176,7 +198,7 @@ export default function HallScreen() {
                   width: 50,
                   height: 50,
                   position: "absolute",
-                  left: -28,
+                  left: -30,
                   top: -10,
                   transform: [{ rotate: "-30deg" }],
                 }}
@@ -189,7 +211,7 @@ export default function HallScreen() {
                   fontFamily: "Baloo2_bold",
                 }}
               >
-                362665
+                {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
               </Text>
             </View>
           </View>
@@ -378,13 +400,20 @@ export default function HallScreen() {
       <SettingModal
         visible={settingVisible}
         onClose={() => setSettingVisible(false)}
+        onOpenDeleteAccount={() => setDeleteAccountVisible(true)}
       />
       <ConfirmDeleteModal
-        visible={deleteVisible}
+        visible={deleteRoomVisible}
         roomName={selectedRoomName}
-        onCancel={() => setDeleteVisible(false)}
+        onCancel={() => setDeleteRoomVisible(false)}
         onConfirm={confirmDelete}
-        loading={deleting}
+        loading={deletingRoom}
+      />
+      <ConfirmDeleteAccountModal
+        visible={deleteAccountVisible}
+        onCancel={() => setDeleteAccountVisible(false)}
+        onConfirm={handleConfirmDelete}
+        loading={loading}
       />
     </View>
   );
