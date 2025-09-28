@@ -70,14 +70,14 @@ const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
 
         <Pressable style={styles.icon} onPress={openStore}>
           <Ionicons name="storefront" size={35} color="white" />
-          <Text style={styles.textIcon}>Store</Text>
+          <Text style={styles.textIcon}>Cửa hàng</Text>
         </Pressable>
 
         <View style={styles.divider} />
 
         <Pressable style={styles.icon} onPress={onOpenInventory}>
           <MaterialIcons name="inventory" size={35} color="white" />
-          <Text style={styles.textIcon}>Inventory</Text>
+          <Text style={styles.textIcon}>Tủ đồ</Text>
         </Pressable>
       </Animated.View>
     </View>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    width: 250,
+    width: 240,
     paddingRight: 20,
   },
   divider: {

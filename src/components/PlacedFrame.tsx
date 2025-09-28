@@ -1,5 +1,5 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { FrameView } from "@src/components/FrameView";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import React, { useEffect, useState } from "react";
@@ -7,7 +7,6 @@ import {
   Image,
   Pressable,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -242,7 +241,7 @@ const PlacedFrame = ({
           },
         ]}
       >
-        {item.item.categoryId !== 1 ? (
+        {item.item.type === "decor" ? (
           <>
             {showRotateIcon && (
               <View style={styles.rotateIcon}>
@@ -252,31 +251,28 @@ const PlacedFrame = ({
             <Pressable onPress={handlePress} style={{ flex: 1 }}>
               <Image
                 source={item.item.imageUrl}
-                style={styles.itemImage}
+                style={[styles.itemImage]}
                 resizeMode="contain"
               />
             </Pressable>
           </>
         ) : (
           <>
-            <Image source={item.item.imageUrl} style={styles.frameImage} />
             <Pressable onPress={handlePress} style={styles.contentArea}>
-              {memory?.image ? (
-                <Image
-                  source={{ uri: memory.image }}
-                  style={styles.memoryImage}
-                  resizeMode="cover"
+              <Image
+                source={item.item.imageUrl}
+                style={styles.frameImage}
+                resizeMode="contain"
+              />
+              {item.item.slots?.map((slot) => (
+                <FrameView
+                  key={slot.slotId}
+                  slot={slot}
+                  memory={memory} // sau này có thể đổi thành item.slotMemories?.[slot.slotId]
+                  frameWidth={item.item.dimension.w}
+                  frameHeight={item.item.dimension.h}
                 />
-              ) : (
-                <View style={styles.emptyContent}>
-                  <MaterialCommunityIcons
-                    name="image-plus"
-                    size={20}
-                    color="#666"
-                  />
-                  <Text style={styles.emptyText}>Thêm kỷ niệm</Text>
-                </View>
-              )}
+              ))}
             </Pressable>
           </>
         )}
@@ -319,15 +315,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
   },
-
   contentArea: {
     position: "absolute",
-    top: 10,
-    left: 10,
-    right: 10,
-    bottom: 10,
-    borderRadius: 8,
-    overflow: "hidden",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   emptyContent: {
     flex: 1,

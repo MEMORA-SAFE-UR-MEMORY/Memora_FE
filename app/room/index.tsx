@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
@@ -18,6 +18,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+
 const Room = () => {
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -108,11 +109,11 @@ const Room = () => {
           <Pressable
             style={styles.icon}
             onPress={() => {
-              router.replace("/home");
+              router.replace("/hall");
             }}
           >
-            <FontAwesome name="home" size={35} color="white" />
-            <Text style={styles.textIcon}>Home</Text>
+            <FontAwesome6 name="door-open" size={28} color="white" />
+            <Text style={styles.textIcon}>Sảnh</Text>
           </Pressable>
 
           {/* Menu */}
@@ -180,6 +181,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "transparent",
+    overflow: "hidden",
   },
   roomScrollView: {
     flex: 1,
@@ -210,7 +212,7 @@ const styles = StyleSheet.create({
   textIcon: {
     color: "white",
     fontSize: 12,
-    marginTop: -8,
+    marginTop: -2,
     fontFamily: "Baloo2_medium",
   },
   trashZone: {

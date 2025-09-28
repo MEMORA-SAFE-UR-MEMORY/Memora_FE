@@ -52,7 +52,7 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished) {
-        setSelectedCategory(1); 
+        setSelectedCategory(1);
         onClose();
       }
     });
@@ -100,6 +100,9 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
         </Text>
         <Text
           style={[styles.cardText, item.quantity === 0 && { color: "#ccc" }]}
+          numberOfLines={1} // ép text trong 1 dòng
+          adjustsFontSizeToFit={true} // tự động co nhỏ text
+          minimumFontScale={0.7} // scale nhỏ nhất
         >
           {item.item.name}
         </Text>
@@ -147,7 +150,7 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
           <FontAwesome5 name="exclamation" size={35} color="#888" />
           <Text style={styles.emptyText}>Không có item nào</Text>
           <TouchableOpacity onPress={onGoToShop} style={styles.shopButton}>
-            <Text style={styles.shopButtonText}>Đến Store</Text>
+            <Text style={styles.shopButtonText}>Đến Cửa hàng</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -164,6 +167,7 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
           initialNumToRender={10}
           maxToRenderPerBatch={10}
           windowSize={10}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </Animated.View>

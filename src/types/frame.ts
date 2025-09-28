@@ -13,7 +13,11 @@ export type SlotShape =
   | { type: "circle"; cx: number; cy: number; r: number }
   | { type: "ellipse"; cx: number; cy: number; rx: number; ry: number }
   | { type: "polygon"; points: string } // "x1,y1 x2,y2 ..."
-  | { type: "path"; d: string; fillRule?: "nonzero" | "evenodd" }; // Các hình phức tạp
+  | { type: "path"; d: string; fillRule?: "nonzero" | "evenodd" } // Các hình phức tạp
+  | {
+      type: "multiPath";
+      paths: { d: string; fill?: string; stroke?: string }[];
+    };
 
 export interface FrameSlot {
   slotId: number;
