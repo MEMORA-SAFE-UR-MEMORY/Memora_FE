@@ -1,17 +1,15 @@
+import BlockingOverlay from "@src/components/inHome/BlockingOverlay";
+import HallBackground from "@src/components/inHome/HallBackground";
 import { ScrollXContext } from "@src/context/ScrollXContext";
+
 import { Stack } from "expo-router";
-import { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import React, { useRef, useState } from "react";
+import { Animated, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function HallLayout() {
   const [loading, setLoading] = useState(true);
+  const [uiReady, setUiReady] = useState(false);
 
   const WALL = require("../../assets/images/inHomeScreen/wall.png");
   const FLOOR = require("../../assets/images/inHomeScreen/floor.png");
@@ -26,55 +24,27 @@ export default function HallLayout() {
   const FLOOR_WIDTH = SCREEN_WIDTH + BG_PARALLAX * maxScroll;
 
   const scrollX = useRef(new Animated.Value(0)).current;
+  const blocking = loading || !uiReady;
 
   return (
     <SafeAreaProvider>
-      <ScrollXContext.Provider value={{ scrollX, setContentWidth }}>
+      <ScrollXContext.Provider
+        value={{ scrollX, setContentWidth, setHallReady: setUiReady }}
+      >
         <View style={styles.container}>
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#D2A4FF" />
-            </View>
-          )}
+          <BlockingOverlay visible={blocking} />
 
-          {/* Wall */}
-          <View pointerEvents="none" style={styles.wall}>
-            <Animated.Image
-              source={WALL}
-              resizeMode="cover"
-              style={[
-                styles.wallImage,
-                {
-                  width: WALL_WIDTH,
-                  transform: [
-                    { translateX: Animated.multiply(scrollX, -BG_PARALLAX) },
-                  ],
-                },
-              ]}
-              onLoadStart={() => setLoading(true)}
-              onLoadEnd={() => setLoading(false)}
-            />
-          </View>
-
-          {/* Floor */}
-          <View
-            pointerEvents="none"
-            style={[styles.floorContainer, { height: FLOOR_HEIGHT }]}
-          >
-            <Animated.Image
-              source={FLOOR}
-              resizeMode="stretch"
-              style={{
-                width: FLOOR_WIDTH,
-                height: FLOOR_HEIGHT,
-                transform: [
-                  { translateX: Animated.multiply(scrollX, -BG_PARALLAX) },
-                ],
-              }}
-              onLoadStart={() => setLoading(true)}
-              onLoadEnd={() => setLoading(false)}
-            />
-          </View>
+          <HallBackground
+            wallSource={WALL}
+            floorSource={FLOOR}
+            floorHeight={FLOOR_HEIGHT}
+            wallWidth={WALL_WIDTH}
+            floorWidth={FLOOR_WIDTH}
+            scrollX={scrollX}
+            parallax={BG_PARALLAX}
+            onLoadStart={() => setLoading(true)}
+            onLoadEnd={() => setLoading(false)}
+          />
 
           {/* Content */}
           <View style={styles.content}>
@@ -98,34 +68,5 @@ export default function HallLayout() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 100,
-    backgroundColor: "rgba(255,255,255,0.6)",
-  },
-  wall: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height: "100%",
-    zIndex: 1,
-    overflow: "hidden",
-  },
-  wallImage: {
-    width: "100%",
-    height: "100%",
-  },
-  floorContainer: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    zIndex: 2,
-    overflow: "hidden",
-  },
   content: { flex: 1, zIndex: 5 },
 });
