@@ -17,18 +17,30 @@ export const useRoomDecoration = ({
     Record<number, Memory>
   >({});
 
+  const normalizeZIndex = (items: RoomItem[]): RoomItem[] => {
+    return [...items]
+      .sort((a, b) => a.zIndex - b.zIndex)
+      .map((item, index) => ({
+        ...item,
+        zIndex: index + 1,
+      }));
+  };
+
   // Thêm item vào phòng
   const placeItem = useCallback(
     (newItem: Omit<RoomItem, "id">): RoomItem => {
-      const roomItem: RoomItem = {
-        ...newItem,
-        id: Date.now(),
-      };
-      setPlacedItems((prev) => [...prev, roomItem]);
-
+      let roomItem: RoomItem;
+      setPlacedItems((prev) => {
+        const updated = normalizeZIndex(prev);
+        roomItem = {
+          ...newItem,
+          id: Date.now(),
+          zIndex: updated.length + 1,
+        };
+        return [...updated, roomItem];
+      });
       decreaseQuantity(newItem.item.id);
-
-      return roomItem;
+      return roomItem!;
     },
     [decreaseQuantity]
   );
@@ -39,6 +51,29 @@ export const useRoomDecoration = ({
     );
   }, []);
 
+  const updateRotation = useCallback((id: number, rotation: number) => {
+    setPlacedItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, rotation } : item))
+    );
+  }, []);
+
+  const bringToFront = useCallback((id: number) => {
+    setPlacedItems((prev) => {
+      const updated = normalizeZIndex(prev);
+
+      const target = updated.find((it) => it.id === id);
+      if (!target) return updated;
+
+      const lowered = updated.map((it) =>
+        it.id === id ? it : { ...it, zIndex: it.zIndex - 1 }
+      );
+
+      return lowered.map((it) =>
+        it.id === id ? { ...it, zIndex: updated.length } : it
+      );
+    });
+  }, []);
+
   const removeItem = useCallback(
     (id: number) => {
       setPlacedItems((prev) => {
@@ -46,7 +81,8 @@ export const useRoomDecoration = ({
         if (target) {
           increaseQuantity(target.item.id);
         }
-        return prev.filter((item) => item.id !== id);
+        const filtered = prev.filter((item) => item.id !== id);
+        return normalizeZIndex(filtered);
       });
       setPlacedItemMemories((prev) => {
         const newMemories = { ...prev };
@@ -84,6 +120,8 @@ export const useRoomDecoration = ({
     placedItemMemories,
     placeItem,
     moveItem,
+    updateRotation,
+    bringToFront,
     removeItem,
     setItemMemory,
     updateItemMemory,
