@@ -5,6 +5,7 @@ import PremiumButton from "@src/components/PremiumButton";
 import SettingModal from "@src/components/SettingModal";
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
+import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -17,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDeleteAccount } from "services/users/hook";
+import { useWalletGetAndUpdate } from "services/wallet/hook";
 
 type User = {
   username: string;
@@ -26,12 +28,15 @@ export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
   const { deleteAccount, loading } = useDeleteAccount();
+  const { wallet, loading: walletLoading } = useWalletGetAndUpdate();
 
   const [headerHeight, setHeaderHeight] = useState(0);
   const [userData, setUserData] = useState<User | null>(null);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+
+  const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
   const headerPaddingTop = isLandscape
     ? Math.min(Math.max(12, insets.top), 32)
@@ -64,11 +69,15 @@ export default function HomeScreen() {
     getUserFromStorage();
   }, []);
 
+  const { handleLogout } = useLogin();
+
   const handleConfirmDelete = async () => {
     try {
       await deleteAccount();
       setDeleteVisible(false);
-      router.replace("/");
+      setUserData(null);
+      await new Promise((r) => setTimeout(r, 100));
+      await handleLogout();
     } catch (e) {
       console.log("Delete account failed:", e);
     }
@@ -137,7 +146,7 @@ export default function HomeScreen() {
                 width: 50,
                 height: 50,
                 position: "absolute",
-                left: -28,
+                left: -30,
                 top: -10,
                 transform: [{ rotate: "-30deg" }],
               }}
@@ -151,7 +160,7 @@ export default function HomeScreen() {
                 fontFamily: "Baloo2_bold",
               }}
             >
-              362665
+              {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
             </Text>
           </View>
         </View>

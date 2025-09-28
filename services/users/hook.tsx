@@ -1,22 +1,28 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useState } from "react";
-import { deleteUserHard } from "./api";
+import { deleteUserHard } from "./api"; // giữ nguyên import bạn đang dùng
 
 export function useDeleteAccount() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
   const getUserId = useCallback(async (): Promise<string | null> => {
-    let uid: string | null = null;
-    const userStr = await AsyncStorage.getItem("user");
-    if (userStr) {
-      try {
+    try {
+      const userStr = await AsyncStorage.getItem("user");
+      if (userStr) {
         const user = JSON.parse(userStr);
-        uid = user?.id ?? user?.user_id ?? null;
-      } catch {}
-    }
-    if (!uid) uid = (await AsyncStorage.getItem("userId")) ?? null;
-    return uid;
+        const fromUser =
+          user?.id ??
+          user?.userId ??
+          user?.uid ??
+          user?.user?.id ??
+          user?.user?.userId ??
+          null;
+        if (fromUser) return String(fromUser);
+      }
+    } catch {}
+    const uid = await AsyncStorage.getItem("userId");
+    return uid ?? null;
   }, []);
 
   const deleteAccount = useCallback(async () => {
@@ -24,19 +30,24 @@ export function useDeleteAccount() {
     setError(null);
     try {
       const uid = await getUserId();
-      if (!uid) throw new Error("Missing user id");
-      await deleteUserHard(uid);
 
+      if (uid) {
+        await deleteUserHard(uid);
+      } else {
+        console.warn("No UID in storage, skip server delete");
+      }
+    } catch (e) {
+      setError(e);
+      console.log("Delete account (server) failed:", e);
+    } finally {
       await AsyncStorage.multiRemove([
         "user",
         "userId",
         "accessToken",
         "refreshToken",
+        "auth_token",
+        "refresh_token",
       ]);
-    } catch (e) {
-      setError(e);
-      throw e;
-    } finally {
       setLoading(false);
     }
   }, [getUserId]);

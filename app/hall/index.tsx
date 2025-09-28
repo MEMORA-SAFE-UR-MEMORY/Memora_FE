@@ -8,6 +8,7 @@ import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
+import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -21,6 +22,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
 import { useDeleteAccount } from "services/users/hook";
+import { useWalletGetAndUpdate } from "services/wallet/hook";
 
 type User = {
   username: string;
@@ -28,6 +30,7 @@ type User = {
 
 export default function HallScreen() {
   const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
+  const { wallet, loading: walletLoading } = useWalletGetAndUpdate();
   const [userData, setUserData] = useState<User | null>(null);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,6 +48,7 @@ export default function HallScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+  const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
   useEffect(() => {
     const getUserFromStorage = async () => {
@@ -109,12 +113,16 @@ export default function HallScreen() {
       setDeletingRoom(false);
     }
   };
+  const { handleLogout } = useLogin();
 
   const handleConfirmDelete = async () => {
     try {
       await deleteAccount();
       setDeleteAccountVisible(false);
-      router.replace("/");
+      setUserData(null);
+
+      await new Promise((r) => setTimeout(r, 100));
+      await handleLogout();
     } catch (e) {
       console.log("Delete account failed:", e);
     }
@@ -190,7 +198,7 @@ export default function HallScreen() {
                   width: 50,
                   height: 50,
                   position: "absolute",
-                  left: -28,
+                  left: -30,
                   top: -10,
                   transform: [{ rotate: "-30deg" }],
                 }}
@@ -203,7 +211,7 @@ export default function HallScreen() {
                   fontFamily: "Baloo2_bold",
                 }}
               >
-                362665
+                {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
               </Text>
             </View>
           </View>
