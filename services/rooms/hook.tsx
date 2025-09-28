@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
-import { createRoom, fetchDoors, fetchRoomsByUser } from "./api";
+import { createRoom, deleteRoom, fetchDoors, fetchRoomsByUser } from "./api";
 import { Door, Room } from "./type";
 
 // Lấy danh sách doors (màu + ảnh) cho modal
@@ -38,23 +39,46 @@ export function useRooms() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     (async () => {
       try {
-        // const uid = await getCurrentUserId();
-        // chưa có auth nên để tạm hihi
-        const uid = "624392ba-9915-4052-a9b5-db5cba35ab0e";
+        setLoading(true);
+
+        let uid: string | null = null;
+
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            uid = user?.id ?? user?.user_id ?? null;
+          } catch {
+            // ignore parse error
+          }
+        }
         if (!uid) {
-          setLoading(false);
+          uid = (await AsyncStorage.getItem("userId")) ?? null;
+        }
+
+        if (!mounted) return;
+
+        if (!uid) {
+          setUserId(null);
           return;
         }
+
         setUserId(uid);
         await reload(uid);
       } catch (e) {
-        setError(e);
+        if (mounted) setError(e);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, [reload]);
 
   const addRoom = useCallback(
@@ -73,5 +97,19 @@ export function useRooms() {
     [userId]
   );
 
-  return { rooms, loading, error, addRoom, userId };
+  const removeRoom = useCallback(
+    async (roomId: number) => {
+      const prev = rooms;
+      setRooms((curr) => curr.filter((r) => r.id !== roomId));
+      try {
+        await deleteRoom(roomId);
+      } catch (e) {
+        setRooms(prev);
+        throw e;
+      }
+    },
+    [rooms]
+  );
+
+  return { rooms, loading, error, addRoom, removeRoom, userId };
 }
