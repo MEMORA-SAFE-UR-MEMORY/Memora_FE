@@ -12,7 +12,6 @@ export const useWallet = () => {
       setError(null);
       const user = JSON.parse(await AsyncStorage.getItem("user"));
       const uid = user.id;
-      console.log("typeof uid:", typeof uid, "uid:", uid);
 
       const { data, error } = await supabase
         .from("wallets")
@@ -20,7 +19,7 @@ export const useWallet = () => {
         .eq("user_id", uid);
       console.log("data", data);
       if (error) throw error;
-      setWallet(data);
+      setWallet(data[0]);
     } catch (err: any) {
       setError(err.message);
       setWallet(null);
@@ -29,9 +28,31 @@ export const useWallet = () => {
     }
   }, []);
 
+  const deductWallet = useCallback(
+    async (amount: number) => {
+      if (!wallet) return { success: false, message: "Wallet not found" };
+      if (wallet.puzzles < amount) {
+        return { success: false, message: "Not enough balance" };
+      }
+      try {
+        const newBalance = wallet.puzzles - amount;
+        const { error } = await supabase
+          .from("wallets")
+          .update({ puzzles: newBalance })
+          .eq("id", wallet.id);
+        if (error) throw error;
+        setWallet({ ...wallet, puzzles: newBalance });
+        return { success: true, message: "Deducted successfully" };
+      } catch (err: any) {
+        return { success: false, message: err.message };
+      }
+    },
+    [wallet]
+  );
+
   useEffect(() => {
     fetchAsync();
   }, [fetchAsync]);
 
-  return { wallet, loading, error };
+  return { wallet, loading, error, deductWallet };
 };
