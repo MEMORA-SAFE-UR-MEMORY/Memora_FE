@@ -17,8 +17,11 @@ const CategoryFilterBar = ({
     2: "emoji-objects", // id=2 Vật trang trí
     3: "collections", // id=3 Gói chủ đề
   };
+
   const { categories, loading, error, fetchCategories, getCategoryName } =
     useCategories();
+
+  const extendedCategories = [{ id: 0, name: "Tất cả" }, ...categories];
 
   useEffect(() => {
     fetchCategories();
@@ -32,7 +35,7 @@ const CategoryFilterBar = ({
         gap: 10,
       }}
     >
-      {categories.map((cat) => {
+      {extendedCategories.map((cat) => {
         const isSelected = selectedCategory === cat.id;
 
         return (
@@ -79,11 +82,15 @@ const CategoryFilterBar = ({
                   backgroundColor: isSelected ? "#D6B7FF" : "transparent",
                 }}
               >
-                <MaterialIcons
-                  name={iconMap[cat.id] || "category"}
-                  size={40}
-                  color="white"
-                />
+                {cat.id === 0 ? (
+                  <MaterialIcons name="all-inclusive" size={40} color="white" />
+                ) : (
+                  <MaterialIcons
+                    name={iconMap[cat.id] || "category"}
+                    size={40}
+                    color="white"
+                  />
+                )}
               </View>
             </View>
           </TouchableOpacity>
