@@ -1,16 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
+import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
+import IntoHouseButton from "@src/components/inHome/intoHouseButton";
 import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
-import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
+import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Image,
@@ -22,16 +24,27 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRooms } from "services/rooms/hook";
 import { useDeleteAccount } from "services/users/hook";
-import { useWalletGet } from "services/wallet/hook";
+import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
 type User = {
   username: string;
 };
 
 export default function HallScreen() {
+  const [userData, setUserData] = useState<User | null>(null);
   const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
   const { wallet, loading: walletLoading } = useWalletGet();
-  const [userData, setUserData] = useState<User | null>(null);
+  const {
+    canClaim,
+    timeLeft,
+    claim,
+    claiming,
+    loading: dailyLoading,
+  } = useDailyReward();
+  const [dailyVisible, setDailyVisible] = useState(false);
+  const [holdDailyModal, setHoldDailyModal] = useState(false);
+
+  const goHome = useCallback(() => router.replace("/home"), []);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
@@ -65,19 +78,26 @@ export default function HallScreen() {
     getUserFromStorage();
   }, []);
 
-  const { animatedStyle } = useFloatPulse({
-    amplitude: 10,
-    duration: 1600,
-    scaleTo: 1.07,
+  useEffect(() => {
+    if (!dailyLoading && !holdDailyModal) {
+      setDailyVisible(canClaim);
+    }
+  }, [canClaim, dailyLoading, holdDailyModal]);
+
+  const handleClaimDaily = async () => {
+    await claim(100);
+  };
+
+  const { animatedStyle: albumShake } = useShake({
+    angle: 6,
+    translate: 2,
+    duration: 140,
   });
 
   const headerPaddingTop = isLandscape
     ? Math.min(Math.max(12, insets.top), 32)
     : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
 
-  const safeTop = isLandscape
-    ? headerPaddingTop + height * 0.45
-    : headerPaddingTop + 150;
   const safeLeft = (insets.left > 0 ? insets.left : 16) + (isLandscape ? 4 : 8);
 
   const handleConfirm = async (
@@ -127,6 +147,24 @@ export default function HallScreen() {
       console.log("Delete account failed:", e);
     }
   };
+
+  const outHomePos = useMemo(() => {
+    if (isLandscape) {
+      const topPx = Math.max(headerPaddingTop + 12, height * 0.5 - 28);
+      return {
+        left: safeLeft,
+        top: topPx,
+        zIndex: 9999,
+        elevation: 50,
+      } as const;
+    }
+    return {
+      left: width * 0.5,
+      top: height * 0.55,
+      zIndex: 9999,
+      elevation: 50,
+    } as const;
+  }, [isLandscape, safeLeft, headerPaddingTop, height, width]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -215,85 +253,6 @@ export default function HallScreen() {
               </Text>
             </View>
           </View>
-
-          <Animated.View
-            style={[
-              {
-                position: "absolute",
-                top: safeTop,
-                left: safeLeft,
-                zIndex: 20,
-              },
-              animatedStyle,
-            ]}
-          >
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.replace("/home")}
-              style={{
-                backgroundColor: "white",
-                width: 48,
-                height: 48,
-                borderRadius: 27,
-                alignItems: "center",
-                justifyContent: "center",
-                shadowColor: "#663530",
-                shadowOpacity: 0.35,
-                shadowRadius: 6,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 6,
-                borderWidth: 2,
-                borderColor: "#663530",
-              }}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  left: "-29%",
-                  marginRight: -2,
-                  top: "29%",
-                  transform: [{ translateY: -10 }],
-                  width: 0,
-                  height: 0,
-                }}
-                pointerEvents="none"
-              >
-                <View
-                  style={{
-                    position: "absolute",
-                    width: 0,
-                    height: 0,
-                    borderTopWidth: 10,
-                    borderBottomWidth: 10,
-                    borderRightWidth: 14,
-                    borderTopColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderRightColor: "#663530",
-                  }}
-                />
-                <View
-                  style={{
-                    position: "absolute",
-                    left: 2,
-                    top: 2,
-                    width: 0,
-                    height: 0,
-                    borderTopWidth: 8,
-                    borderBottomWidth: 8,
-                    borderRightWidth: 12,
-                    borderTopColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderRightColor: "white",
-                  }}
-                />
-              </View>
-              <Image
-                source={require("../../assets/icons/Door.png")}
-                style={{ width: 28, height: 28 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </Animated.View>
         </View>
 
         {/* Nút cửa hàng + cài đặt */}
@@ -307,6 +266,97 @@ export default function HallScreen() {
             alignSelf: "flex-end",
           }}
         >
+          {/* ====== QUÀ NGÀY ====== */}
+          <View style={{ alignItems: "center" }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                marginBottom: -5,
+                elevation: 4,
+                opacity: dailyLoading ? 0.6 : 1,
+              }}
+              onPress={() => setDailyVisible(true)}
+              disabled={dailyLoading}
+            >
+              <View
+                style={{
+                  backgroundColor: canClaim ? "#E9D8FF" : "#f2f2f2",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  width: 41,
+                  height: 41,
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Animated.View style={albumShake}>
+                  <Image
+                    source={require("../../assets/icons/gift.png")}
+                    style={{ width: 34, height: 34, marginTop: -4 }}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+
+                {canClaim && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: -16,
+                      top: -6,
+                      minWidth: 18,
+                      height: 18,
+                      paddingHorizontal: 4,
+                      borderRadius: 9,
+                      backgroundColor: "#ef4444",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 2,
+                      borderColor: "white",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontSize: 10,
+                        fontWeight: "700",
+                      }}
+                    >
+                      +100
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: "#663530",
+                fontSize: 14,
+                fontFamily: "Baloo2_bold",
+                textAlign: "center",
+                textShadowColor: "#d0948dff",
+                textShadowRadius: 1,
+                elevation: 1,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.25,
+                shadowRadius: 1,
+              }}
+            >
+              Quà ngày
+            </Text>
+            {!canClaim && !dailyLoading && (
+              <Text
+                style={{
+                  color: "#8b8b8b",
+                  fontSize: 12,
+                  fontFamily: "Baloo2_medium",
+                  marginTop: -2,
+                }}
+              >
+                {timeLeft}
+              </Text>
+            )}
+          </View>
           {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
@@ -391,6 +441,8 @@ export default function HallScreen() {
         </View>
       </View>
 
+      <IntoHouseButton onPress={goHome} containerStyle={outHomePos} />
+
       {/* ========== MODALS ========== */}
       <RoomScreenModal
         visible={modalVisible}
@@ -414,6 +466,15 @@ export default function HallScreen() {
         onCancel={() => setDeleteAccountVisible(false)}
         onConfirm={handleConfirmDelete}
         loading={loading}
+      />
+      <DailyRewardModal
+        visible={dailyVisible}
+        canClaim={canClaim}
+        timeLeft={timeLeft}
+        onClose={() => setDailyVisible(false)}
+        onClaim={handleClaimDaily}
+        claiming={claiming}
+        onCelebration={setHoldDailyModal}
       />
     </View>
   );
