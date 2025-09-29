@@ -24,18 +24,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Hàm check token
   const checkAndRefreshToken = async () => {
     const storedToken = await AsyncStorage.getItem("auth_token");
     const refreshToken = await AsyncStorage.getItem("refresh_token");
+    const storedUser = await AsyncStorage.getItem("user");
 
+    // Nếu có user trong storage thì set luôn
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch {
+        setUser(null);
+      }
+    }
+
+    // Nếu chưa có token hoặc refreshToken thì thoát
     if (!storedToken || !refreshToken) return;
 
+    // Nếu chưa có user (hoặc user lỗi) => thử refresh
+    if (!storedUser || storedUser === "undefined") {
+      try {
+        const newData = await refreshAccessToken(refreshToken);
+        if (newData?.accessToken) {
+          await AsyncStorage.setItem("auth_token", newData.accessToken);
+          setAccessToken(newData.accessToken);
+
+          const newUser = decodeToken(newData.accessToken);
+          if (newUser) {
+            setUser(newUser);
+            await AsyncStorage.setItem("user", JSON.stringify(newUser));
+          }
+        }
+      } catch (err) {
+        console.log("Refresh token failed:", err);
+        await logout();
+      }
+      return;
+    }
+
+    // Nếu có user thì kiểm tra hạn token
     const decoded = decodeToken(storedToken);
     if (!decoded) return;
 
-    const now = Date.now() / 1000; // giây
-
+    const now = Date.now() / 1000;
     if (decoded.exp < now) {
       // Token hết hạn => refresh
       try {
@@ -69,8 +101,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     checkAndRefreshToken();
 
-    // Check định kỳ mỗi 1 phút
-    const interval = setInterval(checkAndRefreshToken, 60 * 1000);
+    // Check mỗi 1 phút
+    const interval = setInterval(checkAndRefreshToken, 5000);
     return () => clearInterval(interval);
   }, []);
 
