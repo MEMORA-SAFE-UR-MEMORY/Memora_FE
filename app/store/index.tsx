@@ -1,28 +1,70 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import CategoryFilterBar from "@src/components/CategoryFilterBar";
+import ConfirmBuyModal from "@src/components/ConfirmModal";
+import CustomAlert from "@src/components/CustomAlert";
 import ExitShopButton from "@src/components/ExitShopButton";
 import ItemDetail from "@src/components/ItemDetail";
 import ShopItemList from "@src/components/ShopItemList";
+import { useInventory } from "@src/hooks/useInventories";
+import { useInventoryItems } from "@src/hooks/useInventoryItems";
 import { useWallet } from "@src/hooks/useWallet";
 import { useState } from "react";
-import { View } from "react-native";
+import { Image, Text, View } from "react-native";
 
 const Shop = () => {
   const [category, setCategory] = useState<number>(0);
   const [selectedItem, setSelectedItem] = useState();
-  const { wallet } = useWallet();
+  const { wallet, deductWallet } = useWallet();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { inventoryId, loading, error } = useInventory();
+  const { addItemToInventory } = useInventoryItems();
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleAdd = async () => {
+    const result = await addItemToInventory(inventoryId, selectedItem?.id, 1);
+    const deductResult = await deductWallet(selectedItem?.puzzle_price);
+    if (result && deductResult.success) {
+      setShowAlert(true);
+    } // 🔹 hiện alert khi thành công }
+
+    console.log("Item added:", result);
+  };
+
+  console.log("invenid:", inventoryId);
+
+  console.log(wallet);
 
   const handleSelectItem = (item: any) => {
     console.log(item);
     setSelectedItem(item);
   };
+
   return (
     <View style={{ flex: 1, flexDirection: "row" }}>
+      <CustomAlert
+        visible={showAlert}
+        onClose={() => setShowAlert(false)}
+        message={`Bạn đã mua thành công ${selectedItem?.name}!`}
+      />
+      <ConfirmBuyModal
+        visible={showConfirm}
+        itemName={selectedItem?.name}
+        price={selectedItem?.puzzle_price}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={() => {
+          handleAdd();
+          setShowConfirm(false);
+        }}
+      />
       <View
         style={{
           width: "40%",
         }}
       >
-        <ItemDetail selectedItem={selectedItem} />
+        <ItemDetail
+          setShowConfirm={() => setShowConfirm(true)}
+          selectedItem={selectedItem}
+        />
       </View>
       <View
         style={{
@@ -42,6 +84,47 @@ const Shop = () => {
             paddingHorizontal: 20,
           }}
         >
+          <View
+            style={{
+              height: 34,
+              width: 98,
+              backgroundColor: "#FFFFFF",
+              borderColor: "#663530",
+              borderWidth: 2,
+              borderRadius: 40,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: 12,
+              shadowColor: "#663530",
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 3,
+              marginLeft: 16,
+              position: "relative",
+            }}
+          >
+            <Image
+              source={require("../../assets/icons/money.png")}
+              style={{
+                width: 50,
+                height: 50,
+                position: "absolute",
+                left: -30,
+                top: -10,
+                transform: [{ rotate: "-30deg" }],
+              }}
+              resizeMode="contain"
+            />
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#663530",
+              }}
+            >
+              {wallet?.puzzles}
+            </Text>
+          </View>
           <View style={{ flex: 1 }}>
             <CategoryFilterBar
               selectedCategory={category}
