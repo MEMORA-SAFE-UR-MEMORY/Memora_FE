@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { createRoom, deleteRoom, fetchDoors, fetchRoomsByUser } from "./api";
 import { Door, Room } from "./type";
 
-// Lấy danh sách doors (màu + ảnh) cho modal
 export function useDoors() {
   const [doors, setDoors] = useState<Door[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +25,6 @@ export function useDoors() {
   return { doors, loading, error };
 }
 
-// Quản lý rooms của current user
 export function useRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,12 +80,11 @@ export function useRooms() {
   }, [reload]);
 
   const addRoom = useCallback(
-    async (room_name: string, theme_key: string, door_id: number) => {
+    async (room_name: string, theme_id: number | null, door_id: number) => {
       if (!userId) throw new Error("Missing user id");
-      const theme_id: number | null = null;
       const newRoom = await createRoom({
         room_name,
-        theme_id,
+        theme_id, //truyền thẳng theme_id (null nếu “Mặc định”)
         user_id: userId,
         door_id,
       });

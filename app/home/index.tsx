@@ -84,7 +84,6 @@ export default function HomeScreen() {
 
   const handleClaimDaily = async () => {
     await claim(100);
-    // Don't close here; DailyRewardModal will close after confetti finishes
   };
 
   const { handleLogout } = useLogin();
