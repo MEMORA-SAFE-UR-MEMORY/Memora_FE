@@ -91,23 +91,20 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
   }, [selectedThemeId, themeOptions]);
 
   const handleCreateRoom = () => {
-    // Nếu chọn "Mặc định" -> gửi đúng id theme mặc định lấy từ DB
     const themeId: number | null =
       selectedThemeId === "default"
         ? defaultThemeIdFromDb
         : Number(selectedThemeId);
 
-    // Nếu không tìm được id theme mặc định thì không cho tạo
     if (selectedThemeId === "default" && !themeId) {
       console.warn("[CreateRoom] Không tìm thấy id theme 'Mặc định' trong DB");
       return;
     }
 
-    // Nếu theme có sẵn cửa -> không lưu door_id ở rooms (để null)
-    // Nếu theme mặc định -> lưu door_id người dùng chọn vào rooms
-    const roomDoorIdToSave: number | null = themeHasDoor
-      ? null
-      : selectedDoorId;
+    // Luôn gửi door_id:
+    // - Theme có sẵn cửa: selectedDoorId đã được gán từ theme.door_id
+    // - Theme mặc định: selectedDoorId là cửa user chọn
+    const roomDoorIdToSave: number | null = selectedDoorId;
 
     try {
       console.log(
@@ -129,7 +126,8 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
     } catch {}
 
     if (!roomName) return;
-    if (!themeHasDoor && !selectedDoorId) return;
+    // Bắt buộc phải có door_id ở rooms vì cột door_id đang NOT NULL
+    if (!selectedDoorId) return;
 
     onConfirm(roomName, themeId, roomDoorIdToSave);
   };
@@ -456,10 +454,9 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   minWidth: 80,
                   alignItems: "center",
 
-                  opacity:
-                    !roomName || (!themeHasDoor && !selectedDoorId) ? 0.6 : 1,
+                  opacity: !roomName || !selectedDoorId ? 0.6 : 1,
                 }}
-                disabled={!roomName || (!themeHasDoor && !selectedDoorId)}
+                disabled={!roomName || !selectedDoorId}
                 onPress={handleCreateRoom}
               >
                 <Text
