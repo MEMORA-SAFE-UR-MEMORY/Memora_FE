@@ -11,6 +11,6 @@ export type Room = {
   theme_id?: number | null;
   created_at: string;
   user_id: string;
-  door_id: number;
+  door_id: number | null;
   door?: Door;
 };

@@ -80,7 +80,11 @@ export function useRooms() {
   }, [reload]);
 
   const addRoom = useCallback(
-    async (room_name: string, theme_id: number | null, door_id: number) => {
+    async (
+      room_name: string,
+      theme_id: number | null,
+      door_id: number | null
+    ) => {
       if (!userId) throw new Error("Missing user id");
       const newRoom = await createRoom({
         room_name,

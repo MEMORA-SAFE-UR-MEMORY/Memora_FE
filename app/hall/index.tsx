@@ -102,12 +102,16 @@ export default function HallScreen() {
 
   const handleConfirm = async (
     roomName: string,
-    theme: string,
-    doorId: number
+    themeId: number | null,
+    doorId: number | null
   ) => {
     try {
-      await addRoom(roomName, theme, doorId);
+      if (themeId == null) {
+        console.warn("[CreateRoom] themeId is required");
+        return;
+      }
       setModalVisible(false);
+      await addRoom(roomName, themeId, doorId);
     } catch (e) {
       console.log("Create room failed:", e);
     }
@@ -166,13 +170,32 @@ export default function HallScreen() {
     } as const;
   }, [isLandscape, safeLeft, headerPaddingTop, height, width]);
 
+  const openRoom = useCallback(
+    (room: { id: number; theme_id?: number | null; type?: string }) => {
+      if (room.theme_id == null) {
+        console.warn(`[openRoom] room ${room.id} has null theme_id`);
+        return;
+      }
+      const params = {
+        roomId: String(room.id),
+        themeId: String(room.theme_id),
+        type: room.type ?? "private",
+      };
+
+      console.log("[Hall] onDoorPress -> params:", params);
+
+      router.replace({ pathname: "/room", params });
+    },
+    []
+  );
+
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
       <DoorsScroller
         rooms={rooms}
         roomsLoading={roomsLoading}
-        onDoorPress={() => router.replace("/room")}
+        onDoorPress={openRoom}
         onDoorLongPress={(room) => openDeleteModal(room.id, room.room_name)}
         onAddDoorPress={() => setModalVisible(true)}
       />

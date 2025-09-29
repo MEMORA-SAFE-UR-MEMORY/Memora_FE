@@ -7,7 +7,9 @@ import { Animated, useWindowDimensions, View } from "react-native";
 type RoomItem = {
   id: number;
   room_name: string;
-  door_id?: number;
+  theme_id?: number | null;
+  type?: string;
+  door_id?: number | null;
   door?: { id?: number; img_url?: string | null; color_hex?: string | null };
 };
 
@@ -127,7 +129,8 @@ export default function DoorsScroller({
         <DoorItem
           key={room.id}
           door={{
-            id: room.door?.id ?? room.door_id!,
+            // Ensure a numeric id to avoid re-render key issues while door info is loading
+            id: room.door?.id ?? room.door_id ?? room.id,
             name: room.room_name,
             img_url: room.door?.img_url ?? undefined,
             color_hex: room.door?.color_hex ?? undefined,

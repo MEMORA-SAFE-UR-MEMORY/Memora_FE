@@ -18,7 +18,11 @@ import { useUserThemes } from "services/userThemes/hook";
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (roomName: string, themeId: number | null, doorId: number) => void;
+  onConfirm: (
+    roomName: string,
+    themeId: number | null,
+    doorId: number | null
+  ) => void;
 };
 
 type ThemeOption =
@@ -28,6 +32,7 @@ type ThemeOption =
 const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
   const { doors, loading: loadingDoors } = useDoors();
   const { items: userThemes, loading: loadingThemes } = useUserThemes();
+  const DEFAULT_THEME_NAME = "Mặc định";
 
   const [selectedDoorId, setSelectedDoorId] = useState<number | null>(null);
   const [roomName, setRoomName] = useState<string>("");
@@ -36,23 +41,31 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
   );
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
 
-  const themeOptions: ThemeOption[] = useMemo(() => {
-    const owned = (userThemes ?? []).map((ut) => ({
-      id: ut.theme?.id ?? ut.theme_id,
-      label: ut.theme?.theme_name ?? `Theme #${ut.theme_id}`,
-      door_id: ut.theme?.door_id ?? null,
-    }));
-    return [{ id: "default", label: "Mặc định", door_id: null }, ...owned];
+  const defaultThemeIdFromDb = useMemo(() => {
+    const match = (userThemes ?? []).find(
+      (ut) =>
+        (ut.theme?.theme_name ?? "").trim().toLowerCase() ===
+        DEFAULT_THEME_NAME.toLowerCase()
+    );
+    return match?.theme?.id ?? match?.theme_id ?? null;
   }, [userThemes]);
 
+  const themeOptions: ThemeOption[] = useMemo(() => {
+    const owned = (userThemes ?? [])
+      // bỏ theme "Mặc định" từ DB để tránh trùng với option giả lập
+      .filter(
+        (ut) =>
+          (ut.theme?.theme_name ?? "").trim().toLowerCase() !==
+          DEFAULT_THEME_NAME.toLowerCase()
+      )
+      .map((ut) => ({
+        id: ut.theme?.id ?? ut.theme_id,
+        label: ut.theme?.theme_name ?? `Theme #${ut.theme_id}`,
+        door_id: ut.theme?.door_id ?? null,
+      }));
+    return [{ id: "default", label: "Mặc định", door_id: null }, ...owned];
+  }, [userThemes]);
   useDoorImagePrefetch(doors, selectedDoorId, themeDropdownOpen, themeOptions);
-
-  useEffect(() => {
-    try {
-      console.log("[RoomScreenModal] userThemes:", userThemes);
-      console.log("[RoomScreenModal] themeOptions:", themeOptions);
-    } catch {}
-  }, [userThemes, themeOptions]);
 
   useEffect(() => {
     if (!visible) {
@@ -72,15 +85,6 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
     }
   }, [selectedThemeId, themeOptions]);
 
-  useEffect(() => {
-    try {
-      console.log("[RoomScreenModal] selectedThemeId:", selectedThemeId);
-      const picked = themeOptions.find((t) => t.id === selectedThemeId);
-      console.log("[RoomScreenModal] picked theme option:", picked);
-      console.log("[RoomScreenModal] selectedDoorId:", selectedDoorId);
-    } catch {}
-  }, [selectedThemeId, selectedDoorId, themeOptions]);
-
   const themeHasDoor = useMemo(() => {
     const picked = themeOptions.find((t) => t.id === selectedThemeId);
     return !!picked?.door_id;
@@ -88,24 +92,44 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
 
   const handleCreateRoom = () => {
     const themeId: number | null =
-      selectedThemeId === "default" ? null : Number(selectedThemeId);
+      selectedThemeId === "default"
+        ? defaultThemeIdFromDb
+        : Number(selectedThemeId);
+
+    if (selectedThemeId === "default" && !themeId) {
+      console.warn("[CreateRoom] Không tìm thấy id theme 'Mặc định' trong DB");
+      return;
+    }
+
+    // Luôn gửi door_id:
+    // - Theme có sẵn cửa: selectedDoorId đã được gán từ theme.door_id
+    // - Theme mặc định: selectedDoorId là cửa user chọn
+    const roomDoorIdToSave: number | null = selectedDoorId;
+
     try {
       console.log(
         "[CreateRoom] selectedThemeId:",
         selectedThemeId,
         "-> themeId:",
-        themeId
+        themeId,
+        "defaultThemeIdFromDb:",
+        defaultThemeIdFromDb
       );
       console.log(
         "[CreateRoom] selectedDoorId:",
         selectedDoorId,
+        "roomDoorIdToSave:",
+        roomDoorIdToSave,
         "roomName:",
         roomName
       );
     } catch {}
+
     if (!roomName) return;
+    // Bắt buộc phải có door_id ở rooms vì cột door_id đang NOT NULL
     if (!selectedDoorId) return;
-    onConfirm(roomName, themeId, selectedDoorId);
+
+    onConfirm(roomName, themeId, roomDoorIdToSave);
   };
 
   const renderDoorSwatch = (door: Door) => {
@@ -429,6 +453,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   borderColor: "#e8d7ff",
                   minWidth: 80,
                   alignItems: "center",
+
                   opacity: !roomName || !selectedDoorId ? 0.6 : 1,
                 }}
                 disabled={!roomName || !selectedDoorId}
