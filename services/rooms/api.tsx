@@ -24,7 +24,13 @@ export async function fetchRoomsByUser(userId: string): Promise<Room[]> {
       `
       id, room_name, theme_id, created_at, user_id, door_id,
       door_from_room:doors!rooms_door_id_fkey ( id, img_url, created_at, color_hex ),
-      theme:themes ( id, theme_name, door_id, door:doors ( id, img_url, created_at, color_hex ) )
+      user_theme:user_themes!rooms_theme_id_fkey (
+        id, theme_id,
+        theme:themes (
+          id, theme_name, door_id,
+          door:doors ( id, img_url, created_at, color_hex )
+        )
+      )
     `
     )
     .eq("user_id", userId)
@@ -33,7 +39,9 @@ export async function fetchRoomsByUser(userId: string): Promise<Room[]> {
   if (error) throw error;
 
   return (data as any[]).map((r) => {
-    const effectiveDoor = r.door_from_room ?? r.theme?.door ?? undefined;
+    // door priority: explicit door on room > door of the selected theme (via user_themes)
+    const effectiveDoor =
+      r.door_from_room ?? r.user_theme?.theme?.door ?? undefined;
     return {
       id: r.id,
       room_name: r.room_name,
@@ -75,14 +83,17 @@ export async function createRoom(payload: {
       door = doorRow as Door;
     }
   } else if (data?.theme_id) {
-    // Otherwise, if theme has a predefined door, use it (e.g., Giáng sinh)
-    const { data: themeWithDoor, error: themeErr } = await supabase
-      .from("themes")
-      .select(`door_id, door:doors ( id, img_url, created_at, color_hex )`)
+    // Otherwise, if selected user_theme has a predefined door via its linked theme, use it
+    const { data: utRow, error: utErr } = await supabase
+      .from("user_themes")
+      .select(
+        `theme:themes ( door_id, door:doors ( id, img_url, created_at, color_hex ) )`
+      )
       .eq("id", data.theme_id)
       .single();
-    if (!themeErr && themeWithDoor?.door) {
-      door = themeWithDoor.door as unknown as Door;
+    const ut: any = utRow as any;
+    if (!utErr && ut?.theme?.door) {
+      door = ut.theme.door as Door;
     }
   }
 
