@@ -6,7 +6,7 @@ export type Theme = {
   wall_url: string;
   floor_url: string;
   door_id: number | null;
-  entitlement_identifier?: string | null;
+  revenue_cat_product_id?: string | null;
 };
 
 export type UserThemeRow = {

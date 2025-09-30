@@ -60,19 +60,15 @@ export default function DoorsScroller({
   const loadedSetRef = useRef<Set<number>>(new Set());
   const readyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset khi data/viewport đổi
   useEffect(() => {
     loadedSetRef.current.clear();
     setDoorsLoaded(0);
-    setContentSized(false);
-    setHallReady(false);
     if (readyTimeoutRef.current) {
       clearTimeout(readyTimeoutRef.current);
       readyTimeoutRef.current = null;
     }
   }, [rooms.length, visibleTarget, width, height, setHallReady]);
 
-  // Tắt loading khi: đo xong + đủ cửa đầu tiên đã load
   useEffect(() => {
     const allVisibleLoaded = doorsLoaded >= visibleTarget || rooms.length === 0;
 
@@ -83,9 +79,10 @@ export default function DoorsScroller({
       }
       requestAnimationFrame(() => setHallReady(true));
     } else {
-      // Fallback tránh kẹt
-      if (!roomsLoading && contentSized && !readyTimeoutRef.current) {
-        readyTimeoutRef.current = setTimeout(() => setHallReady(true), 2500);
+      // Fallback tránh kẹt: kích hoạt ngay khi không còn roomsLoading,
+      // kể cả khi contentSized không đổi nên onContentSizeChange không được gọi lại
+      if (!roomsLoading && !readyTimeoutRef.current) {
+        readyTimeoutRef.current = setTimeout(() => setHallReady(true), 2000);
       }
     }
   }, [
