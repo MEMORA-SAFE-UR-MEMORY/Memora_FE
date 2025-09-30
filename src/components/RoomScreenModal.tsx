@@ -100,10 +100,6 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
       console.warn("[CreateRoom] Không tìm thấy id theme 'Mặc định' trong DB");
       return;
     }
-
-    // Luôn gửi door_id:
-    // - Theme có sẵn cửa: selectedDoorId đã được gán từ theme.door_id
-    // - Theme mặc định: selectedDoorId là cửa user chọn
     const roomDoorIdToSave: number | null = selectedDoorId;
 
     try {
@@ -126,7 +122,6 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
     } catch {}
 
     if (!roomName) return;
-    // Bắt buộc phải có door_id ở rooms vì cột door_id đang NOT NULL
     if (!selectedDoorId) return;
 
     onConfirm(roomName, themeId, roomDoorIdToSave);

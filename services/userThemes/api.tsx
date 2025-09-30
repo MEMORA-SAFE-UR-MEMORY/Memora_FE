@@ -17,7 +17,7 @@ export async function fetchUserThemesByUser(
       `
       id, created_at, theme_id, user_id,
       theme:themes (
-        id, theme_name, theme_price, created_at, wall_url, floor_url, door_id, entitlement_identifier
+        id, theme_name, theme_price, created_at, wall_url, floor_url, door_id, revenue_cat_product_id
       )
     `
     )
@@ -41,7 +41,7 @@ export async function fetchUserThemesByUser(
           wall_url: r.theme.wall_url,
           floor_url: r.theme.floor_url,
           door_id: r.theme.door_id ?? null,
-          entitlement_identifier: r.theme.entitlement_identifier ?? null,
+          revenue_cat_product_id: r.theme.revenue_cat_product_id ?? null,
         } as Theme)
       : null,
   })) as UserThemeRow[];
