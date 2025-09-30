@@ -47,7 +47,8 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
         (ut.theme?.theme_name ?? "").trim().toLowerCase() ===
         DEFAULT_THEME_NAME.toLowerCase()
     );
-    return match?.theme?.id ?? match?.theme_id ?? null;
+    // Use user_themes.id to store in rooms.theme_id
+    return match?.id ?? null;
   }, [userThemes]);
 
   const themeOptions: ThemeOption[] = useMemo(() => {
@@ -59,7 +60,8 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
           DEFAULT_THEME_NAME.toLowerCase()
       )
       .map((ut) => ({
-        id: ut.theme?.id ?? ut.theme_id,
+        // IMPORTANT: option id is user_themes.id (not themes.id)
+        id: ut.id,
         label: ut.theme?.theme_name ?? `Theme #${ut.theme_id}`,
         door_id: ut.theme?.door_id ?? null,
       }));
