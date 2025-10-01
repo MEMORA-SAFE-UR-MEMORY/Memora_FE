@@ -1,5 +1,3 @@
-import { Memory } from "@src/types/memory";
-
 export type SlotShape =
   | {
       type: "rect";
@@ -29,6 +27,4 @@ export interface FrameSlot {
   shape: SlotShape;
 }
 
-export type SlotMemoryMap = {
-  [slotId: number]: Memory | null;
-};
+export type SlotMemoryMap = { [slotId: number]: number | null };

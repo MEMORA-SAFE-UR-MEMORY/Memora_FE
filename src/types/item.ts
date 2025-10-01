@@ -1,8 +1,6 @@
 import { FrameSlot, SlotMemoryMap } from "@src/types/frame";
 import { ImageSourcePropType } from "react-native";
 
-export type ItemType = "frame" | "decor";
-
 export type Dimension = {
   id: number;
   w: number;
@@ -14,7 +12,7 @@ export type Item = {
   name: string;
   puzzlePrice: number;
   categoryId: number;
-  type: ItemType;
+  type: string;
   imageUrl: ImageSourcePropType;
   dimension: Dimension;
   slots?: FrameSlot[];
@@ -35,11 +33,6 @@ export interface EmptyInventoryItem {
 
 export type InventoryList = InventoryItem | EmptyInventoryItem;
 
-export interface UserInventory {
-  userId: string;
-  items: InventoryItem[];
-}
-
 export interface RoomItem {
   id: number;
   x: number;
@@ -48,4 +41,5 @@ export interface RoomItem {
   rotation?: number;
   item: Item;
   slotMemories?: SlotMemoryMap;
+  [key: string]: any;
 }

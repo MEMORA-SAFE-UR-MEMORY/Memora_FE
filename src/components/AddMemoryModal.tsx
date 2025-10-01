@@ -23,10 +23,18 @@ import {
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: Memory) => void;
+  onSave: (frameId: number, slotId: number, data: Memory) => void;
+  frameId: number | null;
+  slotId: number | null;
 };
 
-const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
+const AddMemoryModal: React.FC<Props> = ({
+  visible,
+  onClose,
+  onSave,
+  frameId,
+  slotId,
+}) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -60,7 +68,7 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
 
     // Mở album ảnh
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -73,15 +81,17 @@ const AddMemoryModal: React.FC<Props> = ({ visible, onClose, onSave }) => {
 
   // Modal
   const handleSave = () => {
-    onSave({
+    if (frameId == null || slotId == null) return;
+
+    onSave(frameId, slotId, {
       id: Date.now(),
-      roomId: 0, 
       title,
       description,
       image: selectedImage,
       date: selectedDate,
       createdAt: new Date().toISOString(),
     });
+
     setTitle("");
     setDescription("");
     setSelectedImage(null);

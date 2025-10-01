@@ -1,3 +1,5 @@
+import { useDoors } from "@src/services/rooms/hook";
+import { Door } from "@src/services/rooms/type";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -10,8 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useDoors } from "services/rooms/hook";
-import { Door } from "services/rooms/type";
 
 type Props = {
   visible: boolean;

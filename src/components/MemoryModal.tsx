@@ -17,8 +17,10 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   memory: Memory;
-  onUpdate: (data: Memory) => void;
-  onDelete: () => void;
+  onUpdate: (frameId: number, slotId: number, data: Memory) => void;
+  onDelete: (frameId: number, slotId: number) => void;
+  frameId: number | null;
+  slotId: number | null;
   onFrameRemoved?: boolean;
 };
 
@@ -28,6 +30,8 @@ const MemoryModal = ({
   memory,
   onUpdate,
   onDelete,
+  frameId,
+  slotId,
   onFrameRemoved,
 }: Props) => {
   const { width, height } = useWindowDimensions();
@@ -97,9 +101,11 @@ const MemoryModal = ({
   };
 
   const handleDelete = () => {
-    setShowConfirm(false);
-    onDelete();
-    handleClose();
+    if (frameId != null && slotId != null) {
+      setShowConfirm(false);
+      onDelete(frameId, slotId);
+      handleClose();
+    }
   };
 
   useEffect(() => {
@@ -107,10 +113,10 @@ const MemoryModal = ({
   }, [memory.id]);
 
   useEffect(() => {
-  if (onFrameRemoved) {
-    handleClose(); // chạy animation slide out
-  }
-}, [onFrameRemoved]);
+    if (onFrameRemoved) {
+      handleClose(); // chạy animation slide out
+    }
+  }, [onFrameRemoved]);
 
   if (!visible) return null;
 
@@ -143,7 +149,12 @@ const MemoryModal = ({
 
       <View style={{ flex: 1 }}>
         {selected === 1 && <InfoMemory memory={memory} />}
-        {selected === 2 && <UpdateMemory memory={memory} onUpdate={onUpdate} />}
+        {selected === 2 && frameId != null && slotId != null && (
+          <UpdateMemory
+            memory={memory}
+            onUpdate={(data) => onUpdate(frameId, slotId, data)}
+          />
+        )}
       </View>
 
       {showConfirm && (

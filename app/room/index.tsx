@@ -6,10 +6,14 @@ import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
+import { useRoomDraftContext } from "@src/context/DraftContext";
+import { useRoomContext } from "@src/context/RoomContext";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useMemory } from "@src/hooks/useMemory";
+import { useRoom } from "@src/hooks/useRoom";
+import { RoomDetail } from "@src/types/room";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -20,10 +24,17 @@ import {
 } from "react-native";
 
 const Room = () => {
+  const { roomId, themeId, type } = useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
   const [scrollX, setScrollX] = useState(0);
+
+  const { draft, clearDraft, applyTo } = useRoomDraftContext();
+  const { roomDetail } = useRoom(roomId, 2, "private");
+  const [effectiveRoom, setEffectiveRoom] = useState<RoomDetail | null>(null);
+  // clearDraft();
+  console.log("Draft: ", draft);
 
   // Room dimensions - 3x wider than screen
   const roomWidth = screenWidth * 3;
@@ -32,6 +43,12 @@ const Room = () => {
   const openStore = () => {
     router.push("/store");
   };
+
+  useEffect(() => {
+    if (roomDetail) {
+      setEffectiveRoom(applyTo(roomDetail));
+    }
+  }, [roomDetail, applyTo]);
 
   const {
     modalType,
@@ -58,7 +75,13 @@ const Room = () => {
     showTrash,
     setShowTrash,
     activeFrameId,
-  } = useMemory(scrollX);
+    activeSlotId,
+    resolveMemory,
+  } = useMemory(roomId, scrollX, effectiveRoom?.items ?? []);
+
+  if (!roomDetail) return null;
+
+  console.log("room detail: ", effectiveRoom);
 
   return (
     <View style={styles.container}>
@@ -87,12 +110,12 @@ const Room = () => {
               onMove={moveItem}
               bringToFront={bringToFront}
               onRotate={updateRotation}
-              onPress={() => handleFramePress(item.id)}
+              onPress={(frameId, slotId) => handleFramePress(frameId, slotId)}
               onDelete={removeItem}
               trashLayout={trashLayout}
               setTrashActive={setIsTrashActive}
               setShowTrash={setShowTrash}
-              memory={placedItemMemories[item.id]}
+              memoryResolver={resolveMemory}
               roomWidth={roomWidth}
               roomHeight={roomHeight}
               scrollX={scrollX}
@@ -160,6 +183,8 @@ const Room = () => {
           visible={true}
           onClose={closeModal}
           onSave={handleSaveMemory}
+          frameId={activeFrameId}
+          slotId={activeSlotId}
         />
       )}
 
@@ -171,6 +196,8 @@ const Room = () => {
           onUpdate={handleUpdateMemory}
           onDelete={handleDeleteMemory}
           onFrameRemoved={activeFrameId === null}
+          frameId={activeFrameId}
+          slotId={activeSlotId}
         />
       )}
     </View>

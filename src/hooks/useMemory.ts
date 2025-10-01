@@ -1,13 +1,18 @@
 import { useInventory } from "@src/context/InventoryContext";
 import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
+import { memoryService } from "@src/services/memoryService";
 import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWindowDimensions } from "react-native";
 
 type ModalType = "add" | "view" | null;
 
-export const useMemory = (scrollX: number = 0) => {
+export const useMemory = (
+  roomId: number,
+  scrollX: number = 0,
+  baseItems: RoomItem[]
+) => {
   const { decreaseQuantity, increaseQuantity } = useInventory();
 
   const {
@@ -21,9 +26,30 @@ export const useMemory = (scrollX: number = 0) => {
     updateItemMemory,
     deleteItemMemory,
     removeItem,
-  } = useRoomDecoration({ decreaseQuantity, increaseQuantity });
+  } = useRoomDecoration({
+    decreaseQuantity,
+    increaseQuantity,
+    roomId,
+    baseItems,
+  });
 
   const { width, height } = useWindowDimensions();
+
+  // Memory store từ AsyncStorage
+  const [memoryStore, setMemoryStore] = useState<Record<number, Memory>>({});
+
+  useEffect(() => {
+    (async () => {
+      const store = await memoryService.loadStore(roomId);
+      setMemoryStore(store);
+    })();
+  }, [roomId]);
+
+  useEffect(() => {
+    (async () => {
+      await memoryService.saveStore(roomId, memoryStore);
+    })();
+  }, [roomId, memoryStore]);
 
   // Trash zone state
   const [trashLayout, setTrashLayout] = useState<{
@@ -42,6 +68,7 @@ export const useMemory = (scrollX: number = 0) => {
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [activeFrameId, setActiveFrameId] = useState<number | null>(null);
+  const [activeSlotId, setActiveSlotId] = useState<number | null>(null);
 
   // Inventory controls
   const openInventory = () => setIsInventoryOpen(true);
@@ -51,12 +78,14 @@ export const useMemory = (scrollX: number = 0) => {
   const openModal = (
     type: "add" | "view",
     memory?: Memory,
-    frameId?: number
+    frameId?: number,
+    slotId?: number
   ) => {
     setTimeout(() => {
       setModalType(type);
       setSelectedMemory(memory ?? null);
       setActiveFrameId(frameId ?? null);
+      setActiveSlotId(slotId ?? null);
     }, 300);
   };
 
@@ -64,6 +93,7 @@ export const useMemory = (scrollX: number = 0) => {
     setModalType(null);
     setSelectedMemory(null);
     setActiveFrameId(null);
+    setActiveSlotId(null);
   };
 
   // Khi chọn item từ inventory → spawn vào Room
@@ -87,35 +117,47 @@ export const useMemory = (scrollX: number = 0) => {
   };
 
   // Khi bấm vào frame (có thể có hoặc chưa có Memory)
-  const handleFramePress = (frameId: number) => {
+  const handleFramePress = (frameId: number, slotId: number | null) => {
     setActiveFrameId(frameId);
-    const memory = placedItemMemories[frameId];
+    setActiveSlotId(slotId);
 
-    if (memory) {
-      openModal("view", memory, frameId);
-    } else {
-      openModal("add", undefined, frameId);
+    if (slotId !== null) {
+      const memory = resolveMemory(frameId, slotId);
+      if (memory) {
+        openModal("view", memory, frameId, slotId);
+      } else {
+        openModal("add", undefined, frameId, slotId);
+      }
     }
   };
 
   // Memory operations
-  const handleSaveMemory = (memory: Memory) => {
-    if (activeFrameId !== null) {
-      setItemMemory(activeFrameId, memory);
-    }
-    closeModal();
+  const handleSaveMemory = async (
+    frameId: number,
+    slotId: number,
+    memory: Memory
+  ) => {
+    const updated = await memoryService.addOrUpdate(roomId, memory);
+    setMemoryStore(updated);
+    setItemMemory(frameId, slotId, memory);
   };
 
-  const handleUpdateMemory = (memory: Memory) => {
-    if (activeFrameId !== null) {
-      updateItemMemory(activeFrameId, memory);
-    }
+  const handleUpdateMemory = async (
+    frameId: number,
+    slotId: number,
+    memory: Memory
+  ) => {
+    updateItemMemory(frameId, slotId, memory);
+    const updated = await memoryService.addOrUpdate(roomId, memory);
+    setMemoryStore(updated);
     setSelectedMemory(memory);
   };
 
-  const handleDeleteMemory = () => {
-    if (activeFrameId !== null) {
-      deleteItemMemory(activeFrameId);
+  const handleDeleteMemory = async () => {
+    if (activeFrameId !== null && activeSlotId !== null && selectedMemory) {
+      deleteItemMemory(activeFrameId, activeSlotId);
+      const updated = await memoryService.delete(roomId, selectedMemory.id);
+      setMemoryStore(updated);
     }
     setTimeout(() => {
       closeModal();
@@ -131,11 +173,22 @@ export const useMemory = (scrollX: number = 0) => {
     }
   };
 
+  const resolveMemory = (frameId: number, slotId: number): Memory | null => {
+    const roomItem = placedItems.find((item) => item.id === frameId);
+    if (!roomItem) return null;
+
+    const memoryId = roomItem.slotMemories?.[slotId];
+    if (!memoryId) return null;
+
+    return memoryStore[memoryId] ?? null;
+  };
+
   return {
     // State
     modalType,
     selectedMemory,
     activeFrameId,
+    activeSlotId,
     placedItems,
     placedItemMemories,
     isInventoryOpen,
@@ -168,5 +221,8 @@ export const useMemory = (scrollX: number = 0) => {
     handleSaveMemory,
     handleUpdateMemory,
     handleDeleteMemory,
+
+    // Resolve
+    resolveMemory,
   };
 };

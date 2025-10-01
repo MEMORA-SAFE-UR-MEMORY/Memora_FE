@@ -11,10 +11,14 @@ const RoomBg = ({ wallUrl, floorUrl, children }: Props) => {
   return (
     <View style={styles.container}>
       {/* Wall */}
-      <Image source={wallUrl} style={styles.wall} resizeMode="cover" />
+      <Image source={{ uri: wallUrl }} style={styles.wall} resizeMode="cover" />
 
       {/* Floor */}
-      <Image source={floorUrl} style={styles.floor} resizeMode="cover" />
+      <Image
+        source={{ uri: floorUrl }}
+        style={styles.floor}
+        resizeMode="cover"
+      />
 
       {/* Nội dung trong phòng */}
       <View style={styles.content}>{children}</View>

@@ -6,6 +6,7 @@ import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
+import { useRooms } from "@src/services/rooms/hook";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -18,7 +19,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRooms } from "services/rooms/hook";
 
 export default function HallScreen() {
   const { rooms, loading, addRoom } = useRooms();

@@ -1,76 +1,77 @@
-import { Room, RoomDetail } from "@src/types/room";
-import { useCallback, useRef, useState } from "react";
+import { useThemeContext } from "@src/context/ThemeContext";
+import * as service from "@src/services/roomService";
+import { RoomDetail } from "@src/types/room";
+import { useCallback, useEffect, useState } from "react";
 
-const mockRooms: Room[] = [
-  {
-    id: 1,
-    themeId: 101,
-    roomName: "Phòng cổ điển",
-    userId: "user_1",
-    doorId: "door_abc",
-    createdAt: "2025-09-22",
-  },
-  {
-    id: 2,
-    themeId: 102,
-    roomName: "Phòng hiện đại",
-    userId: "user_1",
-    doorId: "door_xyz",
-    createdAt: "2025-09-22",
-  },
-];
+export const useRoom = (
+  roomId: number,
+  themeId: number,
+  initialType: "private" | "public"
+) => {
+  const { themes } = useThemeContext();
 
-export const useRoom = () => {
   const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
 
-  // cache lưu chi tiết các phòng đã load
-  const cacheRef = useRef<Record<number, RoomDetail>>({});
+  // load once từ props
+  useEffect(() => {
+    if (!roomId || !themeId) return;
 
-  const getRoomDetail = useCallback(async (roomId: number) => {
-    // 1. Kiểm tra cache trước
-    if (cacheRef.current[roomId]) {
-      setRoomDetail(cacheRef.current[roomId]);
-      return cacheRef.current[roomId];
+    const theme = themes.find((t) => t.id === themeId);
+    if (!theme) {
+      setError("Theme not found");
+      setLoading(false);
+      return;
     }
 
-    try {
-      setLoading(true);
+    const detail: RoomDetail = {
+      id: roomId,
+      themeId,
+      roomName: "", // nếu cần thì thêm sau
+      userId: "", // nếu cần thì thêm sau
+      doorId: "",
+      type: initialType,
+      createdAt: new Date().toISOString(),
+      theme,
+      items: [],
+    };
+
+    setRoomDetail(detail);
+    setLoading(false);
+  }, [roomId, themeId, initialType, themes]);
+
+  // cập nhật type
+  const updateType = useCallback(
+    async (newType: "private" | "public") => {
+      if (!roomDetail) throw new Error("Room not loaded");
+
+      setUpdating(true);
       setError(null);
 
-      // Mock data
-      const detail: RoomDetail = {
-        ...mockRooms.find((r) => r.id === roomId)!,
-        theme: {
-          id: 101,
-          themeName: "Cổ điển",
-          themePrice: 500,
-          wallUrl: require("../../assets/images/roomBg/room-wall.png"),
-          floorUrl: require("../../assets/images/roomBg/room-floor.png"),
-          createdAt: "2025-08-01",
-        },
-        items: [],
-      };
+      const prev = roomDetail;
+      // optimistic update
+      setRoomDetail({ ...roomDetail, type: newType });
 
-      // 2. Lưu cache
-      cacheRef.current[roomId] = detail;
+      try {
+        await service.setRoomType(roomDetail.id, newType);
+      } catch (err: any) {
+        // rollback
+        setRoomDetail(prev);
+        setError(err.message || "Update failed");
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [roomDetail]
+  );
 
-      setRoomDetail(detail);
-      return detail;
-    } catch (err: any) {
-      setError(err.message || "Lỗi khi load phòng");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const toggleType = useCallback(async () => {
+    if (!roomDetail) return;
+    const newType = roomDetail.type === "private" ? "public" : "private";
+    return updateType(newType);
+  }, [roomDetail, updateType]);
 
-  return {
-    rooms: mockRooms,
-    roomDetail,
-    loading,
-    error,
-    getRoomDetail,
-  };
+  return { roomDetail, loading, error, updating, updateType, toggleType };
 };
