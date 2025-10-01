@@ -1,7 +1,6 @@
-import { useDoors } from "@src/services/rooms/hook";
-import { Door } from "@src/services/rooms/type";
+import { useDoorImagePrefetch } from "@src/hooks/useDoorImagePrefetch";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Image,
   Modal,
@@ -12,43 +11,122 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useDoors } from "@src/services/rooms/hook";
+import { Door } from "@src/services/rooms/type";
+import { useUserThemes } from "services/userThemes/hook";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (roomName: string, theme: string, doorId: number) => void;
+  onConfirm: (
+    roomName: string,
+    themeId: number | null,
+    doorId: number | null
+  ) => void;
 };
 
+type ThemeOption =
+  | { id: "default"; label: string; door_id: null }
+  | { id: number; label: string; door_id: number | null };
+
 const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
-  const { doors, loading } = useDoors();
+  const { doors, loading: loadingDoors } = useDoors();
+  const { items: userThemes, loading: loadingThemes } = useUserThemes();
+  const DEFAULT_THEME_NAME = "Mặc định";
 
   const [selectedDoorId, setSelectedDoorId] = useState<number | null>(null);
   const [roomName, setRoomName] = useState<string>("");
-  const [selectedTheme, setSelectedTheme] = useState<string>("default");
+  const [selectedThemeId, setSelectedThemeId] = useState<"default" | number>(
+    "default"
+  );
   const [themeDropdownOpen, setThemeDropdownOpen] = useState(false);
 
-  const themeOptions = [
-    { id: "default", label: "Mặc định" },
-    { id: "birthday", label: "Sinh nhật" },
-    { id: "travel", label: "Du lịch" },
-    { id: "family", label: "Gia đình" },
-    { id: "friend", label: "Bạn bè" },
-  ];
+  const defaultThemeIdFromDb = useMemo(() => {
+    const match = (userThemes ?? []).find(
+      (ut) =>
+        (ut.theme?.theme_name ?? "").trim().toLowerCase() ===
+        DEFAULT_THEME_NAME.toLowerCase()
+    );
+    // Use user_themes.id to store in rooms.theme_id
+    return match?.id ?? null;
+  }, [userThemes]);
+
+  const themeOptions: ThemeOption[] = useMemo(() => {
+    const owned = (userThemes ?? [])
+      // bỏ theme "Mặc định" từ DB để tránh trùng với option giả lập
+      .filter(
+        (ut) =>
+          (ut.theme?.theme_name ?? "").trim().toLowerCase() !==
+          DEFAULT_THEME_NAME.toLowerCase()
+      )
+      .map((ut) => ({
+        // IMPORTANT: option id is user_themes.id (not themes.id)
+        id: ut.id,
+        label: ut.theme?.theme_name ?? `Theme #${ut.theme_id}`,
+        door_id: ut.theme?.door_id ?? null,
+      }));
+    return [{ id: "default", label: "Mặc định", door_id: null }, ...owned];
+  }, [userThemes]);
+  useDoorImagePrefetch(doors, selectedDoorId, themeDropdownOpen, themeOptions);
 
   useEffect(() => {
     if (!visible) {
       setRoomName("");
-      setSelectedTheme("default");
+      setSelectedThemeId("default");
       setThemeDropdownOpen(false);
       setSelectedDoorId(null);
     }
   }, [visible]);
 
+  useEffect(() => {
+    const picked = themeOptions.find((t) => t.id === selectedThemeId);
+    if (picked && picked.door_id) {
+      setSelectedDoorId(picked.door_id);
+    } else if (selectedThemeId === "default") {
+      setSelectedDoorId(null);
+    }
+  }, [selectedThemeId, themeOptions]);
+
+  const themeHasDoor = useMemo(() => {
+    const picked = themeOptions.find((t) => t.id === selectedThemeId);
+    return !!picked?.door_id;
+  }, [selectedThemeId, themeOptions]);
+
   const handleCreateRoom = () => {
-    if (!roomName || !selectedDoorId) {
+    const themeId: number | null =
+      selectedThemeId === "default"
+        ? defaultThemeIdFromDb
+        : Number(selectedThemeId);
+
+    if (selectedThemeId === "default" && !themeId) {
+      console.warn("[CreateRoom] Không tìm thấy id theme 'Mặc định' trong DB");
       return;
     }
-    onConfirm(roomName, selectedTheme, selectedDoorId);
+    const roomDoorIdToSave: number | null = selectedDoorId;
+
+    try {
+      console.log(
+        "[CreateRoom] selectedThemeId:",
+        selectedThemeId,
+        "-> themeId:",
+        themeId,
+        "defaultThemeIdFromDb:",
+        defaultThemeIdFromDb
+      );
+      console.log(
+        "[CreateRoom] selectedDoorId:",
+        selectedDoorId,
+        "roomDoorIdToSave:",
+        roomDoorIdToSave,
+        "roomName:",
+        roomName
+      );
+    } catch {}
+
+    if (!roomName) return;
+    if (!selectedDoorId) return;
+
+    onConfirm(roomName, themeId, roomDoorIdToSave);
   };
 
   const renderDoorSwatch = (door: Door) => {
@@ -70,6 +148,10 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
       />
     );
   };
+
+  const themeLabel =
+    themeOptions.find((opt) => opt.id === selectedThemeId)?.label ??
+    "Chọn chủ đề";
 
   return (
     <Modal
@@ -203,6 +285,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                 }}
                 onPress={() => setThemeDropdownOpen(!themeDropdownOpen)}
                 activeOpacity={0.7}
+                disabled={loadingThemes}
               >
                 <Text
                   style={{
@@ -212,7 +295,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                     fontWeight: "500",
                   }}
                 >
-                  {themeOptions.find((opt) => opt.id === selectedTheme)?.label}
+                  {loadingThemes ? "Đang tải..." : themeLabel}
                 </Text>
                 <Text style={{ fontSize: 16, color: "black" }}>
                   {themeDropdownOpen ? (
@@ -222,7 +305,8 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   )}
                 </Text>
               </TouchableOpacity>
-              {themeDropdownOpen && (
+
+              {themeDropdownOpen && !loadingThemes && (
                 <View
                   style={{
                     backgroundColor: "#f8f8f8",
@@ -237,7 +321,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   <ScrollView>
                     {themeOptions.map((option) => (
                       <TouchableOpacity
-                        key={option.id}
+                        key={`${option.id}`}
                         style={{
                           paddingVertical: 10,
                           paddingHorizontal: 16,
@@ -249,7 +333,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                           borderBottomColor: "#E9D8FF",
                         }}
                         onPress={() => {
-                          setSelectedTheme(option.id);
+                          setSelectedThemeId(option.id);
                           setThemeDropdownOpen(false);
                         }}
                       >
@@ -257,14 +341,28 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                           style={{
                             fontSize: 16,
                             color:
-                              option.id === selectedTheme ? "#7c3aed" : "black",
+                              option.id === selectedThemeId
+                                ? "#7c3aed"
+                                : "black",
                             fontFamily: "Baloo2_medium",
                             fontWeight:
-                              option.id === selectedTheme ? "600" : "500",
+                              option.id === selectedThemeId ? "600" : "500",
                           }}
                         >
                           {option.label}
                         </Text>
+                        {option.door_id ? (
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: "#7c3aed",
+                              marginTop: 2,
+                              fontFamily: "Baloo2_medium",
+                            }}
+                          >
+                            * Chủ đề này đi kèm cửa riêng
+                          </Text>
+                        ) : null}
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -273,39 +371,41 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
             </View>
 
             {/* Color Selection */}
-            <View style={{ marginBottom: 12 }}>
-              <Text
-                style={{
-                  fontFamily: "Baloo2_semiBold",
-                  fontWeight: "600",
-                  fontSize: 16,
-                  color: "black",
-                  marginBottom: 10,
-                }}
-              >
-                Màu cửa
-              </Text>
-              {loading ? (
-                <Text>Đang tải danh sách cửa…</Text>
-              ) : (
-                <View style={{ gap: 2 }}>
-                  {[0, 1].map((row) => (
-                    <View
-                      key={row}
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        marginBottom: row === 0 ? 8 : 0,
-                      }}
-                    >
-                      {doors
-                        .slice(row * 5, row * 5 + 5)
-                        .map((door) => renderDoorSwatch(door))}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
+            {!themeHasDoor && (
+              <View style={{ marginBottom: 12 }}>
+                <Text
+                  style={{
+                    fontFamily: "Baloo2_semiBold",
+                    fontWeight: "600",
+                    fontSize: 16,
+                    color: "black",
+                    marginBottom: 10,
+                  }}
+                >
+                  Màu cửa
+                </Text>
+                {loadingDoors ? (
+                  <Text>Đang tải danh sách cửa…</Text>
+                ) : (
+                  <View style={{ gap: 2 }}>
+                    {[0, 1].map((row) => (
+                      <View
+                        key={row}
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          marginBottom: row === 0 ? 8 : 0,
+                        }}
+                      >
+                        {doors
+                          .slice(row * 5, row * 5 + 5)
+                          .map((door) => renderDoorSwatch(door))}
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Action Buttons */}
             <View
@@ -350,6 +450,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
                   borderColor: "#e8d7ff",
                   minWidth: 80,
                   alignItems: "center",
+
                   opacity: !roomName || !selectedDoorId ? 0.6 : 1,
                 }}
                 disabled={!roomName || !selectedDoorId}

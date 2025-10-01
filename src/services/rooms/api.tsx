@@ -23,7 +23,14 @@ export async function fetchRoomsByUser(userId: string): Promise<Room[]> {
     .select(
       `
       id, room_name, theme_id, created_at, user_id, door_id,
-      door:doors!rooms_door_id_fkey ( id, img_url, created_at, color_hex )
+      door_from_room:doors!rooms_door_id_fkey ( id, img_url, created_at, color_hex ),
+      user_theme:user_themes!rooms_theme_id_fkey (
+        id, theme_id,
+        theme:themes (
+          id, theme_name, door_id,
+          door:doors ( id, img_url, created_at, color_hex )
+        )
+      )
     `
     )
     .eq("user_id", userId)
@@ -31,35 +38,72 @@ export async function fetchRoomsByUser(userId: string): Promise<Room[]> {
 
   if (error) throw error;
 
-  return (data as any[]).map((r) => ({
-    ...r,
-    door: r.door ?? undefined,
-  })) as Room[];
+  return (data as any[]).map((r) => {
+    // door priority: explicit door on room > door of the selected theme (via user_themes)
+    const effectiveDoor =
+      r.door_from_room ?? r.user_theme?.theme?.door ?? undefined;
+    return {
+      id: r.id,
+      room_name: r.room_name,
+      theme_id: r.theme_id,
+      created_at: r.created_at,
+      user_id: r.user_id,
+      door_id: r.door_id ?? null,
+      door: effectiveDoor,
+    } as Room;
+  }) as Room[];
 }
 
 export async function createRoom(payload: {
   room_name: string;
   theme_id?: number | null;
   user_id: string;
-  door_id: number;
+  door_id: number | null;
 }): Promise<Room> {
   const { data, error } = await supabase
     .from("rooms")
     .insert([payload])
-    .select(
-      `
-      id, room_name, theme_id, created_at, user_id, door_id,
-      door:doors!rooms_door_id_fkey ( id, img_url, created_at, color_hex )
-    `
-    )
+    // Select minimal columns only to speed up insert response
+    .select("id, room_name, theme_id, created_at, user_id, door_id")
     .single();
 
   if (error) throw error;
 
   console.log("createRoom raw:", data);
 
+  // If a specific door was chosen (default theme), fetch its details once for immediate UI rendering
+  let door: Door | undefined = undefined;
+  if (data?.door_id) {
+    const { data: doorRow, error: doorErr } = await supabase
+      .from("doors")
+      .select("id, img_url, created_at, color_hex")
+      .eq("id", data.door_id)
+      .single();
+    if (!doorErr && doorRow) {
+      door = doorRow as Door;
+    }
+  } else if (data?.theme_id) {
+    // Otherwise, if selected user_theme has a predefined door via its linked theme, use it
+    const { data: utRow, error: utErr } = await supabase
+      .from("user_themes")
+      .select(
+        `theme:themes ( door_id, door:doors ( id, img_url, created_at, color_hex ) )`
+      )
+      .eq("id", data.theme_id)
+      .single();
+    const ut: any = utRow as any;
+    if (!utErr && ut?.theme?.door) {
+      door = ut.theme.door as Door;
+    }
+  }
+
   return {
-    ...data,
-    door: (data as any).door ?? undefined,
+    ...(data as any),
+    door,
   } as Room;
+}
+
+export async function deleteRoom(roomId: number): Promise<void> {
+  const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+  if (error) throw error;
 }

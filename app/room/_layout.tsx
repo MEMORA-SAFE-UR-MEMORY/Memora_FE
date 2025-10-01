@@ -3,18 +3,28 @@ import { RoomDraftProvider } from "@src/context/DraftContext";
 import { InventoryProvider } from "@src/context/InventoryContext";
 import { RoomProvider } from "@src/context/RoomContext";
 import { useRoom } from "@src/hooks/useRoom";
-import { Stack } from "expo-router";
+import { RoomType } from "@src/types/room";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
-  // const { roomId } = useLocalSearchParams<{ roomId: string }>();
-  const roomId = 15;
-  const themeId = 1;
-  const type: "private" | "public" = "private";
+  const { roomId } = useLocalSearchParams<{ roomId: string }>();
+  const { themeId } = useLocalSearchParams<{ themeId: string }>();
+  const { type } = useLocalSearchParams<{ type: RoomType }>();
 
-  const { roomDetail, loading, error } = useRoom(roomId, themeId, type);
+  const roomIdNum = Number(roomId);
+  if (isNaN(roomIdNum)) {
+    console.warn("roomId không phải số hợp lệ:", roomId);
+  }
+
+  const themeIdNum = Number(themeId);
+  if (isNaN(themeIdNum)) {
+    console.warn("themeId không phải số hợp lệ:", themeId);
+  }
+
+  const { roomDetail, loading, error } = useRoom(roomIdNum, themeIdNum, type);
 
   if (loading || !roomDetail)
     return <View style={{ flex: 1, backgroundColor: "blue" }} />;
@@ -37,8 +47,8 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <RoomProvider roomId={roomId} themeId={1} type="private">
-          <RoomDraftProvider roomId={roomId}>
+        <RoomProvider roomId={roomIdNum} themeId={themeIdNum} type="private">
+          <RoomDraftProvider roomId={roomIdNum}>
             <InventoryProvider>
               <RoomBg
                 wallUrl={roomDetail.theme.wallUrl}

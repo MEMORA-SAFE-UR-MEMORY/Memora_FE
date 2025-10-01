@@ -1,100 +1,204 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
-import AddDoorButton from "@src/components/inHome/AddDoorButton";
-import DoorItem from "@src/components/inHome/DoorItem";
+import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
+import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
+import DoorsScroller from "@src/components/inHome/DoorsScroller";
+import IntoHouseButton from "@src/components/inHome/intoHouseButton";
 import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
-import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
-import { useRooms } from "@src/services/rooms/hook";
+import { useShake } from "@src/hooks/transitions/useShakeOptions";
+import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Image,
-  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRooms } from "@src/services/rooms/hook";
+import { useDeleteAccount } from "services/users/hook";
+import { useDailyReward, useWalletGet } from "services/wallet/hook";
+
+type User = {
+  username: string;
+};
 
 export default function HallScreen() {
-  const { rooms, loading, addRoom } = useRooms();
-  // const { doors, addDoor } = useDoors([
-  //   {
-  //     id: "default",
-  //     color: "#ffffff",
-  //     image: require("../../assets/images/doors/default.png"),
-  //     name: "Phòng mặc định",
-  //     theme: "default",
-  //   },
-  // ]);
+  const [userData, setUserData] = useState<User | null>(null);
+  const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
+  const { wallet, loading: walletLoading } = useWalletGet();
+  const {
+    canClaim,
+    timeLeft,
+    claim,
+    claiming,
+    loading: dailyLoading,
+  } = useDailyReward();
+  const [dailyVisible, setDailyVisible] = useState(false);
+  const [holdDailyModal, setHoldDailyModal] = useState(false);
+
+  const goHome = useCallback(() => router.replace("/home"), []);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [settingVisible, setSettingVisible] = useState(false);
+  const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Delete modal state
+  const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
+  const [deletingRoom, setDeletingRoom] = useState(false);
+  const [deleteAccountVisible, setDeleteAccountVisible] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
+  const [selectedRoomName, setSelectedRoomName] = useState<string>("");
 
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
+  const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
-  const { animatedStyle } = useFloatPulse({
-    amplitude: 10,
-    duration: 1600,
-    scaleTo: 1.07,
+  useEffect(() => {
+    const getUserFromStorage = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          setUserData(user);
+        }
+      } catch (error) {
+        console.error("Error getting user from storage:", error);
+      }
+    };
+    getUserFromStorage();
+  }, []);
+
+  useEffect(() => {
+    if (!dailyLoading && !holdDailyModal) {
+      setDailyVisible(canClaim);
+    }
+  }, [canClaim, dailyLoading, holdDailyModal]);
+
+  const handleClaimDaily = async () => {
+    await claim(100);
+  };
+
+  const { animatedStyle: albumShake } = useShake({
+    angle: 6,
+    translate: 2,
+    duration: 140,
   });
 
   const headerPaddingTop = isLandscape
     ? Math.min(Math.max(12, insets.top), 32)
     : Math.min(Math.max(22, insets.top < 34 ? 34 : insets.top), 60);
 
-  const safeTop = isLandscape
-    ? headerPaddingTop + height * 0.45
-    : headerPaddingTop + 150;
   const safeLeft = (insets.left > 0 ? insets.left : 16) + (isLandscape ? 4 : 8);
 
   const handleConfirm = async (
     roomName: string,
-    theme: string,
-    doorId: number
+    themeId: number | null,
+    doorId: number | null
   ) => {
     try {
-      await addRoom(roomName, theme, doorId);
+      if (themeId == null) {
+        console.warn("[CreateRoom] themeId is required");
+        return;
+      }
       setModalVisible(false);
+      await addRoom(roomName, themeId, doorId);
     } catch (e) {
       console.log("Create room failed:", e);
     }
   };
 
+  const openDeleteModal = (roomId: number, roomName: string) => {
+    setSelectedRoomId(roomId);
+    setSelectedRoomName(roomName);
+    setDeleteRoomVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedRoomId) return;
+    try {
+      setDeletingRoom(true);
+      await removeRoom(selectedRoomId);
+      setDeleteRoomVisible(false);
+      setSelectedRoomId(null);
+      setSelectedRoomName("");
+    } catch (e) {
+      console.log("Delete room failed:", e);
+    } finally {
+      setDeletingRoom(false);
+    }
+  };
+  const { handleLogout } = useLogin();
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteAccount();
+      setDeleteAccountVisible(false);
+      setUserData(null);
+
+      await new Promise((r) => setTimeout(r, 100));
+      await handleLogout();
+    } catch (e) {
+      console.log("Delete account failed:", e);
+    }
+  };
+
+  const outHomePos = useMemo(() => {
+    if (isLandscape) {
+      const topPx = Math.max(headerPaddingTop + 12, height * 0.5 - 28);
+      return {
+        left: safeLeft,
+        top: topPx,
+        zIndex: 9999,
+        elevation: 50,
+      } as const;
+    }
+    return {
+      left: width * 0.5,
+      top: height * 0.55,
+      zIndex: 9999,
+      elevation: 50,
+    } as const;
+  }, [isLandscape, safeLeft, headerPaddingTop, height, width]);
+
+  const openRoom = useCallback(
+    (room: { id: number; theme_id?: number | null; type?: string }) => {
+      if (room.theme_id == null) {
+        console.warn(`[openRoom] room ${room.id} has null theme_id`);
+        return;
+      }
+      const params = {
+        roomId: String(room.id),
+        themeId: String(room.theme_id),
+        type: room.type ?? "private",
+      };
+
+      console.log("[Hall] onDoorPress -> params:", params);
+
+      router.replace({ pathname: "/room", params });
+    },
+    []
+  );
+
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{
-          gap: 24,
-          padding: 26,
-          alignItems: "flex-end",
-        }}
-        style={{ zIndex: 1 }}
-      >
-        {rooms.map((room) => (
-          <DoorItem
-            key={room.id}
-            door={{
-              id: room.door?.id ?? room.door_id,
-              name: room.room_name,
-              img_url: room.door?.img_url,
-              color_hex: room.door?.color_hex,
-            }}
-            onPress={() => router.replace("/room")}
-          />
-        ))}
-
-        <AddDoorButton onPress={() => setModalVisible(true)} />
-      </ScrollView>
+      <DoorsScroller
+        rooms={rooms}
+        roomsLoading={roomsLoading}
+        onDoorPress={openRoom}
+        onDoorLongPress={(room) => openDeleteModal(room.id, room.room_name)}
+        onAddDoorPress={() => setModalVisible(true)}
+      />
 
       {/* ============ HEADER + NÚT ============ */}
       <View
@@ -120,8 +224,7 @@ export default function HallScreen() {
           <TouchableOpacity>
             <BlurBox
               h={50}
-              w={180}
-              title="PLAYER INGAME"
+              title={userData?.username ?? "Guest"}
               image={require("../../assets/images/AvatarImage.png")}
               imageSize={40}
               textSize={16}
@@ -156,13 +259,12 @@ export default function HallScreen() {
                   width: 50,
                   height: 50,
                   position: "absolute",
-                  left: -28,
+                  left: -30,
                   top: -10,
                   transform: [{ rotate: "-30deg" }],
                 }}
                 resizeMode="contain"
               />
-
               <Text
                 style={{
                   fontSize: 16,
@@ -170,89 +272,10 @@ export default function HallScreen() {
                   fontFamily: "Baloo2_bold",
                 }}
               >
-                362665
+                {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
               </Text>
             </View>
           </View>
-
-          <Animated.View
-            style={[
-              {
-                position: "absolute",
-                top: safeTop,
-                left: safeLeft,
-                zIndex: 20,
-              },
-              animatedStyle,
-            ]}
-          >
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.replace("/home")}
-              style={{
-                backgroundColor: "white",
-                width: 48,
-                height: 48,
-                borderRadius: 27,
-                alignItems: "center",
-                justifyContent: "center",
-                shadowColor: "#663530",
-                shadowOpacity: 0.35,
-                shadowRadius: 6,
-                shadowOffset: { width: 0, height: 2 },
-                elevation: 6,
-                borderWidth: 2,
-                borderColor: "#663530",
-              }}
-            >
-              <View
-                style={{
-                  position: "absolute",
-                  left: "-29%",
-                  marginRight: -2,
-                  top: "29%",
-                  transform: [{ translateY: -10 }],
-                  width: 0,
-                  height: 0,
-                }}
-                pointerEvents="none"
-              >
-                <View
-                  style={{
-                    position: "absolute",
-                    width: 0,
-                    height: 0,
-                    borderTopWidth: 10,
-                    borderBottomWidth: 10,
-                    borderRightWidth: 14,
-                    borderTopColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderRightColor: "#663530",
-                  }}
-                />
-                <View
-                  style={{
-                    position: "absolute",
-                    left: 2,
-                    top: 2,
-                    width: 0,
-                    height: 0,
-                    borderTopWidth: 8,
-                    borderBottomWidth: 8,
-                    borderRightWidth: 12,
-                    borderTopColor: "transparent",
-                    borderBottomColor: "transparent",
-                    borderRightColor: "white",
-                  }}
-                />
-              </View>
-              <Image
-                source={require("../../assets/icons/Door.png")}
-                style={{ width: 28, height: 28 }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </Animated.View>
         </View>
 
         {/* Nút cửa hàng + cài đặt */}
@@ -266,7 +289,98 @@ export default function HallScreen() {
             alignSelf: "flex-end",
           }}
         >
-          {/* ========== CỬA HÀNG ========== */}
+          {/* ====== QUÀ NGÀY ====== */}
+          <View style={{ alignItems: "center" }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                marginBottom: -5,
+                elevation: 4,
+                opacity: dailyLoading ? 0.6 : 1,
+              }}
+              onPress={() => setDailyVisible(true)}
+              disabled={dailyLoading}
+            >
+              <View
+                style={{
+                  backgroundColor: canClaim ? "#E9D8FF" : "#f2f2f2",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  width: 41,
+                  height: 41,
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Animated.View style={albumShake}>
+                  <Image
+                    source={require("../../assets/icons/gift.png")}
+                    style={{ width: 34, height: 34, marginTop: -4 }}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+
+                {canClaim && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: -16,
+                      top: -6,
+                      minWidth: 18,
+                      height: 18,
+                      paddingHorizontal: 4,
+                      borderRadius: 9,
+                      backgroundColor: "#ef4444",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 2,
+                      borderColor: "white",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontSize: 10,
+                        fontWeight: "700",
+                      }}
+                    >
+                      +100
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: "#663530",
+                fontSize: 14,
+                fontFamily: "Baloo2_bold",
+                textAlign: "center",
+                textShadowColor: "#d0948dff",
+                textShadowRadius: 1,
+                elevation: 1,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.25,
+                shadowRadius: 1,
+              }}
+            >
+              Quà ngày
+            </Text>
+            {!canClaim && !dailyLoading && (
+              <Text
+                style={{
+                  color: "#8b8b8b",
+                  fontSize: 12,
+                  fontFamily: "Baloo2_medium",
+                  marginTop: -2,
+                }}
+              >
+                {timeLeft}
+              </Text>
+            )}
+          </View>
+          {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{
@@ -307,7 +421,7 @@ export default function HallScreen() {
             </Text>
           </View>
 
-          {/* ========== CÀI ĐẶT ========== */}
+          {/* CÀI ĐẶT */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
               style={{
@@ -350,6 +464,8 @@ export default function HallScreen() {
         </View>
       </View>
 
+      <IntoHouseButton onPress={goHome} containerStyle={outHomePos} />
+
       {/* ========== MODALS ========== */}
       <RoomScreenModal
         visible={modalVisible}
@@ -359,6 +475,29 @@ export default function HallScreen() {
       <SettingModal
         visible={settingVisible}
         onClose={() => setSettingVisible(false)}
+        onOpenDeleteAccount={() => setDeleteAccountVisible(true)}
+      />
+      <ConfirmDeleteModal
+        visible={deleteRoomVisible}
+        roomName={selectedRoomName}
+        onCancel={() => setDeleteRoomVisible(false)}
+        onConfirm={confirmDelete}
+        loading={deletingRoom}
+      />
+      <ConfirmDeleteAccountModal
+        visible={deleteAccountVisible}
+        onCancel={() => setDeleteAccountVisible(false)}
+        onConfirm={handleConfirmDelete}
+        loading={loading}
+      />
+      <DailyRewardModal
+        visible={dailyVisible}
+        canClaim={canClaim}
+        timeLeft={timeLeft}
+        onClose={() => setDailyVisible(false)}
+        onClaim={handleClaimDaily}
+        claiming={claiming}
+        onCelebration={setHoldDailyModal}
       />
     </View>
   );

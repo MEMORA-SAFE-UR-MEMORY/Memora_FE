@@ -72,9 +72,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
     const result = await handleRegister(email, password);
     if (result) {
       showCustomAlert("Đăng ký thành công!");
-      setShowAlert(true);
       // Close modal after alert is closed
       const timer = setTimeout(() => {
+        setShowAlert(false);
         handleClose(); // Thay vì onClose()
         clearTimeout(timer);
       }, 1500);

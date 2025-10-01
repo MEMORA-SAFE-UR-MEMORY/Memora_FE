@@ -1,8 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
-import { createRoom, fetchDoors, fetchRoomsByUser } from "./api";
+import { createRoom, deleteRoom, fetchDoors, fetchRoomsByUser } from "./api";
 import { Door, Room } from "./type";
 
-// Lấy danh sách doors (màu + ảnh) cho modal
 export function useDoors() {
   const [doors, setDoors] = useState<Door[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,6 @@ export function useDoors() {
   return { doors, loading, error };
 }
 
-// Quản lý rooms của current user
 export function useRooms() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,32 +37,58 @@ export function useRooms() {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     (async () => {
       try {
-        // const uid = await getCurrentUserId();
-        // chưa có auth nên để tạm hihi
-        const uid = "9459cc55-0a45-4395-98cb-e2d6915ca2d8";
+        setLoading(true);
+
+        let uid: string | null = null;
+
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            uid = user?.id ?? user?.user_id ?? null;
+          } catch {
+            // ignore parse error
+          }
+        }
         if (!uid) {
-          setLoading(false);
+          uid = (await AsyncStorage.getItem("userId")) ?? null;
+        }
+
+        if (!mounted) return;
+
+        if (!uid) {
+          setUserId(null);
           return;
         }
+
         setUserId(uid);
         await reload(uid);
       } catch (e) {
-        setError(e);
+        if (mounted) setError(e);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, [reload]);
 
   const addRoom = useCallback(
-    async (room_name: string, theme_key: string, door_id: number) => {
+    async (
+      room_name: string,
+      theme_id: number | null,
+      door_id: number | null
+    ) => {
       if (!userId) throw new Error("Missing user id");
-      const theme_id: number | null = null;
       const newRoom = await createRoom({
         room_name,
-        theme_id,
+        theme_id, //truyền thẳng theme_id (null nếu “Mặc định”)
         user_id: userId,
         door_id,
       });
@@ -73,5 +98,19 @@ export function useRooms() {
     [userId]
   );
 
-  return { rooms, loading, error, addRoom, userId };
+  const removeRoom = useCallback(
+    async (roomId: number) => {
+      const prev = rooms;
+      setRooms((curr) => curr.filter((r) => r.id !== roomId));
+      try {
+        await deleteRoom(roomId);
+      } catch (e) {
+        setRooms(prev);
+        throw e;
+      }
+    },
+    [rooms]
+  );
+
+  return { rooms, loading, error, addRoom, removeRoom, userId };
 }

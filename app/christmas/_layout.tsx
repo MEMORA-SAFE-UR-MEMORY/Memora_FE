@@ -1,14 +1,11 @@
 import { Stack } from "expo-router";
 import { ImageBackground, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default function StoreLayout() {
+export default function ChristmasThemeLayout() {
   return (
-    <ImageBackground
-      source={require("../../assets/images/inHomeScreen/wall.png")}
-      style={{ flex: 1, width: "100%", height: "100%" }}
-      resizeMode="cover"
-    >
-      <View style={{ flex: 1 }}>
+    <SafeAreaProvider>
+      <View style={{ flex: 1, width: "100%", height: "100%" }}>
         <Stack
           screenOptions={{
             headerShown: false,
@@ -16,6 +13,6 @@ export default function StoreLayout() {
           }}
         />
       </View>
-    </ImageBackground>
+    </SafeAreaProvider>
   );
 }
