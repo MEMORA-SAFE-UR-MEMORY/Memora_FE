@@ -199,7 +199,7 @@ export default function HomeScreen() {
               marginBottom: -5,
               elevation: 4,
             }}
-            // onPress={() => router.replace("/album")}
+            onPress={() => router.replace("/album")}
           >
             <View
               style={{
