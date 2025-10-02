@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import React from "react";
 import { Modal, View, Text, TouchableOpacity } from "react-native";
 
-export default function CustomAlert({ visible, onClose, message }: any) {
+export default function CustomAlert({
+  visible,
+  onClose,
+  message,
+  title = "Thông báo",
+  buttonText = "OK",
+}: {
+  visible: boolean;
+  onClose: () => void;
+  message: string;
+  title?: string;
+  buttonText?: string;
+}) {
   return (
     <Modal
       transparent
@@ -19,15 +31,62 @@ export default function CustomAlert({ visible, onClose, message }: any) {
       >
         <View
           style={{
-            width: 300,
-            padding: 20,
+            width: 320,
+            padding: 24,
             backgroundColor: "white",
-            borderRadius: 10,
+            borderRadius: 16,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.25,
+            shadowRadius: 8,
+            elevation: 6,
           }}
         >
-          <Text style={{ marginBottom: 20 }}>{message}</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={{ color: "blue", textAlign: "right" }}>OK</Text>
+          {/* Title */}
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: "Baloo2-Bold",
+              marginBottom: 12,
+              color: "#333",
+            }}
+          >
+            {title}
+          </Text>
+
+          {/* Message */}
+          <Text
+            style={{
+              fontSize: 15,
+              fontFamily: "Baloo2-Regular",
+              marginBottom: 20,
+              color: "#555",
+              lineHeight: 20,
+            }}
+          >
+            {message}
+          </Text>
+
+          {/* Button */}
+          <TouchableOpacity
+            onPress={onClose}
+            style={{
+              alignSelf: "flex-end",
+              backgroundColor: "#D2A4FF",
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              borderRadius: 8,
+            }}
+          >
+            <Text
+              style={{
+                color: "white",
+                fontFamily: "Baloo2-SemiBold",
+                fontSize: 15,
+              }}
+            >
+              {buttonText}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

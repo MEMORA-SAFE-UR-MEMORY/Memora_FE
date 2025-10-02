@@ -9,13 +9,14 @@ console.log(BASE_URL);
 
 export const registerUser = async (userName: string, password: string) => {
   try {
-    const response = await axios.post(`${BASE_URL}/api/User/register`, {
-      userName,
-      password,
+    const response = await axios.post(`${BASE_URL}/api/User/signup`, {
+      username: userName,
+      email: userName,
+      passwordHash: password,
     });
     return response.data;
   } catch (err: any) {
-    throw new Error(err.response?.data?.message || "Đăng ký thất bại");
+    throw new Error(err.message || "Đăng ký thất bại");
   }
 };
 
@@ -25,7 +26,6 @@ export const loginUser = async (userName: string, password: string) => {
       userName,
       password,
     });
-    console.log(response.data);
     return response.data; // thường sẽ trả về token hoặc thông tin user
   } catch (err: any) {
     throw new Error(err.response?.data?.message || "Đăng nhập thất bại");

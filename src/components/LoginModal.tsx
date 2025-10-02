@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { useLogin } from "@src/hooks/useLogin";
 import CustomAlert from "./CustomAlert";
+import useCustomFonts from "@src/hooks/useCustomFonts";
 
 interface LoginModalProps {
   visible: boolean;
@@ -37,6 +38,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const fontsLoaded = useCustomFonts();
 
   const { handleLogin, loading, error } = useLogin();
 
@@ -82,6 +84,10 @@ const LoginModal: React.FC<LoginModalProps> = ({
     onRegisterPress();
   };
 
+  if (!fontsLoaded) {
+    return <LoadingOverlay />;
+  }
+
   return (
     <SafeAreaProvider>
       <SafeAreaView>
@@ -97,9 +103,9 @@ const LoginModal: React.FC<LoginModalProps> = ({
           <View
             style={{
               backgroundColor: "white",
-              width: 557,
-              height: 334,
-              marginTop: 40,
+              width: "70%",
+              height: "93%",
+              marginTop: 10,
               alignSelf: "center",
               borderRadius: 32,
               alignItems: "center",
@@ -113,14 +119,16 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 contentContainerStyle={{
                   flexGrow: 1,
                   justifyContent: "center",
+                  alignItems: "center",
+                  paddingBottom: 10,
                 }}
                 showsVerticalScrollIndicator={false}
               >
                 <TouchableOpacity
                   style={{
                     position: "absolute",
-                    right: 10,
-                    top: 25,
+                    right: 0,
+                    top: 20,
                     padding: 8,
                     zIndex: 1,
                   }}
@@ -130,18 +138,28 @@ const LoginModal: React.FC<LoginModalProps> = ({
                 </TouchableOpacity>
 
                 <Text
-                  style={{ marginTop: 16, fontSize: 30, fontWeight: "bold" }}
+                  style={{
+                    marginTop: 16,
+                    fontSize: 30,
+                    fontFamily: "Baloo2-ExtraBold",
+                  }}
                 >
                   Chào mừng quay trở lại!
                 </Text>
                 <View style={{ marginTop: 18 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "500" }}>
-                    Username
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "500",
+                      fontFamily: "Baloo2-Bold",
+                    }}
+                  >
+                    Email
                   </Text>
                   <TextInput
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="Nhập tên đăng nhập của bạn"
+                    placeholder="Nhập email của bạn"
                     keyboardType="default"
                     style={{
                       height: 46,
@@ -150,11 +168,18 @@ const LoginModal: React.FC<LoginModalProps> = ({
                       paddingHorizontal: 20,
                       marginTop: 6,
                       borderRadius: 20,
+                      fontFamily: "Baloo2-Regular",
                     }}
                   />
                 </View>
                 <View style={{ marginTop: 12 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "500" }}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "500",
+                      fontFamily: "Baloo2-Bold",
+                    }}
+                  >
                     Mật khẩu
                   </Text>
                   <TextInput
@@ -170,6 +195,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                       paddingHorizontal: 20,
                       marginTop: 6,
                       borderRadius: 20,
+                      fontFamily: "Baloo2-Regular",
                     }}
                   />
                   <TouchableOpacity
@@ -177,7 +203,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
                     style={{
                       position: "absolute",
                       right: 20,
-                      top: 36,
+                      top: 42,
                     }}
                   >
                     <Ionicons
@@ -196,12 +222,22 @@ const LoginModal: React.FC<LoginModalProps> = ({
                   }}
                 >
                   <TouchableOpacity onPress={handleRegisterPress}>
-                    <Text style={{ textDecorationLine: "underline" }}>
+                    <Text
+                      style={{
+                        textDecorationLine: "underline",
+                        fontFamily: "Baloo2-Regular",
+                      }}
+                    >
                       Chưa có tài khoản?
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={onForgotPasswordPress}>
-                    <Text style={{ textDecorationLine: "underline" }}>
+                    <Text
+                      style={{
+                        textDecorationLine: "underline",
+                        fontFamily: "Baloo2-Regular",
+                      }}
+                    >
                       Quên mật khẩu?
                     </Text>
                   </TouchableOpacity>

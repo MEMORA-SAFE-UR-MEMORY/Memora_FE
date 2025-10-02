@@ -11,7 +11,6 @@ const ItemDetail = ({ selectedItem, setShowConfirm }: ItemDetailType) => {
   const handleBuy = () => {
     setShowConfirm();
   };
-  console.log("selectedItem", selectedItem);
   if (!selectedItem || selectedItem.type === "theme") {
     return (
       <View style={[styles.container, styles.emptyState]}>
@@ -68,12 +67,14 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: "bold",
+    fontFamily: "Baloo2-Bold",
   },
   desc: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: "center",
     color: "#666",
     padding: 10,
+    fontFamily: "Baloo2-Regular",
   },
   priceRow: {
     width: 100,
@@ -89,6 +90,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginLeft: 8,
+    fontFamily: "Baloo2-Bold",
   },
   buyBtn: {
     backgroundColor: "#E9D8FF",
@@ -99,7 +101,7 @@ const styles = StyleSheet.create({
   buyText: {
     color: "#fff",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Baloo2-Bold",
   },
   emptyState: {
     justifyContent: "center",
@@ -108,6 +110,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     textAlign: "center",
+    fontFamily: "Baloo2-Regular",
   },
 });
 
