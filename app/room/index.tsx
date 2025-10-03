@@ -6,6 +6,7 @@ import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
+import RoomSetting from "@src/components/RoomSetting";
 import { useRoomDraftContext } from "@src/context/DraftContext";
 import { useRoomContext } from "@src/context/RoomContext";
 import useCustomFonts from "@src/hooks/useCustomFonts";
@@ -25,7 +26,7 @@ import {
 } from "react-native";
 
 const Room = () => {
-  const { roomId, themeId, type } = useRoomContext();
+  const { roomId, themeId, type, mode } = useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -34,16 +35,17 @@ const Room = () => {
   const { draft, clearDraft, applyTo } = useRoomDraftContext();
 
   const [effectiveRoom, setEffectiveRoom] = useState<RoomDetail | null>(null);
-  const { roomDetail, exitToHall } = useRoom(
-    roomId,
-    themeId,
-    type,
-    effectiveRoom,
-    draft
-  );
+  const {
+    roomDetail,
+    exitToHall,
+    isSettingOpen,
+    openSetting,
+    closeSetting,
+    handleSaveSetting,
+  } = useRoom(roomId, themeId, type, effectiveRoom, draft);
 
   // clearDraft();
-  console.log("Draft: ", draft);
+  // console.log("Draft: ", draft);
 
   // Room dimensions - 3x wider than screen
   const roomWidth = screenWidth * 3;
@@ -54,18 +56,23 @@ const Room = () => {
   };
 
   useEffect(() => {
-    if (roomDetail) {
+    if (!roomDetail) return;
+
+    const handler = setTimeout(() => {
       setEffectiveRoom(applyTo(roomDetail));
-    }
-  }, [roomDetail, applyTo]);
+    }, 200);
+
+    return () => clearTimeout(handler);
+  }, [roomDetail, draft, applyTo]);
 
   const hasChanges = isDraftChanged(effectiveRoom!, draft);
+
+  // console.log("room detail: ", roomDetail);
 
   const {
     modalType,
     selectedMemory,
     placedItems,
-    placedItemMemories,
     closeModal,
     handleItemSelect,
     moveItem,
@@ -88,7 +95,7 @@ const Room = () => {
     activeFrameId,
     activeSlotId,
     resolveMemory,
-  } = useMemory(roomId, scrollX, effectiveRoom?.items ?? []);
+  } = useMemory(roomId, scrollX, effectiveRoom?.items ?? [], mode);
 
   if (!roomDetail) return null;
 
@@ -130,6 +137,7 @@ const Room = () => {
               roomWidth={roomWidth}
               roomHeight={roomHeight}
               scrollX={scrollX}
+              mode={mode}
             />
           ))}
         </View>
@@ -145,8 +153,15 @@ const Room = () => {
             <Text style={styles.textIcon}>Sảnh</Text>
           </Pressable>
 
-          {/* Menu */}
-          <RoomMenu onOpenInventory={openInventory} />
+          {mode !== "view" && (
+            <>
+              {/* Menu */}
+              <RoomMenu
+                onOpenInventory={openInventory}
+                onOpenSetting={openSetting}
+              />
+            </>
+          )}
         </View>
 
         {/* Trash (Fixed position) */}
@@ -184,6 +199,15 @@ const Room = () => {
         />
       )}
 
+      {isSettingOpen && (
+        <RoomSetting
+          visible={true}
+          onClose={closeSetting}
+          onSave={handleSaveSetting}
+          currentType={roomDetail.type}
+        />
+      )}
+
       {fontsLoaded && modalType === "add" && (
         <AddMemoryModal
           visible={true}
@@ -204,6 +228,7 @@ const Room = () => {
           onFrameRemoved={activeFrameId === null}
           frameId={activeFrameId}
           slotId={activeSlotId}
+          mode={mode}
         />
       )}
     </View>

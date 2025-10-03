@@ -1,35 +1,18 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Room } from "@src/types/room";
-
-const ROOM_CACHE_PREFIX = "room_detail:";
-
-export const roomStorageKey = (roomId: number) => `${ROOM_CACHE_PREFIX}${roomId}`;
+import * as api from "@src/apis/roomApi";
+import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
 
 export const roomRepo = {
-  async saveToCache(room: Room) {
-    try {
-      await AsyncStorage.setItem(roomStorageKey(room.id), JSON.stringify(room));
-    } catch (err) {
-      console.warn("roomRepo.saveToCache error", err);
-    }
+  async getRoom(roomId: number): Promise<RoomDetail> {
+    const room = await api.fetchRoomById(roomId);
+    if (!room) throw new Error("Room not found");
+    return room;
   },
 
-  async getFromCache(roomId: number): Promise<Room | null> {
-    try {
-      const raw = await AsyncStorage.getItem(roomStorageKey(roomId));
-      if (!raw) return null;
-      return JSON.parse(raw) as Room;
-    } catch (err) {
-      console.warn("roomRepo.getFromCache error", err);
-      return null;
-    }
+  async updateRoomType(roomId: number, type: RoomType): Promise<Room> {
+    return api.updateRoomTypeApi(roomId, type);
   },
 
-  async removeCache(roomId: number) {
-    try {
-      await AsyncStorage.removeItem(roomStorageKey(roomId));
-    } catch (err) {
-      console.warn("roomRepo.removeCache error", err);
-    }
-  }
+  async saveRoom(room: RoomDetail, draft: Draft) {
+    return api.saveRoomToSupabase(room, draft);
+  },
 };

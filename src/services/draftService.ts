@@ -18,139 +18,134 @@ const loadIntoMemory = async (roomId: number) => {
   return d ?? null;
 };
 
-// 🧹 compactDraft: dọn sạch patch thừa
-function compactDraft(draft: Draft) {
-  const state: Record<number, any> = {}; // trạng thái cuối của từng item
-  const removed: Set<number> = new Set();
+// compactDraft: chỉ giữ trạng thái cuối của từng item
+function compactDraft(draft: Draft): Draft {
+  const state: Record<number, any> = {}; // lưu trạng thái cuối cùng của mỗi item
+  const removePatches: DraftOp[] = []; // lưu patch removeItem
+  const slotMemoriesMap: Record<number, Record<number, number | null>> = {}; // lưu slotMemories cuối cùng
 
   for (const p of draft.patches) {
     const id = (p as any).itemId ?? (p as any).roomItemId;
     if (!id) continue;
 
-    if (p.op === "removeItem") {
-      delete state[id];
-      removed.add(id);
-      continue;
-    }
-
-    if (!state[id]) {
-      if (p.op === "addItem") {
-        state[id] = { ...p }; // khởi tạo item mới
-      }
-      continue; // bỏ patch lẻ không có addItem trước
-    }
-
     switch (p.op) {
-      case "moveItem":
-        state[id].x = p.x;
-        state[id].y = p.y;
-        state[id].zIndex = p.zIndex;
+      case "removeItem":
+        removePatches.push(p); 
+        delete state[id]; 
+        delete slotMemoriesMap[id]; 
         break;
-      case "rotateItem":
-        state[id].rotation = p.rotation;
-        break;
-      case "setSlotMemory":
-      case "updateSlotMemory":
-        state[id].slotMemories = {
-          ...(state[id].slotMemories ?? {}),
-          [p.slotId]: p.memoryId,
+
+      case "upsertItem":
+        state[id] = {
+          ...state[id],
+          ...p,
+          rotation: p.rotation ?? state[id]?.rotation ?? 0,
         };
         break;
+
+      case "setSlotMemory":
+      case "updateSlotMemory":
+        if (!slotMemoriesMap[id]) slotMemoriesMap[id] = {};
+        slotMemoriesMap[id][p.slotId] = p.memoryId;
+        break;
+
       case "deleteSlotMemory":
-        if (state[id].slotMemories) {
-          delete state[id].slotMemories[p.slotId];
-        }
+        if (!slotMemoriesMap[id]) slotMemoriesMap[id] = {};
+        slotMemoriesMap[id][p.slotId] = null;
         break;
     }
   }
 
-  // build lại patches gọn nhất
   const newPatches: DraftOp[] = [];
-  for (const [id, st] of Object.entries(state)) {
-    if (removed.has(Number(id))) continue;
-    const { slotMemories, ...base } = st;
-    newPatches.push(base as DraftOp);
 
-    if (slotMemories) {
-      for (const [slotId, memId] of Object.entries(slotMemories)) {
+  // 1. Thêm các patch removeItem trước tiên
+  newPatches.push(...removePatches);
+
+  // 2. Thêm patch upsertItem
+  for (const [idStr, st] of Object.entries(state)) {
+    const id = Number(idStr);
+    const { slotMemories, ...base } = st;
+
+    newPatches.push({
+      ...base,
+      op: "upsertItem",
+      rotation: base.rotation ?? 0,
+    } as DraftOp);
+
+    // 3. Thêm slotMemories cho item
+    const smMap = slotMemoriesMap[id];
+    if (smMap) {
+      for (const [slotIdStr, memId] of Object.entries(smMap)) {
         newPatches.push({
           op: "setSlotMemory",
-          roomItemId: Number(id),
-          slotId: Number(slotId),
-          memoryId: memId as number | null,
-        });
+          roomItemId: id,
+          slotId: Number(slotIdStr),
+          memoryId: memId,
+        } as DraftOp);
       }
     }
   }
 
-  draft.patches = newPatches;
+  return {
+    ...draft,
+    patches: newPatches,
+  };
 }
-
 const persistRoomDraft = async (roomId: number) => {
   const draft = inMemoryDrafts[roomId];
   if (draft) {
-    compactDraft(draft); // cleanup trước khi lưu
+    compactDraft(draft);
     await saveDraft(roomId, draft);
   } else {
     await removeDraft(roomId);
   }
 };
 
+// squash patch: merge các thay đổi lặp cho cùng 1 item
 const trySquash = (draft: Draft, patch: DraftOp) => {
-  const patches = draft.patches;
-
   switch (patch.op) {
-    case "moveItem": {
-      const { itemId } = patch as any;
-      draft.patches = patches.filter(
-        (p) => !(p.op === "moveItem" && (p as any).itemId === itemId)
+    case "upsertItem": {
+      const { itemId } = patch;
+      const idx = draft.patches.findIndex(
+        (p) => p.op === "upsertItem" && (p as any).itemId === itemId
+      );
+      if (idx >= 0) {
+        draft.patches[idx] = {
+          ...(draft.patches[idx] as any),
+          ...patch,
+          rotation:
+            (patch as any).rotation ??
+            (draft.patches[idx] as any).rotation ??
+            0,
+        };
+      } else {
+        draft.patches.push({
+          ...patch,
+          rotation: patch.rotation ?? 0,
+        });
+      }
+      return true;
+    }
+
+    case "removeItem": {
+      const { itemId } = patch;
+      draft.patches = draft.patches.filter(
+        (p) => !(p.op === "upsertItem" && (p as any).itemId === itemId)
       );
       draft.patches.push(patch);
       return true;
     }
 
-    case "rotateItem": {
-      const { itemId } = patch as any;
-      draft.patches = patches.filter(
-        (p) => !(p.op === "rotateItem" && (p as any).itemId === itemId)
-      );
-      draft.patches.push(patch);
-      return true;
-    }
-
-    case "setSlotMemory": {
-      const { roomItemId, slotId } = patch as any;
-      draft.patches = patches.filter(
-        (p) =>
-          !(
-            p.op === "setSlotMemory" &&
-            (p as any).roomItemId === roomItemId &&
-            (p as any).slotId === slotId
-          )
-      );
-      draft.patches.push(patch);
-      return true;
-    }
-
+    case "setSlotMemory":
     case "updateSlotMemory": {
-      const { roomItemId, slotId } = patch as any;
-      draft.patches = patches.filter(
+      const { roomItemId, slotId } = patch;
+      draft.patches = draft.patches.filter(
         (p) =>
           !(
             (p.op === "setSlotMemory" || p.op === "updateSlotMemory") &&
             (p as any).roomItemId === roomItemId &&
             (p as any).slotId === slotId
           )
-      );
-      draft.patches.push(patch);
-      return true;
-    }
-
-    case "removeItem": {
-      const { itemId } = patch as any;
-      draft.patches = patches.filter(
-        (p) =>
-          !((p as any).itemId === itemId || (p as any).roomItemId === itemId)
       );
       draft.patches.push(patch);
       return true;
@@ -174,9 +169,10 @@ export const DraftManager = {
 
     draft.lastEdited = nowISO();
 
-    // addItem → đảm bảo có tempId
-    if (patch.op === "addItem" && !patch.itemId) {
-      (patch as any).itemId = generateTempId();
+    if (patch.op === "upsertItem") {
+      if (!patch.itemId) {
+        (patch as any).itemId = generateTempId();
+      }
     }
 
     const squashed = trySquash(draft, patch);
@@ -184,7 +180,6 @@ export const DraftManager = {
 
     inMemoryDrafts[roomId] = draft;
 
-    // debounce persist
     if (saveTimers[roomId]) clearTimeout(saveTimers[roomId] as any);
     saveTimers[roomId] = setTimeout(async () => {
       await persistRoomDraft(roomId);
@@ -207,46 +202,38 @@ export const DraftManager = {
 
     for (const p of draft.patches) {
       switch (p.op) {
-        case "addItem": {
-          const { itemId, refItemId, x, y, zIndex } = p;
+        case "upsertItem": {
+          const { itemId, refItemId, x, y, zIndex, rotation } = p;
           const invItem = InventoryService.getItemById(refItemId);
           if (!invItem) break;
+
           const newItem: RoomItem = {
             id: Number(itemId),
             x,
             y,
             zIndex,
+            rotation: rotation ?? 0,
             item: invItem.item,
           };
-          result.items.push(newItem);
-          break;
-        }
 
-        case "moveItem": {
-          const { itemId, x, y, zIndex } = p as any;
-          result.items = result.items.map((it) =>
-            it.id === itemId ? { ...it, x, y, zIndex } : it
-          );
-          break;
-        }
-
-        case "rotateItem": {
-          const { itemId, rotation } = p as any;
-          result.items = result.items.map((it) =>
-            it.id === itemId ? { ...it, rotation } : it
-          );
+          const idx = result.items.findIndex((it) => it.id === itemId);
+          if (idx >= 0) {
+            result.items[idx] = { ...result.items[idx], ...newItem };
+          } else {
+            result.items.push(newItem);
+          }
           break;
         }
 
         case "removeItem": {
-          const { itemId } = p as any;
+          const { itemId } = p;
           result.items = result.items.filter((it) => it.id !== itemId);
           break;
         }
 
         case "setSlotMemory":
         case "updateSlotMemory": {
-          const { roomItemId, slotId, memoryId } = p as any;
+          const { roomItemId, slotId, memoryId } = p;
           result.items = result.items.map((it) => {
             if (it.id !== roomItemId) return it;
             const sm = { ...(it.slotMemories ?? {}) };
@@ -257,7 +244,7 @@ export const DraftManager = {
         }
 
         case "deleteSlotMemory": {
-          const { roomItemId, slotId } = p as any;
+          const { roomItemId, slotId } = p;
           result.items = result.items.map((it) => {
             if (it.id !== roomItemId) return it;
             const sm = { ...(it.slotMemories ?? {}) } as Record<string, any>;

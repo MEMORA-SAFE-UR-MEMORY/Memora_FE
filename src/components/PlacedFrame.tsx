@@ -31,6 +31,7 @@ type PlacedFrameProps = {
   roomHeight?: number;
   memoryResolver: (frameId: number, slotId: number) => Memory | null;
   scrollX: number;
+  mode: "view" | "edit";
 };
 
 function clamp(val: number, min: number, max: number): number {
@@ -52,6 +53,7 @@ const PlacedFrame = ({
   roomHeight,
   memoryResolver,
   scrollX,
+  mode,
 }: PlacedFrameProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const maxWidth = roomWidth || screenWidth;
@@ -222,11 +224,63 @@ const PlacedFrame = ({
     }
   };
 
+  // console.log("item", item);
+
   useEffect(() => {
     translationX.value = item.x ?? 0;
     translationY.value = item.y ?? 0;
     rotation.value = item.rotation ?? 0;
   }, [item.x, item.y, item.rotation]);
+
+  if (mode === "view") {
+    return (
+      <Animated.View
+        style={[
+          styles.container,
+          animatedStyle,
+          {
+            width: item.item.dimension.w,
+            height: item.item.dimension.h,
+            zIndex: item.zIndex,
+          },
+        ]}
+      >
+        {item.item.categoryId !== 1 ? (
+          <Pressable onPress={() => onPress(item.id, null)} style={{ flex: 1 }}>
+            <Image
+              source={{ uri: item.item.imageUrl }}
+              style={styles.itemImage}
+              resizeMode="contain"
+            />
+          </Pressable>
+        ) : (
+          <View style={styles.contentArea}>
+            {item.item.slots?.map((slot) => (
+              <Pressable
+                key={slot.slotId}
+                onPress={() => onPress(item.id, slot.slotId)}
+                style={{ position: "absolute" }}
+              >
+                <FrameView
+                  slot={slot}
+                  memory={memoryResolver(item.id, slot.slotId)}
+                  frameWidth={item.item.dimension.w}
+                  frameHeight={item.item.dimension.h}
+                />
+              </Pressable>
+            ))}
+            <View style={styles.frameImage} pointerEvents="none">
+              <Image
+                source={{ uri: item.item.imageUrl }}
+                style={styles.frameImage}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        )}
+      </Animated.View>
+    );
+  }
 
   return (
     <GestureDetector gesture={composed}>

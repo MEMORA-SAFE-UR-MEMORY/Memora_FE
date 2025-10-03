@@ -46,7 +46,12 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <RoomProvider roomId={roomIdNum} themeId={themeIdNum} type="private">
+        <RoomProvider
+          roomId={roomIdNum}
+          themeId={themeIdNum}
+          type={type}
+          mode="view"
+        >
           <RoomDraftProvider roomId={roomIdNum}>
             <RoomBg
               wallUrl={roomDetail.theme.wallUrl}

@@ -19,33 +19,50 @@ export const useRoom = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  // Setting modal
+  const [isSettingOpen, setIsSettingOpen] = useState(false);
 
   // load once từ props
   useEffect(() => {
     if (!roomId || !themeId) return;
 
-    const theme = themes.find((t) => t.id === themeId);
-    if (!theme) {
-      setError("Theme not found");
-      setLoading(false);
-      return;
-    }
+    const fetchAndSetRoom = async () => {
+      setLoading(true);
+      setError(null);
 
-    const detail: RoomDetail = {
-      id: roomId,
-      themeId,
-      roomName: "", // nếu cần thì thêm sau
-      userId: "", // nếu cần thì thêm sau
-      doorId: "",
-      type: initialType ?? "private",
-      createdAt: new Date().toISOString(),
-      theme,
-      items: [],
+      try {
+        // 1. Fetch room từ API
+        const room = await service.getRoom(roomId);
+
+        // 2. Tìm theme dựa vào themeId
+        const theme = themes.find((t) => t.id === themeId);
+        if (!theme) {
+          setError("Theme not found");
+          setRoomDetail(null);
+          return;
+        }
+
+        // 3. Update roomDetail với theme và các thông tin cơ bản
+        const updatedRoom: RoomDetail = {
+          ...room,
+          theme,
+        };
+
+        setRoomDetail(updatedRoom);
+      } catch (err: any) {
+        setError(err.message || "Failed to load room");
+        setRoomDetail(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setRoomDetail(detail);
-    setLoading(false);
-  }, [roomId, themeId, initialType, themes]);
+    fetchAndSetRoom();
+  }, [roomId, themeId, themes]);
+
+  // Setting controls
+  const openSetting = () => setIsSettingOpen(true);
+  const closeSetting = () => setIsSettingOpen(false);
 
   // cập nhật type
   const updateType = useCallback(
@@ -72,12 +89,6 @@ export const useRoom = (
     [roomDetail]
   );
 
-  const toggleType = useCallback(async () => {
-    if (!roomDetail) return;
-    const newType = roomDetail.type === "private" ? "public" : "private";
-    return updateType(newType);
-  }, [roomDetail, updateType]);
-
   const exitToHall = async (hasChanges?: boolean) => {
     try {
       if (!initialRoom || !draft) {
@@ -92,9 +103,8 @@ export const useRoom = (
       }
 
       // Nếu có chỉnh sửa thì mới gọi save
-      const compacted = compactDraft();
+      const compacted = await compactDraft();
       if (compacted) {
-        console.log("compated", compacted);
         const appliedRoom = DraftManager.applyDraft(initialRoom, compacted);
         await service.saveRoom(appliedRoom, compacted);
       }
@@ -105,13 +115,23 @@ export const useRoom = (
     }
   };
 
+  const handleSaveSetting = (type: "private" | "public") => {
+    updateType(type);
+    closeSetting();
+  };
+
   return {
     roomDetail,
     loading,
     error,
     updating,
     updateType,
-    toggleType,
     exitToHall,
+
+    // Setting
+    isSettingOpen,
+    openSetting,
+    closeSetting,
+    handleSaveSetting,
   };
 };

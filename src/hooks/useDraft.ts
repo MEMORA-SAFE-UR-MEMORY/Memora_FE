@@ -14,13 +14,14 @@ export const useDraft = (roomId: number) => {
     load();
   }, [roomId]);
 
-  const compact = useCallback((): Draft | null => {
-    if (!draft) return null;
-    DraftManager.compactDraft(draft);
-    const newDraft = { ...draft };
-    setDraft(newDraft);
+  const compact = useCallback(async (): Promise<Draft | null> => {
+    const latest = await DraftManager.loadDraft(roomId);
+    if (!latest) return null;
+
+    const newDraft = DraftManager.compactDraft(latest);
+    setDraft(newDraft); // sync lại state
     return newDraft;
-  }, [draft]);
+  }, [roomId]);
 
   // save patch
   const savePatch = useCallback(

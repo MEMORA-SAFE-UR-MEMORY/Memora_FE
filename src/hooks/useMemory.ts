@@ -1,6 +1,6 @@
 import { useInventory } from "@src/context/InventoryContext";
 import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
-import { memoryService } from "@src/services/memoryService";
+import { memoryService, MemoryStore } from "@src/services/memoryService";
 import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { useEffect, useState } from "react";
@@ -11,7 +11,8 @@ type ModalType = "add" | "view" | null;
 export const useMemory = (
   roomId: number,
   scrollX: number = 0,
-  baseItems: RoomItem[]
+  baseItems: RoomItem[],
+  mode: "view" | "edit"
 ) => {
   const { decreaseQuantity, increaseQuantity } = useInventory();
 
@@ -35,8 +36,8 @@ export const useMemory = (
 
   const { width, height } = useWindowDimensions();
 
-  // Memory store từ AsyncStorage
-  const [memoryStore, setMemoryStore] = useState<Record<number, Memory>>({});
+  // Memory store từ AsyncStorage (roomItemId → slotId → Memory)
+  const [memoryStore, setMemoryStore] = useState<MemoryStore>({});
 
   useEffect(() => {
     (async () => {
@@ -123,10 +124,15 @@ export const useMemory = (
 
     if (slotId !== null) {
       const memory = resolveMemory(frameId, slotId);
+
       if (memory) {
+        // Có memory thì luôn cho mở view
         openModal("view", memory, frameId, slotId);
       } else {
-        openModal("add", undefined, frameId, slotId);
+        // Nếu chưa có memory → chỉ cho add khi mode = edit
+        if (mode === "edit") {
+          openModal("add", undefined, frameId, slotId);
+        }
       }
     }
   };
@@ -137,7 +143,13 @@ export const useMemory = (
     slotId: number,
     memory: Memory
   ) => {
-    const updated = await memoryService.addOrUpdate(roomId, memory);
+    if (mode === "view") return;
+    const updated = await memoryService.setMemory(
+      roomId,
+      frameId,
+      slotId,
+      memory
+    );
     setMemoryStore(updated);
     setItemMemory(frameId, slotId, memory);
   };
@@ -147,16 +159,27 @@ export const useMemory = (
     slotId: number,
     memory: Memory
   ) => {
+    if (mode === "view") return;
     updateItemMemory(frameId, slotId, memory);
-    const updated = await memoryService.addOrUpdate(roomId, memory);
+    const updated = await memoryService.setMemory(
+      roomId,
+      frameId,
+      slotId,
+      memory
+    );
     setMemoryStore(updated);
     setSelectedMemory(memory);
   };
 
   const handleDeleteMemory = async () => {
+    if (mode === "view") return;
     if (activeFrameId !== null && activeSlotId !== null && selectedMemory) {
       deleteItemMemory(activeFrameId, activeSlotId);
-      const updated = await memoryService.delete(roomId, selectedMemory.id);
+      const updated = await memoryService.deleteMemory(
+        roomId,
+        activeFrameId,
+        activeSlotId
+      );
       setMemoryStore(updated);
     }
     setTimeout(() => {
@@ -165,7 +188,8 @@ export const useMemory = (
   };
 
   // Xóa item khỏi room
-  const removeItemWithModalCheck = (id: number) => {
+   const removeItemWithModalCheck = (id: number) => {
+    if (mode === "view") return; 
     removeItem(id);
 
     if (activeFrameId === id) {
@@ -174,13 +198,7 @@ export const useMemory = (
   };
 
   const resolveMemory = (frameId: number, slotId: number): Memory | null => {
-    const roomItem = placedItems.find((item) => item.id === frameId);
-    if (!roomItem) return null;
-
-    const memoryId = roomItem.slotMemories?.[slotId];
-    if (!memoryId) return null;
-
-    return memoryStore[memoryId] ?? null;
+    return memoryStore[frameId]?.[slotId] ?? null;
   };
 
   return {

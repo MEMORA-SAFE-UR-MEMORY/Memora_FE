@@ -22,6 +22,7 @@ type Props = {
   frameId: number | null;
   slotId: number | null;
   onFrameRemoved?: boolean;
+  mode: "view" | "edit";
 };
 
 const MemoryModal = ({
@@ -33,6 +34,7 @@ const MemoryModal = ({
   frameId,
   slotId,
   onFrameRemoved,
+  mode,
 }: Props) => {
   const { width, height } = useWindowDimensions();
   const [selected, setSelected] = useState<number>(1);
@@ -131,33 +133,43 @@ const MemoryModal = ({
         },
       ]}
     >
-      <ModalMenu
-        modalWidth={modalWidth}
-        slideAnim={menuAnim}
-        selected={selected}
-        setSelected={(id) => {
-          if (id === 3) {
-            setShowConfirm(true);
-          } else {
-            setSelected(id);
-          }
-        }}
-      />
+      {/* Nếu mode edit thì mới có menu, ngược lại chỉ xem */}
+      {mode === "edit" && (
+        <ModalMenu
+          modalWidth={modalWidth}
+          slideAnim={menuAnim}
+          selected={selected}
+          setSelected={(id) => {
+            if (id === 3) {
+              setShowConfirm(true);
+            } else {
+              setSelected(id);
+            }
+          }}
+        />
+      )}
+
       <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
         <Ionicons name="close-circle" size={28} color="#B0B0B0" />
       </TouchableOpacity>
 
       <View style={{ flex: 1 }}>
-        {selected === 1 && <InfoMemory memory={memory} />}
-        {selected === 2 && frameId != null && slotId != null && (
-          <UpdateMemory
-            memory={memory}
-            onUpdate={(data) => onUpdate(frameId, slotId, data)}
-          />
-        )}
+        {/* luôn có tab 1 = InfoMemory */}
+        <InfoMemory memory={memory} />
+
+        {/* Nếu là edit mode mới có update */}
+        {mode === "edit" &&
+          selected === 2 &&
+          frameId != null &&
+          slotId != null && (
+            <UpdateMemory
+              memory={memory}
+              onUpdate={(data) => onUpdate(frameId, slotId, data)}
+            />
+          )}
       </View>
 
-      {showConfirm && (
+      {mode === "edit" && showConfirm && (
         <ModalConfirm
           visible={showConfirm}
           onClose={() => setShowConfirm(false)}

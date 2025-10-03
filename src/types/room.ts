@@ -21,15 +21,14 @@ export interface RoomDetail extends Room {
 
 export type DraftOp =
   | {
-      op: "addItem";
-      itemId: number; // id tạm trong room (temp id)
+      op: "upsertItem";
+      itemId: number; // id tạm hoặc id thật trong room
       refItemId: number; // tham chiếu đến catalog item
       x: number;
       y: number;
       zIndex: number;
+      rotation: number;
     }
-  | { op: "moveItem"; itemId: number; x: number; y: number; zIndex: number }
-  | { op: "rotateItem"; itemId: number; rotation: number }
   | { op: "removeItem"; itemId: number }
   | {
       op: "setSlotMemory" | "updateSlotMemory";

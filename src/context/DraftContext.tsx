@@ -7,7 +7,7 @@ type RoomDraftContextValue = {
   applyTo: (room: RoomDetail) => RoomDetail;
   savePatch: (patch: any) => Promise<void>;
   clearDraft: () => Promise<void>;
-  compactDraft: () => Draft | null;
+  compactDraft: () => Promise<Draft | null>;
 };
 
 const RoomDraftContext = createContext<RoomDraftContextValue | null>(null);

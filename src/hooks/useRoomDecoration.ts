@@ -1,4 +1,3 @@
-// hooks/useRoomDecoration.ts
 import { useRoomDraftContext } from "@src/context/DraftContext";
 import { memoryService } from "@src/services/memoryService";
 import { RoomItem } from "@src/types/item";
@@ -41,6 +40,18 @@ export const useRoomDecoration = ({
       }));
   };
 
+  const persistUpsert = (item: RoomItem) => {
+    savePatch({
+      op: "upsertItem",
+      itemId: item.id,
+      refItemId: item.item.id,
+      x: item.x,
+      y: item.y,
+      zIndex: item.zIndex,
+      rotation: item.rotation ?? 0,
+    });
+  };
+
   // Thêm item vào phòng
   const placeItem = useCallback(
     (newItem: Omit<RoomItem, "id">): RoomItem => {
@@ -61,14 +72,7 @@ export const useRoomDecoration = ({
         const zIndex = normalized.length + 1;
         createdRoomItem = { ...createdRoomItem, zIndex };
         // persist patch now we know zIndex
-        savePatch({
-          op: "addItem",
-          itemId: createdRoomItem.id,
-          refItemId: newItem.item.id,
-          x: createdRoomItem.x,
-          y: createdRoomItem.y,
-          zIndex,
-        });
+        persistUpsert(createdRoomItem);
         return [...normalized, createdRoomItem];
       });
 
@@ -93,7 +97,7 @@ export const useRoomDecoration = ({
         const movedItem: RoomItem = { ...target, x, y, zIndex };
 
         // lưu patch ngay khi move
-        savePatch({ op: "moveItem", itemId: id, x, y, zIndex });
+        persistUpsert(movedItem);
 
         return [...updated, movedItem];
       });
@@ -103,10 +107,14 @@ export const useRoomDecoration = ({
 
   const updateRotation = useCallback(
     (id: number, rotation: number) => {
-      setPlacedItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, rotation } : item))
-      );
-      savePatch({ op: "rotateItem", itemId: id, rotation });
+      setPlacedItems((prev) => {
+        const updated = prev.map((item) =>
+          item.id === id ? { ...item, rotation } : item
+        );
+        const item = updated.find((it) => it.id === id);
+        if (item) persistUpsert(item);
+        return updated;
+      });
     },
     [savePatch]
   );
@@ -122,13 +130,7 @@ export const useRoomDecoration = ({
         const movedItem = { ...target, zIndex };
         updated.push(movedItem);
         // save patch so z-order survived crash
-        savePatch({
-          op: "moveItem",
-          itemId: id,
-          x: movedItem.x,
-          y: movedItem.y,
-          zIndex,
-        });
+        persistUpsert(movedItem);
         return normalizeZIndex(updated);
       });
     },
@@ -179,7 +181,7 @@ export const useRoomDecoration = ({
           slotId,
           memoryId,
         });
-        await memoryService.addOrUpdate(roomId, memory);
+        await memoryService.setMemory(roomId, itemId, slotId, memory);
       } else {
         savePatch({ op: "deleteSlotMemory", roomItemId: itemId, slotId });
       }
@@ -196,7 +198,7 @@ export const useRoomDecoration = ({
           [slotId]: memory,
         },
       }));
-      await memoryService.addOrUpdate(roomId, memory);
+      await memoryService.setMemory(roomId, itemId, slotId, memory);
       const memoryId = memory.id;
 
       savePatch({
@@ -213,7 +215,7 @@ export const useRoomDecoration = ({
     async (itemId: number, slotId: number) => {
       const memory = placedItemMemories[itemId]?.[slotId];
       if (memory) {
-        await memoryService.delete(roomId, memory.id);
+        await memoryService.deleteMemory(roomId, itemId, slotId);
       }
 
       setPlacedItemMemories((prev) => {
