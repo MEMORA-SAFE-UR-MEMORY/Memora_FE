@@ -28,13 +28,7 @@ const Shop = () => {
       await refreshInventory();
       setShowAlert(true);
     } // 🔹 hiện alert khi thành công }
-
-    console.log("Item added:", result);
   };
-
-  console.log("invenid:", inventoryId);
-
-  console.log(wallet);
 
   const handleSelectItem = (item: any) => {
     console.log(item);
@@ -122,6 +116,7 @@ const Shop = () => {
               style={{
                 fontSize: 16,
                 color: "#663530",
+                fontFamily: "Baloo2-Regular",
               }}
             >
               {wallet?.puzzles}

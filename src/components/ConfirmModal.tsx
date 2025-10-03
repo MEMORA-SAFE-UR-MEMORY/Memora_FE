@@ -83,16 +83,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 12,
     textAlign: "center",
+    fontFamily: "Baloo2-Bold",
   },
   message: {
     fontSize: 16,
     marginBottom: 20,
     textAlign: "center",
     color: "#333",
+    fontFamily: "Baloo2-SemiBold",
   },
   highlight: {
     fontWeight: "700",
     color: "#FFBCDD",
+    fontFamily: "Baloo2-Bold",
   },
   buttonRow: {
     flexDirection: "row",
@@ -113,11 +116,11 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: "#333",
-    fontWeight: "600",
+    fontFamily: "Baloo2-SemiBold",
   },
   confirmText: {
     color: "#fff",
-    fontWeight: "600",
+    fontFamily: "Baloo2-SemiBold",
   },
 });
 

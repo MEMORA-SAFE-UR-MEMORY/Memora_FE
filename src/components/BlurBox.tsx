@@ -1,5 +1,7 @@
+import useCustomFonts from "@src/hooks/useCustomFonts";
 import { BlurView } from "expo-blur";
 import { Image, ImageSourcePropType, StyleSheet, Text } from "react-native";
+import LoadingOverlay from "./LoadingOverlay";
 
 interface BlurBoxProps {
   h: number;
@@ -24,6 +26,11 @@ const BlurBox: React.FC<BlurBoxProps> = ({
   fontFamily,
   titleStyle,
 }) => {
+  const fontsLoaded = useCustomFonts();
+
+  if (!fontsLoaded) {
+    return <LoadingOverlay />;
+  }
   return (
     <BlurView
       intensity={10}
@@ -52,7 +59,7 @@ const BlurBox: React.FC<BlurBoxProps> = ({
           {
             fontSize: textSize,
             fontWeight: 500,
-            ...(fontFamily ? { fontFamily } : {}),
+            fontFamily: "Baloo2-Bold",
           },
           titleStyle,
         ]}

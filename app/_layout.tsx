@@ -1,7 +1,9 @@
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import Cloud from "@src/components/login/Cloud";
 import { AuthProvider } from "@src/context/AuthContext";
 import { InventoryProvider } from "@src/context/InventoryContext";
 import { MusicProvider } from "@src/context/MusicContext";
+import useCustomFonts from "@src/hooks/useCustomFonts";
 import { ThemeProvider } from "@src/context/ThemeContext";
 import { Stack } from "expo-router";
 import { useState } from "react";
@@ -17,7 +19,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 export default function HomeLayout() {
   const { width } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
-
   const BG = require("../assets/images/loginScreen/nen_troi.png");
   const HOUSE = require("../assets/images/loginScreen/nhà.png");
   const CLOUD = require("../assets/images/loginScreen/mây 2.png");
