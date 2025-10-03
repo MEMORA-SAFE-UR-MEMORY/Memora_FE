@@ -18,12 +18,15 @@ import { router } from "expo-router";
 import { useAuth } from "@src/hooks/useAuth";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import CustomAlert from "@src/components/CustomAlert";
 
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [registerVisible, setRegisterVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { loading } = useAuth();
+  const [alertMessage, setAlertMessage] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
 
   const handleRegisterPress = useCallback(() => {
     setTimeout(() => {
@@ -64,6 +67,15 @@ export default function Home() {
     }, 3000);
   }, []);
 
+  const showCustomAlert = (message: string) => {
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
+  const handlePopUp = () => {
+    showCustomAlert("Tính năng chưa được hỗ trợ!");
+  };
+
   if (loading) {
     return <LoadingOverlay />;
   }
@@ -85,7 +97,7 @@ export default function Home() {
             alignItems: "flex-end",
           }}
         >
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <TouchableOpacity onPress={handlePopUp()}>
             <BlurBox
               h={43}
               w={259}
@@ -123,6 +135,11 @@ export default function Home() {
           visible={registerVisible}
           onClose={() => setRegisterVisible(false)}
           onLoginPress={handleLoginPress}
+        />
+        <CustomAlert
+          visible={showAlert}
+          onClose={() => setShowAlert(false)}
+          message={alertMessage}
         />
       </View>
     </SafeAreaView>
