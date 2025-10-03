@@ -1,76 +1,137 @@
-import { Room, RoomDetail } from "@src/types/room";
-import { useCallback, useRef, useState } from "react";
+import { useThemeContext } from "@src/context/ThemeContext";
+import { useDraft } from "@src/hooks/useDraft";
+import { DraftManager } from "@src/services/draftService";
+import * as service from "@src/services/roomService";
+import { Draft, RoomDetail } from "@src/types/room";
+import { router } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 
-const mockRooms: Room[] = [
-  {
-    id: 1,
-    themeId: 101,
-    roomName: "Phòng cổ điển",
-    userId: "user_1",
-    doorId: "door_abc",
-    createdAt: "2025-09-22",
-  },
-  {
-    id: 2,
-    themeId: 102,
-    roomName: "Phòng hiện đại",
-    userId: "user_1",
-    doorId: "door_xyz",
-    createdAt: "2025-09-22",
-  },
-];
-
-export const useRoom = () => {
+export const useRoom = (
+  roomId?: number,
+  themeId?: number,
+  initialType?: "private" | "public",
+  initialRoom?: RoomDetail | null,
+  draft?: Draft
+) => {
+  const { themes } = useThemeContext();
+  const { compactDraft } = useDraft(roomId!);
   const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
+  // Setting modal
+  const [isSettingOpen, setIsSettingOpen] = useState(false);
 
-  // cache lưu chi tiết các phòng đã load
-  const cacheRef = useRef<Record<number, RoomDetail>>({});
+  // load once từ props
+  useEffect(() => {
+    if (!roomId || !themeId) return;
 
-  const getRoomDetail = useCallback(async (roomId: number) => {
-    // 1. Kiểm tra cache trước
-    if (cacheRef.current[roomId]) {
-      setRoomDetail(cacheRef.current[roomId]);
-      return cacheRef.current[roomId];
-    }
-
-    try {
+    const fetchAndSetRoom = async () => {
       setLoading(true);
       setError(null);
 
-      // Mock data
-      const detail: RoomDetail = {
-        ...mockRooms.find((r) => r.id === roomId)!,
-        theme: {
-          id: 101,
-          themeName: "Cổ điển",
-          themePrice: 500,
-          wallUrl: require("../../assets/images/roomBg/room-wall.png"),
-          floorUrl: require("../../assets/images/roomBg/room-floor.png"),
-          createdAt: "2025-08-01",
-        },
-        items: [],
-      };
+      try {
+        // 1. Fetch room từ API
+        const room = await service.getRoom(roomId);
 
-      // 2. Lưu cache
-      cacheRef.current[roomId] = detail;
+        // 2. Tìm theme dựa vào themeId
+        const theme = themes.find((t) => t.id === themeId);
+        if (!theme) {
+          setError("Theme not found");
+          setRoomDetail(null);
+          return;
+        }
 
-      setRoomDetail(detail);
-      return detail;
-    } catch (err: any) {
-      setError(err.message || "Lỗi khi load phòng");
-      return null;
-    } finally {
-      setLoading(false);
+        // 3. Update roomDetail với theme và các thông tin cơ bản
+        const updatedRoom: RoomDetail = {
+          ...room,
+          theme,
+        };
+
+        setRoomDetail(updatedRoom);
+      } catch (err: any) {
+        setError(err.message || "Failed to load room");
+        setRoomDetail(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAndSetRoom();
+  }, [roomId, themeId, themes]);
+
+  // Setting controls
+  const openSetting = () => setIsSettingOpen(true);
+  const closeSetting = () => setIsSettingOpen(false);
+
+  // cập nhật type
+  const updateType = useCallback(
+    async (newType: "private" | "public") => {
+      if (!roomDetail) throw new Error("Room not loaded");
+
+      setUpdating(true);
+      setError(null);
+
+      const prev = roomDetail;
+      // optimistic update
+      setRoomDetail({ ...roomDetail, type: newType });
+
+      try {
+        await service.setRoomType(roomDetail.id, newType);
+      } catch (err: any) {
+        // rollback
+        setRoomDetail(prev);
+        setError(err.message || "Update failed");
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [roomDetail]
+  );
+
+  const exitToHall = async (hasChanges?: boolean) => {
+    try {
+      if (!initialRoom || !draft) {
+        router.replace("/hall");
+        return;
+      }
+
+      if (!hasChanges) {
+        // User chỉ xem room, không chỉnh sửa
+        router.replace("/hall");
+        return;
+      }
+
+      // Nếu có chỉnh sửa thì mới gọi save
+      const compacted = await compactDraft();
+      if (compacted) {
+        const appliedRoom = DraftManager.applyDraft(initialRoom, compacted);
+        await service.saveRoom(appliedRoom, compacted);
+      }
+      router.replace("/hall");
+    } catch (err) {
+      console.error("Save room failed:", err);
+      router.replace("/hall");
     }
-  }, []);
+  };
+
+  const handleSaveSetting = (type: "private" | "public") => {
+    updateType(type);
+    closeSetting();
+  };
 
   return {
-    rooms: mockRooms,
     roomDetail,
     loading,
     error,
-    getRoomDetail,
+    updating,
+    updateType,
+    exitToHall,
+
+    // Setting
+    isSettingOpen,
+    openSetting,
+    closeSetting,
+    handleSaveSetting,
   };
 };

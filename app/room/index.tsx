@@ -6,10 +6,16 @@ import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
+import RoomSetting from "@src/components/RoomSetting";
+import { useRoomDraftContext } from "@src/context/DraftContext";
+import { useRoomContext } from "@src/context/RoomContext";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useMemory } from "@src/hooks/useMemory";
+import { useRoom } from "@src/hooks/useRoom";
+import { RoomDetail } from "@src/types/room";
+import { isDraftChanged } from "@src/utils/draftUtils";
 import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -20,10 +26,26 @@ import {
 } from "react-native";
 
 const Room = () => {
+  const { roomId, themeId, type, mode } = useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
   const [scrollX, setScrollX] = useState(0);
+
+  const { draft, clearDraft, applyTo } = useRoomDraftContext();
+
+  const [effectiveRoom, setEffectiveRoom] = useState<RoomDetail | null>(null);
+  const {
+    roomDetail,
+    exitToHall,
+    isSettingOpen,
+    openSetting,
+    closeSetting,
+    handleSaveSetting,
+  } = useRoom(roomId, themeId, type, effectiveRoom, draft);
+
+  // clearDraft();
+  // console.log("Draft: ", draft);
 
   // Room dimensions - 3x wider than screen
   const roomWidth = screenWidth * 3;
@@ -33,11 +55,24 @@ const Room = () => {
     router.push("/store");
   };
 
+  useEffect(() => {
+    if (!roomDetail) return;
+
+    const handler = setTimeout(() => {
+      setEffectiveRoom(applyTo(roomDetail));
+    }, 200);
+
+    return () => clearTimeout(handler);
+  }, [roomDetail, draft, applyTo]);
+
+  const hasChanges = isDraftChanged(effectiveRoom!, draft);
+
+  // console.log("room detail: ", roomDetail);
+
   const {
     modalType,
     selectedMemory,
     placedItems,
-    placedItemMemories,
     closeModal,
     handleItemSelect,
     moveItem,
@@ -58,7 +93,13 @@ const Room = () => {
     showTrash,
     setShowTrash,
     activeFrameId,
-  } = useMemory(scrollX);
+    activeSlotId,
+    resolveMemory,
+  } = useMemory(roomId, scrollX, effectiveRoom?.items ?? [], mode);
+
+  if (!roomDetail) return null;
+
+  // console.log("placed items: ", placedItems);
 
   return (
     <View style={styles.container}>
@@ -87,15 +128,16 @@ const Room = () => {
               onMove={moveItem}
               bringToFront={bringToFront}
               onRotate={updateRotation}
-              onPress={() => handleFramePress(item.id)}
+              onPress={(frameId, slotId) => handleFramePress(frameId, slotId)}
               onDelete={removeItem}
               trashLayout={trashLayout}
               setTrashActive={setIsTrashActive}
               setShowTrash={setShowTrash}
-              memory={placedItemMemories[item.id]}
+              memoryResolver={resolveMemory}
               roomWidth={roomWidth}
               roomHeight={roomHeight}
               scrollX={scrollX}
+              mode={mode}
             />
           ))}
         </View>
@@ -106,18 +148,20 @@ const Room = () => {
         {/* Bottom UI */}
         <View style={styles.bottomContainer}>
           {/* Home */}
-          <Pressable
-            style={styles.icon}
-            onPress={() => {
-              router.replace("/hall");
-            }}
-          >
+          <Pressable style={styles.icon} onPress={() => exitToHall(hasChanges)}>
             <FontAwesome6 name="door-open" size={28} color="white" />
             <Text style={styles.textIcon}>Sảnh</Text>
           </Pressable>
 
-          {/* Menu */}
-          <RoomMenu onOpenInventory={openInventory} />
+          {mode !== "view" && (
+            <>
+              {/* Menu */}
+              <RoomMenu
+                onOpenInventory={openInventory}
+                onOpenSetting={openSetting}
+              />
+            </>
+          )}
         </View>
 
         {/* Trash (Fixed position) */}
@@ -155,11 +199,22 @@ const Room = () => {
         />
       )}
 
+      {isSettingOpen && (
+        <RoomSetting
+          visible={true}
+          onClose={closeSetting}
+          onSave={handleSaveSetting}
+          currentType={roomDetail.type}
+        />
+      )}
+
       {fontsLoaded && modalType === "add" && (
         <AddMemoryModal
           visible={true}
           onClose={closeModal}
           onSave={handleSaveMemory}
+          frameId={activeFrameId}
+          slotId={activeSlotId}
         />
       )}
 
@@ -171,6 +226,9 @@ const Room = () => {
           onUpdate={handleUpdateMemory}
           onDelete={handleDeleteMemory}
           onFrameRemoved={activeFrameId === null}
+          frameId={activeFrameId}
+          slotId={activeSlotId}
+          mode={mode}
         />
       )}
     </View>

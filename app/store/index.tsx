@@ -1,10 +1,10 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import CategoryFilterBar from "@src/components/CategoryFilterBar";
 import ConfirmBuyModal from "@src/components/ConfirmModal";
 import CustomAlert from "@src/components/CustomAlert";
 import ExitShopButton from "@src/components/ExitShopButton";
 import ItemDetail from "@src/components/ItemDetail";
 import ShopItemList from "@src/components/ShopItemList";
+import { useInventory as useInventoryContext } from "@src/context/InventoryContext";
 import { useInventory } from "@src/hooks/useInventories";
 import { useInventoryItems } from "@src/hooks/useInventoryItems";
 import { useWallet } from "@src/hooks/useWallet";
@@ -19,11 +19,13 @@ const Shop = () => {
   const { inventoryId, loading, error } = useInventory();
   const { addItemToInventory } = useInventoryItems();
   const [showAlert, setShowAlert] = useState(false);
+  const { refreshInventory } = useInventoryContext();
 
   const handleAdd = async () => {
     const result = await addItemToInventory(inventoryId, selectedItem?.id, 1);
     const deductResult = await deductWallet(selectedItem?.puzzle_price);
     if (result && deductResult.success) {
+      await refreshInventory();
       setShowAlert(true);
     } // 🔹 hiện alert khi thành công }
   };

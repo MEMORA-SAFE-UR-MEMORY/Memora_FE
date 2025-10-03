@@ -11,6 +11,7 @@ import SettingModal from "@src/components/SettingModal";
 
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
+
 import { router } from "expo-router";
 import { Menu } from "lucide-react-native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -25,6 +26,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fetchRandomPublicRoom } from "services/rooms/api";
 import { useRooms } from "services/rooms/hook";
+
 import { useDeleteAccount } from "services/users/hook";
 import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
@@ -198,15 +200,14 @@ export default function HallScreen() {
         console.warn("No public rooms available");
         return;
       }
-      router.replace({
-        pathname: "/room",
-        params: {
-          roomId: String(r.roomId),
-          themeId: String(r.themeId),
-          type: r.type ?? "public",
-          mode: "view",
-        },
-      });
+      const params = {
+        roomId: String(r.roomId),
+        themeId: String(r.themeId),
+        type: r.type ?? "public",
+        mode: "view" as const,
+      };
+      console.log("[Home] Explore -> params:", params);
+      router.replace({ pathname: "/room", params });
     } catch (e) {
       console.log("Explore random failed:", e);
     }

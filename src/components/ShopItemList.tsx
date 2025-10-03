@@ -50,7 +50,6 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
   }, [items, category, themes]);
 
   const renderItem = ({ item }: any) => {
-    console.log(item);
     if (item.theme_id !== null) {
       return (
         <TouchableOpacity
