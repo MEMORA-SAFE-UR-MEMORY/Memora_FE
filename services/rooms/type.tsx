@@ -16,4 +16,5 @@ export type Room = {
   user_id: string;
   door_id: number | null;
   door?: Door;
+  type?: string;
 };

@@ -2,16 +2,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import GoldShineButton from "@src/components/GoldShineButton";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import IntoHouseButton from "@src/components/inHome/intoHouseButton";
-import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
+
 import { router } from "expo-router";
+import { Menu } from "lucide-react-native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
@@ -22,7 +24,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRooms } from "@src/services/rooms/hook";
+import { fetchRandomPublicRoom } from "services/rooms/api";
+import { useRooms } from "services/rooms/hook";
+
 import { useDeleteAccount } from "services/users/hook";
 import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
@@ -189,6 +193,26 @@ export default function HallScreen() {
     []
   );
 
+  const handleExploreRandom = useCallback(async () => {
+    try {
+      const r = await fetchRandomPublicRoom();
+      if (!r) {
+        console.warn("No public rooms available");
+        return;
+      }
+      const params = {
+        roomId: String(r.roomId),
+        themeId: String(r.themeId),
+        type: r.type ?? "public",
+        mode: "view" as const,
+      };
+      console.log("[Home] Explore -> params:", params);
+      router.replace({ pathname: "/room", params });
+    } catch (e) {
+      console.log("Explore random failed:", e);
+    }
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       {/* ============ DANH SÁCH CỬA ============ */}
@@ -232,7 +256,7 @@ export default function HallScreen() {
             />
           </TouchableOpacity>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <PremiumButton onPress={() => console.log("Go to premium")} />
+            {/* <PremiumButton onPress={() => console.log("Go to premium")} /> */}
             <View
               style={{
                 height: 34,
@@ -275,10 +299,31 @@ export default function HallScreen() {
                 {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
               </Text>
             </View>
+
+            {/* Hamburger to open settings modal */}
+            <TouchableOpacity
+              style={{ marginLeft: 12, borderRadius: 50, elevation: 3 }}
+              onPress={() => setSettingVisible(true)}
+            >
+              <View
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Menu size={20} color="#663530" />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Nút cửa hàng + cài đặt */}
+        {/* Nút cửa hàng*/}
         <View
           style={{
             flexDirection: "row",
@@ -380,6 +425,7 @@ export default function HallScreen() {
               </Text>
             )}
           </View>
+
           {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
@@ -420,47 +466,12 @@ export default function HallScreen() {
               Cửa hàng
             </Text>
           </View>
-
-          {/* CÀI ĐẶT */}
-          <View style={{ alignItems: "center" }}>
-            <TouchableOpacity
-              style={{
-                borderRadius: 50,
-                overflow: "hidden",
-                marginBottom: -5,
-                elevation: 4,
-              }}
-              onPress={() => setSettingVisible(true)}
-            >
-              <View
-                style={{
-                  backgroundColor: "#663530",
-                  borderColor: "#663530",
-                  borderWidth: 2,
-                  padding: 7,
-                  borderRadius: 50,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Image
-                  source={require("../../assets/icons/setting.png")}
-                  style={{ width: 24, height: 24 }}
-                  resizeMode="contain"
-                />
-              </View>
-            </TouchableOpacity>
-            <Text
-              style={{
-                color: "#663530",
-                fontSize: 14,
-                fontFamily: "Baloo2_bold",
-                textAlign: "center",
-              }}
-            >
-              Cài đặt
-            </Text>
-          </View>
+          {/* Khám phá (gold shine) */}
+          <GoldShineButton
+            label="Khám phá"
+            iconSource={require("../../assets/icons/discovery.png")}
+            onPress={handleExploreRandom}
+          />
         </View>
       </View>
 
