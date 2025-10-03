@@ -8,9 +8,10 @@ import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
 type RoomMenuProps = {
   onOpenInventory: () => void;
+  onOpenSetting: () => void;
 };
 
-const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
+const RoomMenu = ({ onOpenInventory, onOpenSetting }: RoomMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const openStore = () => {
@@ -79,6 +80,13 @@ const RoomMenu = ({ onOpenInventory }: RoomMenuProps) => {
           <MaterialIcons name="inventory" size={35} color="white" />
           <Text style={styles.textIcon}>Tủ đồ</Text>
         </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable style={styles.icon} onPress={onOpenSetting}>
+          <Ionicons name="settings-sharp" size={35} color="white" />
+          <Text style={styles.textIcon}>Cài đặt</Text>
+        </Pressable>
       </Animated.View>
     </View>
   );
@@ -112,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    width: 240,
+    width: 250,
     paddingRight: 20,
   },
   divider: {

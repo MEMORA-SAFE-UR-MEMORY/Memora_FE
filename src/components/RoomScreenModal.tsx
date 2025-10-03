@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useDoors } from "services/rooms/hook";
-import { Door } from "services/rooms/type";
+import { useDoors } from "@src/services/rooms/hook";
+import { Door } from "@src/services/rooms/type";
 import { useUserThemes } from "services/userThemes/hook";
 
 type Props = {

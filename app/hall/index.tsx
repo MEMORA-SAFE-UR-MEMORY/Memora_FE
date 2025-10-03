@@ -22,7 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRooms } from "services/rooms/hook";
+import { useRooms } from "@src/services/rooms/hook";
 import { useDeleteAccount } from "services/users/hook";
 import { useDailyReward, useWalletGet } from "services/wallet/hook";
 

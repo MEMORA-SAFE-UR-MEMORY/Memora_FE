@@ -1,4 +1,3 @@
-import { Entypo } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -50,7 +49,8 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
         contentContainerStyle={styles.categoryContainer}
       >
         {categories.map((category) => {
-          const IconComponent = iconComponents[category.iconPackage];
+          const IconComponent =
+            iconComponents[category.iconPackage] || MaterialIcons;
           const isSelected = selectedCategory === category.id;
 
           return (
@@ -63,7 +63,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
                 style={[isSelected ? styles.iconWrapper : styles.iconContainer]}
               >
                 <IconComponent
-                  name={category.iconName}
+                  name={category.iconName || "help-outline"}
                   size={27}
                   color="white"
                 />
@@ -87,8 +87,8 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
       </ScrollView>
 
       {/* Nút play */}
-      <Pressable
-        style={{ alignSelf: "center", marginLeft: 5, marginBottom: 20, }}
+      {/* <Pressable
+        style={{ alignSelf: "center", marginLeft: 5, marginBottom: 20 }}
         onPress={handleScrollRight}
       >
         <View style={{ position: "relative" }}>
@@ -100,7 +100,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
             style={{ position: "absolute", top: 2, left: 1.9 }}
           />
         </View>
-      </Pressable>
+      </Pressable> */}
     </View>
   );
 };

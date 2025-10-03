@@ -89,7 +89,7 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
         ]}
         disabled={item.quantity === 0}
       >
-        <Image source={item.item.imageUrl} style={styles.cardImage} />
+        <Image source={{ uri: item.item.imageUrl }} style={styles.cardImage} />
         <Text
           style={[
             styles.quantityText,
@@ -196,7 +196,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
   },
   cardContainer: {
     flex: 1,
