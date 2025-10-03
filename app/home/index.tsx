@@ -118,7 +118,9 @@ export default function HomeScreen() {
         }}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.replace({ pathname: "/admin" })}
+        >
           <BlurBox
             h={50}
             title={userData?.username ?? "Guest"}
@@ -379,6 +381,7 @@ export default function HomeScreen() {
             Cửa hàng
           </Text>
         </View>
+
         {/* =============================== */}
         <View style={{ alignItems: "center" }}>
           <TouchableOpacity
