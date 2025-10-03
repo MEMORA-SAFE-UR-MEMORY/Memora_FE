@@ -18,81 +18,143 @@ const loadIntoMemory = async (roomId: number) => {
   return d ?? null;
 };
 
+// 🧹 compactDraft: dọn sạch patch thừa
+function compactDraft(draft: Draft) {
+  const state: Record<number, any> = {}; // trạng thái cuối của từng item
+  const removed: Set<number> = new Set();
+
+  for (const p of draft.patches) {
+    const id = (p as any).itemId ?? (p as any).roomItemId;
+    if (!id) continue;
+
+    if (p.op === "removeItem") {
+      delete state[id];
+      removed.add(id);
+      continue;
+    }
+
+    if (!state[id]) {
+      if (p.op === "addItem") {
+        state[id] = { ...p }; // khởi tạo item mới
+      }
+      continue; // bỏ patch lẻ không có addItem trước
+    }
+
+    switch (p.op) {
+      case "moveItem":
+        state[id].x = p.x;
+        state[id].y = p.y;
+        state[id].zIndex = p.zIndex;
+        break;
+      case "rotateItem":
+        state[id].rotation = p.rotation;
+        break;
+      case "setSlotMemory":
+      case "updateSlotMemory":
+        state[id].slotMemories = {
+          ...(state[id].slotMemories ?? {}),
+          [p.slotId]: p.memoryId,
+        };
+        break;
+      case "deleteSlotMemory":
+        if (state[id].slotMemories) {
+          delete state[id].slotMemories[p.slotId];
+        }
+        break;
+    }
+  }
+
+  // build lại patches gọn nhất
+  const newPatches: DraftOp[] = [];
+  for (const [id, st] of Object.entries(state)) {
+    if (removed.has(Number(id))) continue;
+    const { slotMemories, ...base } = st;
+    newPatches.push(base as DraftOp);
+
+    if (slotMemories) {
+      for (const [slotId, memId] of Object.entries(slotMemories)) {
+        newPatches.push({
+          op: "setSlotMemory",
+          roomItemId: Number(id),
+          slotId: Number(slotId),
+          memoryId: memId as number | null,
+        });
+      }
+    }
+  }
+
+  draft.patches = newPatches;
+}
+
 const persistRoomDraft = async (roomId: number) => {
-  if (inMemoryDrafts[roomId]) {
-    await saveDraft(roomId, inMemoryDrafts[roomId]);
+  const draft = inMemoryDrafts[roomId];
+  if (draft) {
+    compactDraft(draft); // cleanup trước khi lưu
+    await saveDraft(roomId, draft);
   } else {
     await removeDraft(roomId);
   }
 };
 
-// squash rules: merge sequential ops when applicable
 const trySquash = (draft: Draft, patch: DraftOp) => {
-  const last = draft.patches[draft.patches.length - 1];
-  if (!last) return false;
+  const patches = draft.patches;
 
-  // moveItem squash
-  if (
-    patch.op === "moveItem" &&
-    last.op === "moveItem" &&
-    last.itemId === patch.itemId
-  ) {
-    (last as any).x = patch.x;
-    (last as any).y = patch.y;
-    return true;
-  }
+  switch (patch.op) {
+    case "moveItem": {
+      const { itemId } = patch as any;
+      draft.patches = patches.filter(
+        (p) => !(p.op === "moveItem" && (p as any).itemId === itemId)
+      );
+      draft.patches.push(patch);
+      return true;
+    }
 
-  // rotateItem squash
-  if (
-    patch.op === "rotateItem" &&
-    last.op === "rotateItem" &&
-    last.itemId === patch.itemId
-  ) {
-    (last as any).rotation = (patch as any).rotation;
-    return true;
-  }
+    case "rotateItem": {
+      const { itemId } = patch as any;
+      draft.patches = patches.filter(
+        (p) => !(p.op === "rotateItem" && (p as any).itemId === itemId)
+      );
+      draft.patches.push(patch);
+      return true;
+    }
 
-  // setSlotMemory squash
-  if (
-    patch.op === "setSlotMemory" &&
-    last.op === "setSlotMemory" &&
-    (last as any).roomItemId === (patch as any).roomItemId &&
-    (last as any).slotId === (patch as any).slotId
-  ) {
-    (last as any).memoryId = (patch as any).memoryId;
-    return true;
-  }
+    case "setSlotMemory": {
+      const { roomItemId, slotId } = patch as any;
+      draft.patches = patches.filter(
+        (p) =>
+          !(
+            p.op === "setSlotMemory" &&
+            (p as any).roomItemId === roomItemId &&
+            (p as any).slotId === slotId
+          )
+      );
+      draft.patches.push(patch);
+      return true;
+    }
 
-  // updateSlotMemory squash
-  if (
-    patch.op === "updateSlotMemory" &&
-    last.op === "updateSlotMemory" &&
-    (last as any).roomItemId === (patch as any).roomItemId &&
-    (last as any).slotId === (patch as any).slotId
-  ) {
-    (last as any).memoryId = (patch as any).memoryId;
-    return true;
-  }
+    case "updateSlotMemory": {
+      const { roomItemId, slotId } = patch as any;
+      draft.patches = patches.filter(
+        (p) =>
+          !(
+            (p.op === "setSlotMemory" || p.op === "updateSlotMemory") &&
+            (p as any).roomItemId === roomItemId &&
+            (p as any).slotId === slotId
+          )
+      );
+      draft.patches.push(patch);
+      return true;
+    }
 
-  // setSlotMemory + updateSlotMemory squash
-  if (
-    patch.op === "updateSlotMemory" &&
-    last.op === "setSlotMemory" &&
-    last.roomItemId === patch.roomItemId &&
-    last.slotId === patch.slotId
-  ) {
-    last.memoryId = patch.memoryId;
-    return true;
-  }
-
-  // addItem + removeItem squash
-  if (
-    patch.op === "removeItem" &&
-    last.op === "addItem" &&
-    last.itemId === patch.itemId
-  ) {
-    draft.patches.pop(); // xoá addItem
-    return true;
+    case "removeItem": {
+      const { itemId } = patch as any;
+      draft.patches = patches.filter(
+        (p) =>
+          !((p as any).itemId === itemId || (p as any).roomItemId === itemId)
+      );
+      draft.patches.push(patch);
+      return true;
+    }
   }
 
   return false;
@@ -112,11 +174,9 @@ export const DraftManager = {
 
     draft.lastEdited = nowISO();
 
-    // nếu là addItem mà chưa có id thì tạo tempId
-    if (patch.op === "addItem") {
-      if (!patch.itemId) {
-        (patch as any).itemId = generateTempId();
-      }
+    // addItem → đảm bảo có tempId
+    if (patch.op === "addItem" && !patch.itemId) {
+      (patch as any).itemId = generateTempId();
     }
 
     const squashed = trySquash(draft, patch);
@@ -124,10 +184,8 @@ export const DraftManager = {
 
     inMemoryDrafts[roomId] = draft;
 
-    // debounce persist xuống AsyncStorage
-    if (saveTimers[roomId]) {
-      clearTimeout(saveTimers[roomId] as any);
-    }
+    // debounce persist
+    if (saveTimers[roomId]) clearTimeout(saveTimers[roomId] as any);
     saveTimers[roomId] = setTimeout(async () => {
       await persistRoomDraft(roomId);
       saveTimers[roomId] = null;
@@ -208,12 +266,11 @@ export const DraftManager = {
           });
           break;
         }
-
-        default:
-          break;
       }
     }
 
     return result;
   },
+
+  compactDraft,
 };

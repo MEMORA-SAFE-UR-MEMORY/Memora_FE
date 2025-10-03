@@ -1,6 +1,18 @@
 import * as api from "@src/apis/roomApi";
 import { roomRepo } from "@src/repositories/roomRepo";
-import { Room, RoomType } from "@src/types/room";
+import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
+
+/** Lấy room, ưu tiên cache, fallback API */
+export async function getRoom(roomId: number): Promise<Room> {
+  const cached = await roomRepo.getFromCache(roomId);
+  if (cached) return cached;
+
+  const remote = await api.fetchRoomById(roomId);
+  if (!remote) throw new Error("Room not found");
+
+  await roomRepo.saveToCache(remote);
+  return remote;
+}
 
 /**
  * Cập nhật room.type
@@ -43,4 +55,10 @@ export async function toggleRoomType(roomId: number): Promise<Room> {
 
   const newType: RoomType = currentType === "private" ? "public" : "private";
   return setRoomType(roomId, newType);
+}
+
+/** Lưu room + draft lên Supabase và xóa draft */
+export async function saveRoom(room: RoomDetail, draft: Draft) {
+  const result = await api.saveRoomToSupabase(room, draft);
+  return result;
 }

@@ -1,15 +1,20 @@
 import { useThemeContext } from "@src/context/ThemeContext";
+import { useDraft } from "@src/hooks/useDraft";
+import { DraftManager } from "@src/services/draftService";
 import * as service from "@src/services/roomService";
-import { RoomDetail } from "@src/types/room";
+import { Draft, RoomDetail } from "@src/types/room";
+import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
 export const useRoom = (
-  roomId: number,
-  themeId: number,
-  initialType: "private" | "public"
+  roomId?: number,
+  themeId?: number,
+  initialType?: "private" | "public",
+  initialRoom?: RoomDetail | null,
+  draft?: Draft
 ) => {
   const { themes } = useThemeContext();
-
+  const { compactDraft } = useDraft(roomId!);
   const [roomDetail, setRoomDetail] = useState<RoomDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +37,7 @@ export const useRoom = (
       roomName: "", // nếu cần thì thêm sau
       userId: "", // nếu cần thì thêm sau
       doorId: "",
-      type: initialType,
+      type: initialType ?? "private",
       createdAt: new Date().toISOString(),
       theme,
       items: [],
@@ -73,5 +78,40 @@ export const useRoom = (
     return updateType(newType);
   }, [roomDetail, updateType]);
 
-  return { roomDetail, loading, error, updating, updateType, toggleType };
+  const exitToHall = async (hasChanges?: boolean) => {
+    try {
+      if (!initialRoom || !draft) {
+        router.replace("/hall");
+        return;
+      }
+
+      if (!hasChanges) {
+        // User chỉ xem room, không chỉnh sửa
+        router.replace("/hall");
+        return;
+      }
+
+      // Nếu có chỉnh sửa thì mới gọi save
+      const compacted = compactDraft();
+      if (compacted) {
+        console.log("compated", compacted);
+        const appliedRoom = DraftManager.applyDraft(initialRoom, compacted);
+        await service.saveRoom(appliedRoom, compacted);
+      }
+      router.replace("/hall");
+    } catch (err) {
+      console.error("Save room failed:", err);
+      router.replace("/hall");
+    }
+  };
+
+  return {
+    roomDetail,
+    loading,
+    error,
+    updating,
+    updateType,
+    toggleType,
+    exitToHall,
+  };
 };

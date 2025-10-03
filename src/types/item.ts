@@ -1,5 +1,4 @@
 import { FrameSlot, SlotMemoryMap } from "@src/types/frame";
-import { ImageSourcePropType } from "react-native";
 
 export type Dimension = {
   id: number;
@@ -10,10 +9,10 @@ export type Dimension = {
 export type Item = {
   id: number;
   name: string;
-  puzzlePrice: number;
+  puzzlePrice?: number;
   categoryId: number;
-  type: string;
-  imageUrl: ImageSourcePropType;
+  type?: string;
+  imageUrl: string;
   dimension: Dimension;
   slots?: FrameSlot[];
   themeId?: number;

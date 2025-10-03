@@ -18,6 +18,7 @@ export type SlotShape =
     };
 
 export interface FrameSlot {
+  id: number;
   slotId: number;
   x: number;
   y: number;

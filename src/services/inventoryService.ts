@@ -1,9 +1,13 @@
-import { InventoryItem } from "@src/types/item";
 import { InventoryRepo } from "@src/repositories/inventoryRepo";
+import { InventoryItem } from "@src/types/item";
 
 export const InventoryService = {
-  initItems: (items: InventoryItem[]) => {
-    InventoryRepo.setItems(items);
+  async initByUser(userId: string | null): Promise<InventoryItem[]> {
+    if (!userId) {
+      console.warn("initByUser called with null userId");
+      return [];
+    }
+    return await InventoryRepo.loadByUser(userId);
   },
 
   getItemById: (id: number): InventoryItem | undefined => {
@@ -14,17 +18,19 @@ export const InventoryService = {
     return InventoryRepo.getAll();
   },
 
-  decreaseQuantity: (itemId: number) => {
+  decreaseQuantity: async (itemId: number) => {
     const item = InventoryRepo.getItemById(itemId);
     if (item && item.quantity > 0) {
-      InventoryRepo.updateQuantity(itemId, item.quantity - 1);
+      InventoryRepo.updateCacheQuantity(itemId, item.quantity - 1);
+      await InventoryRepo.updateQuantity(itemId, item.quantity - 1);
     }
   },
 
-  increaseQuantity: (itemId: number) => {
+  increaseQuantity: async (itemId: number) => {
     const item = InventoryRepo.getItemById(itemId);
     if (item) {
-      InventoryRepo.updateQuantity(itemId, item.quantity + 1);
+      InventoryRepo.updateCacheQuantity(itemId, item.quantity + 1);
+      await InventoryRepo.updateQuantity(itemId, item.quantity + 1);
     }
   },
 };

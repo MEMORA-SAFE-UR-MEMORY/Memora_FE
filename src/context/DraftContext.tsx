@@ -1,5 +1,5 @@
 import { useDraft } from "@src/hooks/useDraft";
-import { RoomDetail } from "@src/types/room";
+import { Draft, RoomDetail } from "@src/types/room";
 import React, { createContext, useContext } from "react";
 
 type RoomDraftContextValue = {
@@ -7,6 +7,7 @@ type RoomDraftContextValue = {
   applyTo: (room: RoomDetail) => RoomDetail;
   savePatch: (patch: any) => Promise<void>;
   clearDraft: () => Promise<void>;
+  compactDraft: () => Draft | null;
 };
 
 const RoomDraftContext = createContext<RoomDraftContextValue | null>(null);

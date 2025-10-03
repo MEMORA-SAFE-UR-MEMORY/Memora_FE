@@ -14,6 +14,14 @@ export const useDraft = (roomId: number) => {
     load();
   }, [roomId]);
 
+  const compact = useCallback((): Draft | null => {
+    if (!draft) return null;
+    DraftManager.compactDraft(draft);
+    const newDraft = { ...draft };
+    setDraft(newDraft);
+    return newDraft;
+  }, [draft]);
+
   // save patch
   const savePatch = useCallback(
     async (patch: any) => {
@@ -30,7 +38,7 @@ export const useDraft = (roomId: number) => {
     setDraft(null);
   }, [roomId]);
 
-  // applyTo 
+  // applyTo
   const applyTo = useCallback(
     (room: RoomDetail) => {
       if (!draft) return room;
@@ -44,5 +52,6 @@ export const useDraft = (roomId: number) => {
     savePatch,
     clearDraft,
     applyTo,
+    compactDraft: compact,
   };
 };

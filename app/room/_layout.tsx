@@ -1,6 +1,5 @@
 import RoomBg from "@src/components/RoomBg";
 import { RoomDraftProvider } from "@src/context/DraftContext";
-import { InventoryProvider } from "@src/context/InventoryContext";
 import { RoomProvider } from "@src/context/RoomContext";
 import { useRoom } from "@src/hooks/useRoom";
 import { RoomType } from "@src/types/room";
@@ -49,20 +48,18 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <RoomProvider roomId={roomIdNum} themeId={themeIdNum} type="private">
           <RoomDraftProvider roomId={roomIdNum}>
-            <InventoryProvider>
-              <RoomBg
-                wallUrl={roomDetail.theme.wallUrl}
-                floorUrl={roomDetail.theme.floorUrl}
-              >
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: "transparent" },
-                    animation: "fade",
-                  }}
-                />
-              </RoomBg>
-            </InventoryProvider>
+            <RoomBg
+              wallUrl={roomDetail.theme.wallUrl}
+              floorUrl={roomDetail.theme.floorUrl}
+            >
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: "transparent" },
+                  animation: "fade",
+                }}
+              />
+            </RoomBg>
           </RoomDraftProvider>
         </RoomProvider>
       </SafeAreaProvider>

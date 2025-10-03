@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useThemeRealtime } from "@src/hooks/useThemeRealTime";
 import * as themeService from "@src/services/themeService";
 import { Theme } from "@src/types/theme";
@@ -33,7 +32,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const data = await themeService.getThemes();
       setThemes(data);
-      console.log("theme: ", data);
+      // console.log("theme: ", data);
     } catch (err: any) {
       setError(err.message || "Lỗi khi load themes");
     } finally {
@@ -47,8 +46,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [loadThemes]);
 
   // realtime listener: khi supabase có thay đổi thì gọi setThemes
-  useThemeRealtime((updated) => {
-    setThemes(updated);
+  useThemeRealtime(() => {
+    console.log("[ThemeProvider] Theme changed -> reload");
+    loadThemes();
   });
 
   const value: ThemeContextValue = {

@@ -1,14 +1,17 @@
-import { themeRepo } from "@src/repositories/themeRepo";
 import { fetchAllThemes } from "@src/apis/themeApi";
+import { themeRepo } from "@src/repositories/themeRepo";
 import { Theme } from "@src/types/theme";
 
-export async function getThemes(forceRefresh = false): Promise<Theme[]> {
-  if (!forceRefresh) {
+export async function getThemes(): Promise<Theme[]> {
+  try {
+    // luôn fetch từ server
+    const remote = await fetchAllThemes();
+    await themeRepo.saveThemes(remote); // vẫn lưu cache để offline dùng
+    return remote;
+  } catch (err) {
+    console.warn("getThemes: fetch remote failed, fallback cache", err);
+    // fallback cache nếu online fetch fail
     const cached = await themeRepo.getThemes();
-    if (cached) return cached;
+    return cached ?? [];
   }
-
-  const remote = await fetchAllThemes();
-  await themeRepo.saveThemes(remote);
-  return remote;
 }

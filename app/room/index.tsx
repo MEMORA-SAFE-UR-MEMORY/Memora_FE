@@ -12,6 +12,7 @@ import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useMemory } from "@src/hooks/useMemory";
 import { useRoom } from "@src/hooks/useRoom";
 import { RoomDetail } from "@src/types/room";
+import { isDraftChanged } from "@src/utils/draftUtils";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -31,8 +32,16 @@ const Room = () => {
   const [scrollX, setScrollX] = useState(0);
 
   const { draft, clearDraft, applyTo } = useRoomDraftContext();
-  const { roomDetail } = useRoom(roomId, 2, "private");
+
   const [effectiveRoom, setEffectiveRoom] = useState<RoomDetail | null>(null);
+  const { roomDetail, exitToHall } = useRoom(
+    roomId,
+    themeId,
+    type,
+    effectiveRoom,
+    draft
+  );
+
   // clearDraft();
   console.log("Draft: ", draft);
 
@@ -49,6 +58,8 @@ const Room = () => {
       setEffectiveRoom(applyTo(roomDetail));
     }
   }, [roomDetail, applyTo]);
+
+  const hasChanges = isDraftChanged(effectiveRoom!, draft);
 
   const {
     modalType,
@@ -81,7 +92,7 @@ const Room = () => {
 
   if (!roomDetail) return null;
 
-  console.log("room detail: ", effectiveRoom);
+  // console.log("placed items: ", placedItems);
 
   return (
     <View style={styles.container}>
@@ -129,12 +140,7 @@ const Room = () => {
         {/* Bottom UI */}
         <View style={styles.bottomContainer}>
           {/* Home */}
-          <Pressable
-            style={styles.icon}
-            onPress={() => {
-              router.replace("/hall");
-            }}
-          >
+          <Pressable style={styles.icon} onPress={() => exitToHall(hasChanges)}>
             <FontAwesome6 name="door-open" size={28} color="white" />
             <Text style={styles.textIcon}>Sảnh</Text>
           </Pressable>

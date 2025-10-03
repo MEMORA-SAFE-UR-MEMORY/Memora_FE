@@ -222,8 +222,6 @@ const PlacedFrame = ({
     }
   };
 
-  
-
   useEffect(() => {
     translationX.value = item.x ?? 0;
     translationY.value = item.y ?? 0;
@@ -252,7 +250,7 @@ const PlacedFrame = ({
             )}
             <Pressable onPress={handlePress} style={{ flex: 1 }}>
               <Image
-                source={item.item.imageUrl}
+                source={{ uri: item.item.imageUrl }}
                 style={[styles.itemImage]}
                 resizeMode="contain"
               />
@@ -277,7 +275,7 @@ const PlacedFrame = ({
               ))}
               <View style={styles.frameImage} pointerEvents="none">
                 <Image
-                  source={item.item.imageUrl}
+                  source={{ uri: item.item.imageUrl }}
                   style={styles.frameImage}
                   resizeMode="contain"
                 />
