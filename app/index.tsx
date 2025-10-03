@@ -97,7 +97,7 @@ export default function Home() {
             alignItems: "flex-end",
           }}
         >
-          <TouchableOpacity onPress={handlePopUp()}>
+          <TouchableOpacity onPress={handlePopUp}>
             <BlurBox
               h={43}
               w={259}
