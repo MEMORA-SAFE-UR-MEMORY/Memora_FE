@@ -45,7 +45,9 @@ export async function fetchRoomsByUser(userId: string): Promise<Room[]> {
     return {
       id: r.id,
       room_name: r.room_name,
-      theme_id: r.theme_id,
+      // Map to actual themes.id; keep rooms.theme_id in user_theme_id
+      theme_id: r.user_theme?.theme_id ?? null,
+      user_theme_id: r.theme_id ?? null,
       created_at: r.created_at,
       user_id: r.user_id,
       door_id: r.door_id ?? null,
@@ -63,7 +65,7 @@ export async function createRoom(payload: {
   const { data, error } = await supabase
     .from("rooms")
     .insert([payload])
-    // Select minimal columns only to speed up insert response
+
     .select("id, room_name, theme_id, created_at, user_id, door_id")
     .single();
 
@@ -71,8 +73,8 @@ export async function createRoom(payload: {
 
   console.log("createRoom raw:", data);
 
-  // If a specific door was chosen (default theme), fetch its details once for immediate UI rendering
   let door: Door | undefined = undefined;
+  let actualThemeId: number | null = null;
   if (data?.door_id) {
     const { data: doorRow, error: doorErr } = await supabase
       .from("doors")
@@ -82,23 +84,30 @@ export async function createRoom(payload: {
     if (!doorErr && doorRow) {
       door = doorRow as Door;
     }
-  } else if (data?.theme_id) {
-    // Otherwise, if selected user_theme has a predefined door via its linked theme, use it
+  }
+
+  if (data?.theme_id) {
     const { data: utRow, error: utErr } = await supabase
       .from("user_themes")
       .select(
-        `theme:themes ( door_id, door:doors ( id, img_url, created_at, color_hex ) )`
+        `theme_id, theme:themes ( door_id, door:doors ( id, img_url, created_at, color_hex ) )`
       )
       .eq("id", data.theme_id)
       .single();
     const ut: any = utRow as any;
-    if (!utErr && ut?.theme?.door) {
-      door = ut.theme.door as Door;
+    if (!utErr) {
+      actualThemeId = ut?.theme_id ?? null;
+
+      if (!door && ut?.theme?.door) {
+        door = ut.theme.door as Door;
+      }
     }
   }
 
   return {
     ...(data as any),
+    theme_id: actualThemeId ?? null,
+    user_theme_id: data?.theme_id ?? null,
     door,
   } as Room;
 }

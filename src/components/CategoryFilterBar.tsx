@@ -64,8 +64,9 @@ const CategoryFilterBar = ({
                   <Text
                     style={{
                       color: "#D6B7FF",
-                      marginTop: 4,
+                      marginTop: 0,
                       fontSize: 14,
+                      fontFamily: "Baloo2-SemiBold",
                     }}
                   >
                     {cat.name}

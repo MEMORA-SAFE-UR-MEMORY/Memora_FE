@@ -31,10 +31,6 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
     fetchThemes();
   }, [fetchItems, fetchThemes]);
 
-  console.log(themes);
-
-  console.log(items);
-
   const filteredItems = useMemo(() => {
     if (category === 3) {
       return themes.map((t) => ({
@@ -124,6 +120,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
     color: "#444",
+    fontFamily: "Baloo2-SemiBold",
   },
   themeImage: {
     backgroundColor: "#F0F0F0",

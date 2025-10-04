@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "semibold",
+    fontFamily: "Baloo2-SemiBold",
   },
   disabled: {
     backgroundColor: "#d3d3d3",

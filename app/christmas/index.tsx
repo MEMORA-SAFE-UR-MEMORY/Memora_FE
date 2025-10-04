@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { ShoppingCart, Gift, Star } from "lucide-react-native";
+import { useThemes } from "@src/hooks/useThemes";
 
 // Update dimensions constants
 const { width, height } = Dimensions.get("window");
@@ -23,36 +24,19 @@ const Christmas = () => {
   const { items, fetchItems } = useItems();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const { themes, fetchThemes } = useThemes();
 
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    fetchThemes();
+  }, [fetchItems, fetchThemes]);
 
   // Lọc item có theme_id = 2 (Giáng Sinh)
   const christmasItems =
     items?.filter((item: any) => item.theme_id === 2) || [];
 
-  const handleBuyTheme = () => {
-    Alert.alert(
-      "🎄 Christmas Theme Purchase",
-      "Do you want to buy the complete Christmas theme collection?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Buy Now - $4.99",
-          onPress: () => {
-            // Implement purchase logic here
-            Alert.alert(
-              "Success!",
-              "Christmas theme purchased successfully! 🎅"
-            );
-          },
-        },
-      ]
-    );
+  const handleBuyTheme = async () => {
+    console.log("object");
   };
 
   const renderItem = ({ item, index }: any) => (
@@ -95,7 +79,7 @@ const Christmas = () => {
           style={{
             backgroundColor: "rgba(255,255,255,0.8)",
             borderRadius: 20,
-            padding: 30, // Increased from 20
+            padding: 30,
             borderWidth: 3,
             borderColor: "#E53935",
           }}
@@ -103,8 +87,8 @@ const Christmas = () => {
           <Image
             source={{ uri: item.item_image_path }}
             style={{
-              width: 180, // Increased from 140
-              height: 180, // Increased from 140
+              width: 100, // Increased from 140
+              height: 100, // Increased from 140
             }}
             resizeMode="contain"
           />
@@ -193,194 +177,173 @@ const Christmas = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF8F0" }}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#D32F2F", "#F44336"]}
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      style={{ backgroundColor: "white" }}
+    >
+      {/* Header */}
+      <LinearGradient
+        colors={["#D32F2F", "#F44336"]}
+        style={{
+          paddingVertical: 30,
+          paddingHorizontal: 20,
+          alignItems: "center",
+        }}
+      >
+        <Text
           style={{
-            paddingVertical: 30,
-            paddingHorizontal: 20,
-            alignItems: "center",
+            fontSize: 28,
+            fontWeight: "bold",
+            color: "white",
+            textAlign: "center",
+            marginBottom: 8,
           }}
         >
-          <Text
-            style={{
-              fontSize: 28,
-              fontWeight: "bold",
-              color: "white",
-              textAlign: "center",
-              marginBottom: 8,
-            }}
-          >
-            🎅 Bộ sưu tập Giáng sinh 🎄
-          </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              color: "rgba(255,255,255,0.9)",
-              textAlign: "center",
-            }}
-          >
-            Khám phá vật phẩm chủ đề giáng sinh
-          </Text>
-        </LinearGradient>
+          🎅 Bộ sưu tập Giáng sinh 🎄
+        </Text>
+        <Text
+          style={{
+            fontSize: 16,
+            color: "rgba(255,255,255,0.9)",
+            textAlign: "center",
+          }}
+        >
+          Khám phá vật phẩm chủ đề giáng sinh
+        </Text>
+      </LinearGradient>
 
-        {/* Carousel */}
-        <View style={{ marginTop: 30, height: ITEM_HEIGHT + 40 }}>
-          {" "}
-          {/* Added fixed height */}
-          <FlatList
-            ref={flatListRef}
-            data={christmasItems}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            pagingEnabled
-            decelerationRate="fast"
-            snapToInterval={ITEM_WIDTH}
-            snapToAlignment="center"
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{
-              itemVisiblePercentThreshold: 50,
-            }}
-            contentContainerStyle={{
-              alignItems: "center",
-              paddingHorizontal: (width - ITEM_WIDTH) / 2,
-            }}
-          />
-        </View>
+      {/* Carousel */}
+      <View style={{ marginTop: 30, height: ITEM_HEIGHT + 40 }}>
+        {/* Added fixed height */}
+        <FlatList
+          ref={flatListRef}
+          data={christmasItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          pagingEnabled
+          decelerationRate="fast"
+          snapToInterval={ITEM_WIDTH}
+          snapToAlignment="center"
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 50,
+          }}
+          contentContainerStyle={{
+            alignItems: "center",
+            paddingHorizontal: (width - ITEM_WIDTH) / 2,
+          }}
+        />
+      </View>
 
-        {/* Pagination */}
-        {renderPagination()}
+      {/* Pagination */}
+      {renderPagination()}
 
-        {/* Purchase Section */}
+      {/* Purchase Section */}
+      <View
+        style={{
+          paddingHorizontal: 30,
+          paddingBottom: 40,
+        }}
+      >
         <View
           style={{
-            paddingHorizontal: 30,
-            paddingBottom: 40,
+            backgroundColor: "white",
+            borderRadius: 20,
+            padding: 24,
+            borderWidth: 2,
+            borderColor: "#E53935",
+            elevation: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 4 },
           }}
         >
+          <View style={{ alignItems: "center", marginBottom: 20 }}>
+            <Gift size={32} color="#D32F2F" />
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "bold",
+                color: "#D32F2F",
+                marginTop: 8,
+                textAlign: "center",
+              }}
+            >
+              Trọn bộ Theme Giáng Sinh
+            </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                color: "#666",
+                textAlign: "center",
+                marginTop: 4,
+                lineHeight: 22,
+              }}
+            >
+              Mở khóa tất cả {christmasItems.length} items Giáng Sinh
+            </Text>
+          </View>
+
           <View
             style={{
-              backgroundColor: "white",
-              borderRadius: 20,
-              padding: 24,
-              borderWidth: 2,
-              borderColor: "#E53935",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "bold",
+                color: "#2E7D32",
+              }}
+            >
+              {themes[1].theme_price}vnd
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={handleBuyTheme}
+            style={{
+              backgroundColor: "#D32F2F",
+              borderRadius: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 24,
               elevation: 4,
-              shadowColor: "#000",
-              shadowOpacity: 0.15,
+              shadowColor: "#D32F2F",
+              shadowOpacity: 0.3,
               shadowRadius: 8,
               shadowOffset: { width: 0, height: 4 },
             }}
+            activeOpacity={0.8}
           >
-            <View style={{ alignItems: "center", marginBottom: 20 }}>
-              <Gift size={32} color="#D32F2F" />
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "bold",
-                  color: "#D32F2F",
-                  marginTop: 8,
-                  textAlign: "center",
-                }}
-              >
-                Complete Christmas Theme
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: "#666",
-                  textAlign: "center",
-                  marginTop: 4,
-                  lineHeight: 22,
-                }}
-              >
-                Unlock all {christmasItems.length} premium Christmas items
-              </Text>
-            </View>
-
             <View
               style={{
                 flexDirection: "row",
-                justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 20,
+                justifyContent: "center",
               }}
             >
-              <Text style={{ fontSize: 16, color: "#666" }}>
-                Individual items: ${(christmasItems.length * 0.99).toFixed(2)}
-              </Text>
+              <ShoppingCart size={20} color="white" />
               <Text
                 style={{
-                  fontSize: 24,
+                  color: "white",
+                  fontSize: 18,
                   fontWeight: "bold",
-                  color: "#2E7D32",
+                  marginLeft: 8,
                 }}
               >
-                $4.99
+                Mua gói chủ đề
               </Text>
             </View>
-
-            <TouchableOpacity
-              onPress={handleBuyTheme}
-              style={{
-                backgroundColor: "#D32F2F",
-                borderRadius: 16,
-                paddingVertical: 16,
-                paddingHorizontal: 24,
-                elevation: 4,
-                shadowColor: "#D32F2F",
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                shadowOffset: { width: 0, height: 4 },
-              }}
-              activeOpacity={0.8}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <ShoppingCart size={20} color="white" />
-                <Text
-                  style={{
-                    color: "white",
-                    fontSize: 18,
-                    fontWeight: "bold",
-                    marginLeft: 8,
-                  }}
-                >
-                  Buy Theme - $4.99
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <Text
-              style={{
-                fontSize: 12,
-                color: "#999",
-                textAlign: "center",
-                marginTop: 12,
-                fontStyle: "italic",
-              }}
-            >
-              🎁 Save{" "}
-              {(
-                ((christmasItems.length * 0.99 - 4.99) /
-                  (christmasItems.length * 0.99)) *
-                100
-              ).toFixed(0)}
-              % with theme bundle
-            </Text>
-          </View>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 };
 

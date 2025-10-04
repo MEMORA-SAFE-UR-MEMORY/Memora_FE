@@ -75,8 +75,10 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       // Close modal after alert is closed
       const timer = setTimeout(() => {
         setShowAlert(false);
-        handleClose(); // Thay vì onClose()
         clearTimeout(timer);
+        setTimeout(() => {
+          handleClose();
+        }, 300);
       }, 1500);
     } else {
       showCustomAlert(error || "Đăng ký thất bại!");
@@ -114,11 +116,11 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
                 <Text style={styles.title}>Tạo tài khoản mới!</Text>
 
                 <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Username</Text>
+                  <Text style={styles.label}>Email</Text>
                   <TextInput
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="Nhập tên đăng nhập của bạn"
+                    placeholder="Nhập email của bạn"
                     keyboardType="default"
                     style={styles.input}
                   />
@@ -203,7 +205,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: "white",
     width: 557,
-    height: 368,
+    height: "90%",
     marginTop: 20,
     alignSelf: "center",
     borderRadius: 32,
@@ -214,6 +216,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "bold",
     marginBottom: 20,
+    fontFamily: "Baloo2-Bold",
   },
   inputContainer: {
     width: "100%",
@@ -223,6 +226,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 6,
+    fontFamily: "Baloo2-Medium",
   },
   input: {
     height: 46,
@@ -230,6 +234,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 20,
+    fontFamily: "Baloo2-Medium",
   },
   eyeIcon: {
     position: "absolute",
@@ -239,12 +244,13 @@ const styles = StyleSheet.create({
   eyeIconConfirm: {
     position: "absolute",
     right: 20,
-    top: 36,
+    top: 42,
   },
   linkText: {
     textDecorationLine: "underline",
     marginTop: 10,
     marginLeft: 300,
+    fontFamily: "Baloo2-Regular",
   },
   buttonContainer: {
     marginTop: 20,
