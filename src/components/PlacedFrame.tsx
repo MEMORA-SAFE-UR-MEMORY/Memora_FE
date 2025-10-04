@@ -13,6 +13,7 @@ import {
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
@@ -30,7 +31,7 @@ type PlacedFrameProps = {
   roomWidth?: number;
   roomHeight?: number;
   memoryResolver: (frameId: number, slotId: number) => Memory | null;
-  scrollX: number;
+  scrollX: SharedValue<number>;
   mode: "view" | "edit";
 };
 
@@ -157,7 +158,7 @@ const PlacedFrame = ({
         );
 
         const frameCenterX =
-          translationX.value - scrollX + item.item.dimension.w / 2;
+          translationX.value - scrollX.value + item.item.dimension.w / 2;
         const frameCenterY = translationY.value + item.item.dimension.h / 2;
 
         if (
@@ -179,7 +180,7 @@ const PlacedFrame = ({
         runOnJS(setIsRotating)(false);
       } else {
         const frameCenterX =
-          translationX.value - scrollX + item.item.dimension.w / 2;
+          translationX.value - scrollX.value + item.item.dimension.w / 2;
         const frameCenterY = translationY.value + item.item.dimension.h / 2;
 
         if (

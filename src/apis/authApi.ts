@@ -20,10 +20,10 @@ export const registerUser = async (userName: string, password: string) => {
   }
 };
 
-export const loginUser = async (userName: string, password: string) => {
+export const loginUser = async (email: string, password: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/User/login`, {
-      userName,
+      email,
       password,
     });
     return response.data; // thường sẽ trả về token hoặc thông tin user

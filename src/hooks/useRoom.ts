@@ -11,7 +11,8 @@ export const useRoom = (
   themeId?: number,
   initialType?: "private" | "public",
   initialRoom?: RoomDetail | null,
-  draft?: Draft
+  draft?: Draft,
+  back?: string
 ) => {
   const { themes } = useThemeContext();
   const { compactDraft } = useDraft(roomId!);
@@ -89,16 +90,24 @@ export const useRoom = (
     [roomDetail]
   );
 
+  const goBack = () => {
+    if (back) {
+      router.replace(back as any);
+    } else {
+      router.replace("/hall");
+    }
+  };
+
   const exitToHall = async (hasChanges?: boolean) => {
     try {
       if (!initialRoom || !draft) {
-        router.replace("/hall");
+        goBack();
         return;
       }
 
       if (!hasChanges) {
         // User chỉ xem room, không chỉnh sửa
-        router.replace("/hall");
+        goBack();
         return;
       }
 
@@ -108,10 +117,10 @@ export const useRoom = (
         const appliedRoom = DraftManager.applyDraft(initialRoom, compacted);
         await service.saveRoom(appliedRoom, compacted);
       }
-      router.replace("/hall");
+      goBack();
     } catch (err) {
       console.error("Save room failed:", err);
-      router.replace("/hall");
+      goBack();
     }
   };
 

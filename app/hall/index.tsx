@@ -184,6 +184,7 @@ export default function HallScreen() {
         roomId: String(room.id),
         themeId: String(room.theme_id),
         type: room.type ?? "private",
+        back: "/hall",
       };
 
       console.log("[Hall] onDoorPress -> params:", params);
@@ -205,6 +206,7 @@ export default function HallScreen() {
         themeId: String(r.themeId),
         type: r.type ?? "public",
         mode: "view" as const,
+        back: "/hall",
       };
       console.log("[Home] Explore -> params:", params);
       router.replace({ pathname: "/room", params });

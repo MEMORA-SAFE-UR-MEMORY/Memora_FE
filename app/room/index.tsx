@@ -15,22 +15,56 @@ import { useRoom } from "@src/hooks/useRoom";
 import { RoomDetail } from "@src/types/room";
 import { isDraftChanged } from "@src/utils/draftUtils";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 const Room = () => {
-  const { roomId, themeId, type, mode } = useRoomContext();
+  const { roomId, themeId, type, mode, back } = useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [scrollX, setScrollX] = useState(0);
+  // Room dimensions - 3x wider than screen
+  const roomWidth = screenWidth * 3;
+  const roomHeight = screenHeight;
+  const scrollX = useSharedValue(0);
+  const delayedScrollX = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x;
+    },
+  });
+
+  useAnimatedReaction(
+    () => scrollX.value,
+    (value) => {
+      delayedScrollX.value = withSpring(value, {
+        damping: 30, // lực hãm, càng cao thì càng ít rung
+        stiffness: 20, // độ cứng, càng thấp thì càng chậm rãi
+        mass: 20, // khối lượng, càng cao thì càng ì, nặng
+        overshootClamping: true,
+        energyThreshold: 6e-9,
+      });
+    }
+  );
+
+  const slowedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: -delayedScrollX.value * 0.000001 }],
+    };
+  });
 
   const { draft, clearDraft, applyTo } = useRoomDraftContext();
 
@@ -42,14 +76,10 @@ const Room = () => {
     openSetting,
     closeSetting,
     handleSaveSetting,
-  } = useRoom(roomId, themeId, type, effectiveRoom, draft);
+  } = useRoom(roomId, themeId, type, effectiveRoom, draft, back);
 
   // clearDraft();
   // console.log("Draft: ", draft);
-
-  // Room dimensions - 3x wider than screen
-  const roomWidth = screenWidth * 3;
-  const roomHeight = screenHeight;
 
   const openStore = () => {
     router.push("/store");
@@ -106,20 +136,22 @@ const Room = () => {
       {!fontsLoaded && <LoadingOverlay />}
 
       {/* Scrollable Room Area */}
-      <ScrollView
-        ref={scrollViewRef}
+      <Animated.ScrollView
         horizontal
         style={styles.roomScrollView}
         contentContainerStyle={[styles.roomContent, { width: roomWidth }]}
         showsHorizontalScrollIndicator={false}
         bounces={false}
-        onScroll={(e) => {
-          setScrollX(e.nativeEvent.contentOffset.x);
-        }}
+        onScroll={scrollHandler}
         scrollEventThrottle={16}
+        decelerationRate="fast"
       >
-        {/* Room Background */}
-        <View style={[{ width: roomWidth, height: roomHeight }]}>
+        <Animated.View
+          style={[
+            { width: roomWidth, height: roomHeight, transitionDelay: "300ms" },
+            slowedStyle,
+          ]}
+        >
           {/* Render placed frames */}
           {placedItems.map((item) => (
             <PlacedFrame
@@ -137,11 +169,11 @@ const Room = () => {
               roomWidth={roomWidth}
               roomHeight={roomHeight}
               scrollX={scrollX}
-              mode={mode}
+              mode={mode ?? "edit"}
             />
           ))}
-        </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
 
       {/* Fixed UI Elements */}
       <View style={styles.fixedUIContainer}>
@@ -228,7 +260,7 @@ const Room = () => {
           onFrameRemoved={activeFrameId === null}
           frameId={activeFrameId}
           slotId={activeSlotId}
-          mode={mode}
+          mode={mode ?? "edit"}
         />
       )}
     </View>
