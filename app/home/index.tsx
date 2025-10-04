@@ -93,9 +93,7 @@ export default function HomeScreen() {
           const user = JSON.parse(userStr);
           setUserData(user);
         }
-      } catch (error) {
-        console.error("Error getting user from storage:", error);
-      }
+      } catch {}
     };
 
     getUserFromStorage();
@@ -134,7 +132,6 @@ export default function HomeScreen() {
   // Discovery
   const handleExploreRandom = useCallback(async () => {
     try {
-      // Exclude current user's rooms
       let excludeUserId: string | null = null;
       try {
         const userStr = await AsyncStorage.getItem("user");
@@ -152,7 +149,6 @@ export default function HomeScreen() {
         lastExploredRoomRef.current
       );
       if (!r) {
-        console.warn("No public rooms available");
         return;
       }
       const params = {
@@ -161,16 +157,12 @@ export default function HomeScreen() {
         type: r.type ?? "public",
         mode: "view",
       };
-      console.log("[Home] Explore -> params:", params);
       router.replace({ pathname: "/room", params });
-      // Remember last explored to avoid repeating next time
       lastExploredRoomRef.current = r.roomId;
       try {
         await AsyncStorage.setItem("explore.lastRoomId", String(r.roomId));
       } catch {}
-    } catch (e) {
-      console.log("Explore random failed:", e);
-    }
+    } catch {}
   }, []);
 
   const handleExplorePress = useCallback(() => {
