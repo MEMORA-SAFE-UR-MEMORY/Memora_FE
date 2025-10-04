@@ -50,7 +50,7 @@ export default function RootLayout() {
           roomId={roomIdNum}
           themeId={themeIdNum}
           type={type}
-          mode="view"
+          mode="edit"
         >
           <RoomDraftProvider roomId={roomIdNum}>
             <RoomBg

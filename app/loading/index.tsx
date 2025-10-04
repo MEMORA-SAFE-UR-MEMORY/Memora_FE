@@ -47,9 +47,6 @@ const Loading = () => {
       const emailUsername = supabaseUser.email.split("@")[0];
       const userUsername = supabaseUser.username.split("@")[0];
 
-      console.log("Email username:", emailUsername);
-      console.log("User username:", userUsername);
-
       if (userUsername === emailUsername) {
         router.replace("/username");
       } else {

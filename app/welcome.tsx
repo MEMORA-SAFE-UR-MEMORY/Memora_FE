@@ -34,7 +34,6 @@ const Welcome = () => {
 
     getUserFromStorage();
   }, []);
-  console.log(userData);
 
   const handlePlay = () => {
     InteractionManager.runAfterInteractions(() => {

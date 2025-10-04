@@ -2,17 +2,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import ExploreIntroModal from "@src/components/ExploreIntroModal";
+import GoldShineButton from "@src/components/GoldShineButton";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
 import IntoHouseButton from "@src/components/inHome/intoHouseButton";
-import PremiumButton from "@src/components/PremiumButton";
 import RoomScreenModal from "@src/components/RoomScreenModal";
 import SettingModal from "@src/components/SettingModal";
 
 import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
+
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Menu } from "lucide-react-native";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Image,
@@ -22,13 +31,16 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRooms } from "@src/services/rooms/hook";
+import { fetchRandomPublicRoom } from "services/rooms/api";
+import { useRooms } from "services/rooms/hook";
 import { useDeleteAccount } from "services/users/hook";
 import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
 type User = {
   username: string;
 };
+
+const EXPLORE_HIDE_KEY = "hall.explore_intro.hide";
 
 export default function HallScreen() {
   const [userData, setUserData] = useState<User | null>(null);
@@ -50,6 +62,9 @@ export default function HallScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
+  const [hideExploreIntro, setHideExploreIntro] = useState(false);
+  const lastExploredRoomRef = useRef<number | null>(null);
 
   // Delete modal state
   const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
@@ -71,9 +86,7 @@ export default function HallScreen() {
           const user = JSON.parse(userStr);
           setUserData(user);
         }
-      } catch (error) {
-        console.error("Error getting user from storage:", error);
-      }
+      } catch {}
     };
     getUserFromStorage();
   }, []);
@@ -83,6 +96,17 @@ export default function HallScreen() {
       setDailyVisible(canClaim);
     }
   }, [canClaim, dailyLoading, holdDailyModal]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const v = await AsyncStorage.getItem("hall.explore_intro.hide");
+        setHideExploreIntro(v === "1");
+        const last = await AsyncStorage.getItem("explore.lastRoomId");
+        if (last) lastExploredRoomRef.current = Number(last) || null;
+      } catch {}
+    })();
+  }, []);
 
   const handleClaimDaily = async () => {
     await claim(100);
@@ -107,14 +131,11 @@ export default function HallScreen() {
   ) => {
     try {
       if (themeId == null) {
-        console.warn("[CreateRoom] themeId is required");
         return;
       }
       setModalVisible(false);
       await addRoom(roomName, themeId, doorId);
-    } catch (e) {
-      console.log("Create room failed:", e);
-    }
+    } catch {}
   };
 
   const openDeleteModal = (roomId: number, roomName: string) => {
@@ -131,8 +152,7 @@ export default function HallScreen() {
       setDeleteRoomVisible(false);
       setSelectedRoomId(null);
       setSelectedRoomName("");
-    } catch (e) {
-      console.log("Delete room failed:", e);
+    } catch {
     } finally {
       setDeletingRoom(false);
     }
@@ -147,9 +167,7 @@ export default function HallScreen() {
 
       await new Promise((r) => setTimeout(r, 100));
       await handleLogout();
-    } catch (e) {
-      console.log("Delete account failed:", e);
-    }
+    } catch {}
   };
 
   const outHomePos = useMemo(() => {
@@ -173,7 +191,6 @@ export default function HallScreen() {
   const openRoom = useCallback(
     (room: { id: number; theme_id?: number | null; type?: string }) => {
       if (room.theme_id == null) {
-        console.warn(`[openRoom] room ${room.id} has null theme_id`);
         return;
       }
       const params = {
@@ -182,11 +199,67 @@ export default function HallScreen() {
         type: room.type ?? "private",
       };
 
-      console.log("[Hall] onDoorPress -> params:", params);
-
       router.replace({ pathname: "/room", params });
     },
     []
+  );
+
+  // Discovery
+  const handleExploreRandom = useCallback(async () => {
+    try {
+      let excludeUserId: string | null = null;
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          excludeUserId = u?.id ?? u?.user_id ?? null;
+        }
+        if (!excludeUserId) {
+          excludeUserId = (await AsyncStorage.getItem("userId")) ?? null;
+        }
+      } catch {}
+
+      const r = await fetchRandomPublicRoom(
+        excludeUserId ?? undefined,
+        lastExploredRoomRef.current
+      );
+      if (!r) {
+        return;
+      }
+      const params = {
+        roomId: String(r.roomId),
+        themeId: String(r.themeId),
+        type: r.type ?? "public",
+        mode: "view",
+      };
+      router.replace({ pathname: "/room", params });
+      lastExploredRoomRef.current = r.roomId;
+      try {
+        await AsyncStorage.setItem("explore.lastRoomId", String(r.roomId));
+      } catch {}
+    } catch {}
+  }, []);
+
+  const handleExplorePress = useCallback(() => {
+    if (hideExploreIntro) {
+      handleExploreRandom();
+    } else {
+      setExploreIntroVisible(true);
+    }
+  }, [hideExploreIntro, handleExploreRandom]);
+
+  const onConfirmExploreIntro = useCallback(
+    async (dontShowAgain: boolean) => {
+      try {
+        if (dontShowAgain) {
+          await AsyncStorage.setItem(EXPLORE_HIDE_KEY, "1");
+          setHideExploreIntro(true);
+        }
+      } catch {}
+      setExploreIntroVisible(false);
+      handleExploreRandom();
+    },
+    [handleExploreRandom]
   );
 
   return (
@@ -232,7 +305,7 @@ export default function HallScreen() {
             />
           </TouchableOpacity>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <PremiumButton onPress={() => console.log("Go to premium")} />
+            {/* <PremiumButton onPress={() => console.log("Go to premium")} /> */}
             <View
               style={{
                 height: 34,
@@ -275,10 +348,31 @@ export default function HallScreen() {
                 {walletLoading ? "…" : formatNumber(wallet?.puzzles ?? 0)}
               </Text>
             </View>
+
+            {/* Hamburger to open settings modal */}
+            <TouchableOpacity
+              style={{ marginLeft: 12, borderRadius: 50, elevation: 3 }}
+              onPress={() => setSettingVisible(true)}
+            >
+              <View
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Menu size={20} color="#663530" />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Nút cửa hàng + cài đặt */}
+        {/* Nút cửa hàng*/}
         <View
           style={{
             flexDirection: "row",
@@ -380,6 +474,7 @@ export default function HallScreen() {
               </Text>
             )}
           </View>
+
           {/* CỬA HÀNG */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity
@@ -420,47 +515,12 @@ export default function HallScreen() {
               Cửa hàng
             </Text>
           </View>
-
-          {/* CÀI ĐẶT */}
-          <View style={{ alignItems: "center" }}>
-            <TouchableOpacity
-              style={{
-                borderRadius: 50,
-                overflow: "hidden",
-                marginBottom: -5,
-                elevation: 4,
-              }}
-              onPress={() => setSettingVisible(true)}
-            >
-              <View
-                style={{
-                  backgroundColor: "#663530",
-                  borderColor: "#663530",
-                  borderWidth: 2,
-                  padding: 7,
-                  borderRadius: 50,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Image
-                  source={require("../../assets/icons/setting.png")}
-                  style={{ width: 24, height: 24 }}
-                  resizeMode="contain"
-                />
-              </View>
-            </TouchableOpacity>
-            <Text
-              style={{
-                color: "#663530",
-                fontSize: 14,
-                fontFamily: "Baloo2_bold",
-                textAlign: "center",
-              }}
-            >
-              Cài đặt
-            </Text>
-          </View>
+          {/* Khám phá (gold shine) */}
+          <GoldShineButton
+            label="Khám phá"
+            iconSource={require("../../assets/icons/discovery.png")}
+            onPress={handleExplorePress}
+          />
         </View>
       </View>
 
@@ -498,6 +558,11 @@ export default function HallScreen() {
         onClaim={handleClaimDaily}
         claiming={claiming}
         onCelebration={setHoldDailyModal}
+      />
+      <ExploreIntroModal
+        visible={exploreIntroVisible}
+        onClose={() => setExploreIntroVisible(false)}
+        onConfirm={onConfirmExploreIntro}
       />
     </View>
   );
