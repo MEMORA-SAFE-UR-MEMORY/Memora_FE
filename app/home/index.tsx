@@ -10,7 +10,13 @@ import { useShake } from "@src/hooks/transitions/useShakeOptions";
 import { useLogin } from "@src/hooks/useLogin";
 import { router } from "expo-router";
 import { Menu } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Image,
@@ -51,6 +57,7 @@ export default function HomeScreen() {
   const [userData, setUserData] = useState<User | null>(null);
   const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
   const [hideExploreIntro, setHideExploreIntro] = useState(false);
+  const lastExploredRoomRef = useRef<number | null>(null);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
@@ -62,6 +69,8 @@ export default function HomeScreen() {
       try {
         const v = await AsyncStorage.getItem(EXPLORE_HIDE_KEY);
         setHideExploreIntro(v === "1");
+        const last = await AsyncStorage.getItem("explore.lastRoomId");
+        if (last) lastExploredRoomRef.current = Number(last) || null;
       } catch {}
     })();
   }, []);
@@ -125,7 +134,23 @@ export default function HomeScreen() {
   // Discovery
   const handleExploreRandom = useCallback(async () => {
     try {
-      const r = await fetchRandomPublicRoom();
+      // Exclude current user's rooms
+      let excludeUserId: string | null = null;
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          excludeUserId = u?.id ?? u?.user_id ?? null;
+        }
+        if (!excludeUserId) {
+          excludeUserId = (await AsyncStorage.getItem("userId")) ?? null;
+        }
+      } catch {}
+
+      const r = await fetchRandomPublicRoom(
+        excludeUserId ?? undefined,
+        lastExploredRoomRef.current
+      );
       if (!r) {
         console.warn("No public rooms available");
         return;
@@ -138,6 +163,11 @@ export default function HomeScreen() {
       };
       console.log("[Home] Explore -> params:", params);
       router.replace({ pathname: "/room", params });
+      // Remember last explored to avoid repeating next time
+      lastExploredRoomRef.current = r.roomId;
+      try {
+        await AsyncStorage.setItem("explore.lastRoomId", String(r.roomId));
+      } catch {}
     } catch (e) {
       console.log("Explore random failed:", e);
     }
