@@ -4,7 +4,8 @@ type RoomContextType = {
   roomId: number;
   themeId: number;
   type: "private" | "public";
-  mode: "view" | "edit";
+  mode?: "view" | "edit";
+  back: string;
 };
 
 const RoomContext = createContext<RoomContextType | null>(null);
@@ -15,9 +16,10 @@ export const RoomProvider = ({
   themeId,
   type,
   mode,
+  back,
 }: RoomContextType & { children: React.ReactNode }) => {
   return (
-    <RoomContext.Provider value={{ roomId, themeId, type, mode }}>
+    <RoomContext.Provider value={{ roomId, themeId, type, mode, back }}>
       {children}
     </RoomContext.Provider>
   );

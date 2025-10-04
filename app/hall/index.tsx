@@ -197,6 +197,7 @@ export default function HallScreen() {
         roomId: String(room.id),
         themeId: String(room.theme_id),
         type: room.type ?? "private",
+        back: "/hall",
       };
 
       router.replace({ pathname: "/room", params });
@@ -230,7 +231,8 @@ export default function HallScreen() {
         roomId: String(r.roomId),
         themeId: String(r.themeId),
         type: r.type ?? "public",
-        mode: "view",
+        mode: "view" as const,
+        back: "/hall",
       };
       router.replace({ pathname: "/room", params });
       lastExploredRoomRef.current = r.roomId;

@@ -5,14 +5,15 @@ import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { useEffect, useState } from "react";
 import { useWindowDimensions } from "react-native";
+import { SharedValue } from "react-native-reanimated";
 
 type ModalType = "add" | "view" | null;
 
 export const useMemory = (
   roomId: number,
-  scrollX: number = 0,
+  scrollX: SharedValue<number>,
   baseItems: RoomItem[],
-  mode: "view" | "edit"
+  mode: "view" | "edit" = "edit"
 ) => {
   const { decreaseQuantity, increaseQuantity } = useInventory();
 
@@ -103,7 +104,7 @@ export const useMemory = (
     const visibleWidth = width * 0.65;
 
     // căn giữa frame trong vùng 65%
-    const spawnX = scrollX + (visibleWidth - frameSize) / 2;
+    const spawnX = scrollX.value + (visibleWidth - frameSize) / 2;
     const spawnY = height / 3;
 
     const newRoomItem: Omit<RoomItem, "id"> = {
@@ -188,8 +189,8 @@ export const useMemory = (
   };
 
   // Xóa item khỏi room
-   const removeItemWithModalCheck = (id: number) => {
-    if (mode === "view") return; 
+  const removeItemWithModalCheck = (id: number) => {
+    if (mode === "view") return;
     removeItem(id);
 
     if (activeFrameId === id) {
