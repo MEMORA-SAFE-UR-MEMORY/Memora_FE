@@ -17,7 +17,6 @@ export const useWallet = () => {
         .from("wallets")
         .select("*")
         .eq("user_id", uid);
-      console.log("data", data);
       if (error) throw error;
       setWallet(data[0]);
     } catch (err: any) {

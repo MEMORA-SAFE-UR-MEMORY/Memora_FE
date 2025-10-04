@@ -1,7 +1,7 @@
 import { useItems } from "@src/hooks/useItems";
 import { useThemes } from "@src/hooks/useThemes";
 import { router } from "expo-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import CustomAlert from "./CustomAlert";
 
 // Add theme image mapping
 const themeImages = {
@@ -25,6 +26,8 @@ type ShopItemListType = {
 const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
   const { items, fetchItems } = useItems();
   const { themes, loading, error, fetchThemes } = useThemes();
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   useEffect(() => {
     fetchItems();
@@ -33,16 +36,22 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
 
   const filteredItems = useMemo(() => {
     if (category === 3) {
-      return themes.map((t) => ({
-        ...t,
-        type: "theme",
-        imagePath: t.theme_name.toLowerCase().includes("giáng sinh")
-          ? themeImages.christmas
-          : themeImages.default,
-        themePath: t.theme_name.toLowerCase().includes("giáng sinh")
-          ? "/christmas"
-          : null,
-      }));
+      return themes
+        .filter((t) => {
+          // Loại bỏ theme mặc định
+          const lower = t.theme_name.toLowerCase();
+          return !(lower.includes("mặc định") || lower.includes("default"));
+        })
+        .map((t) => ({
+          ...t,
+          type: "theme",
+          imagePath: t.theme_name.toLowerCase().includes("giáng sinh")
+            ? themeImages.christmas
+            : themeImages.default,
+          themePath: t.theme_name.toLowerCase().includes("giáng sinh")
+            ? "/christmas"
+            : null,
+        }));
     }
     let result = items.filter((it) => it.theme_id === null);
     if (category === 0) return result; // nếu chưa chọn thì show all
@@ -57,6 +66,9 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
           onPress={() => {
             if (item.themePath) {
               router.push(item.themePath);
+            } else {
+              setAlertMessage("Theme này chưa được tạo!");
+              setAlertVisible(true);
             }
           }}
         >
@@ -79,18 +91,30 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
         </Text>
+        <CustomAlert
+          visible={alertVisible}
+          message={alertMessage}
+          onClose={() => setAlertVisible(false)}
+        />
       </TouchableOpacity>
     );
   };
   return (
-    <FlatList
-      data={filteredItems}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={renderItem}
-      numColumns={4}
-      columnWrapperStyle={styles.row}
-      contentContainerStyle={styles.container}
-    />
+    <>
+      <FlatList
+        data={filteredItems}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        numColumns={4}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.container}
+      />
+      <CustomAlert
+        visible={alertVisible}
+        message={alertMessage}
+        onClose={() => setAlertVisible(false)}
+      />
+    </>
   );
 };
 const styles = StyleSheet.create({

@@ -5,8 +5,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-console.log(BASE_URL);
-
 export const registerUser = async (userName: string, password: string) => {
   try {
     const response = await axios.post(`${BASE_URL}/api/User/signup`, {

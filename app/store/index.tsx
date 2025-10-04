@@ -31,7 +31,6 @@ const Shop = () => {
   };
 
   const handleSelectItem = (item: any) => {
-    console.log(item);
     setSelectedItem(item);
   };
 
