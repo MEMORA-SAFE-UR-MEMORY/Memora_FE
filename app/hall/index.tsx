@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import ExploreIntroModal from "@src/components/ExploreIntroModal";
 import GoldShineButton from "@src/components/GoldShineButton";
 import ConfirmDeleteModal from "@src/components/inHome/ConfirmDeleteModal";
 import DoorsScroller from "@src/components/inHome/DoorsScroller";
@@ -54,6 +55,8 @@ export default function HallScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
+  const [hideExploreIntro, setHideExploreIntro] = useState(false);
 
   // Delete modal state
   const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
@@ -87,6 +90,15 @@ export default function HallScreen() {
       setDailyVisible(canClaim);
     }
   }, [canClaim, dailyLoading, holdDailyModal]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const v = await AsyncStorage.getItem("hall.explore_intro.hide");
+        setHideExploreIntro(v === "1");
+      } catch {}
+    })();
+  }, []);
 
   const handleClaimDaily = async () => {
     await claim(100);
@@ -204,14 +216,39 @@ export default function HallScreen() {
         roomId: String(r.roomId),
         themeId: String(r.themeId),
         type: r.type ?? "public",
-        mode: "view" as const,
-      };
-      console.log("[Home] Explore -> params:", params);
-      router.replace({ pathname: "/room", params });
+        mode: "view",
+      } as const;
+      console.log("[Hall] Explore -> params:", params);
+      router.replace({
+        pathname: "/room",
+        params,
+      });
     } catch (e) {
       console.log("Explore random failed:", e);
     }
   }, []);
+
+  const handleExplorePress = useCallback(() => {
+    if (hideExploreIntro) {
+      handleExploreRandom();
+    } else {
+      setExploreIntroVisible(true);
+    }
+  }, [hideExploreIntro, handleExploreRandom]);
+
+  const onConfirmExploreIntro = useCallback(
+    async (dontShowAgain: boolean) => {
+      try {
+        if (dontShowAgain) {
+          await AsyncStorage.setItem("hall.explore_intro.hide", "1");
+          setHideExploreIntro(true);
+        }
+      } catch {}
+      setExploreIntroVisible(false);
+      handleExploreRandom();
+    },
+    [handleExploreRandom]
+  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -470,7 +507,7 @@ export default function HallScreen() {
           <GoldShineButton
             label="Khám phá"
             iconSource={require("../../assets/icons/discovery.png")}
-            onPress={handleExploreRandom}
+            onPress={handleExplorePress}
           />
         </View>
       </View>
@@ -509,6 +546,11 @@ export default function HallScreen() {
         onClaim={handleClaimDaily}
         claiming={claiming}
         onCelebration={setHoldDailyModal}
+      />
+      <ExploreIntroModal
+        visible={exploreIntroVisible}
+        onClose={() => setExploreIntroVisible(false)}
+        onConfirm={onConfirmExploreIntro}
       />
     </View>
   );

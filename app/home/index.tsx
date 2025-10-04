@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BlurBox from "@src/components/BlurBox";
 import ConfirmDeleteAccountModal from "@src/components/ConfirmDeleteAccountModal";
 import DailyRewardModal from "@src/components/dailyReward/DailyRewardModal";
+import ExploreIntroModal from "@src/components/ExploreIntroModal";
 import GoldShineButton from "@src/components/GoldShineButton";
 import IntoHouseButton from "@src/components/inHome/intoHouseButton";
 import SettingModal from "@src/components/SettingModal";
@@ -27,6 +28,8 @@ type User = {
   username: string;
 };
 
+const EXPLORE_HIDE_KEY = "hall.explore_intro.hide";
+
 export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -46,11 +49,22 @@ export default function HomeScreen() {
 
   const [headerHeight, setHeaderHeight] = useState(0);
   const [userData, setUserData] = useState<User | null>(null);
+  const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
+  const [hideExploreIntro, setHideExploreIntro] = useState(false);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
   const formatNumber = (n: number) => n.toLocaleString("vi-VN");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const v = await AsyncStorage.getItem(EXPLORE_HIDE_KEY);
+        setHideExploreIntro(v === "1");
+      } catch {}
+    })();
+  }, []);
 
   const headerPaddingTop = isLandscape
     ? Math.min(Math.max(12, insets.top), 32)
@@ -108,6 +122,7 @@ export default function HomeScreen() {
     return { left: leftPx, top: topPx } as const;
   }, [width, height]);
 
+  // Discovery
   const handleExploreRandom = useCallback(async () => {
     try {
       const r = await fetchRandomPublicRoom();
@@ -115,19 +130,40 @@ export default function HomeScreen() {
         console.warn("No public rooms available");
         return;
       }
-      router.replace({
-        pathname: "/room",
-        params: {
-          roomId: String(r.roomId),
-          themeId: String(r.themeId),
-          type: r.type ?? "public",
-          mode: "view",
-        },
-      });
+      const params = {
+        roomId: String(r.roomId),
+        themeId: String(r.themeId),
+        type: r.type ?? "public",
+        mode: "view",
+      };
+      console.log("[Home] Explore -> params:", params);
+      router.replace({ pathname: "/room", params });
     } catch (e) {
       console.log("Explore random failed:", e);
     }
   }, []);
+
+  const handleExplorePress = useCallback(() => {
+    if (hideExploreIntro) {
+      handleExploreRandom();
+    } else {
+      setExploreIntroVisible(true);
+    }
+  }, [hideExploreIntro, handleExploreRandom]);
+
+  const onConfirmExploreIntro = useCallback(
+    async (dontShowAgain: boolean) => {
+      try {
+        if (dontShowAgain) {
+          await AsyncStorage.setItem(EXPLORE_HIDE_KEY, "1");
+          setHideExploreIntro(true);
+        }
+      } catch {}
+      setExploreIntroVisible(false);
+      handleExploreRandom();
+    },
+    [handleExploreRandom]
+  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -431,7 +467,7 @@ export default function HomeScreen() {
         <GoldShineButton
           label="Khám phá"
           iconSource={require("../../assets/icons/discovery.png")}
-          onPress={handleExploreRandom}
+          onPress={handleExplorePress}
         />
       </View>
 
@@ -455,6 +491,11 @@ export default function HomeScreen() {
         onCancel={() => setDeleteVisible(false)}
         onConfirm={handleConfirmDelete}
         loading={loading}
+      />
+      <ExploreIntroModal
+        visible={exploreIntroVisible}
+        onClose={() => setExploreIntroVisible(false)}
+        onConfirm={onConfirmExploreIntro}
       />
     </View>
   );
