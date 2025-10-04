@@ -1,9 +1,8 @@
-// src/components/ImagePreloader.tsx
 import { useEffect } from "react";
 import { Image } from "react-native";
 
 type ImagePreloaderProps = {
-  uri: string; // chỉ 1 url
+  uri: string;
 };
 
 const ImagePreloader = ({ uri }: ImagePreloaderProps) => {
@@ -12,7 +11,6 @@ const ImagePreloader = ({ uri }: ImagePreloaderProps) => {
       if (uri) {
         try {
           await Image.prefetch(uri);
-          console.log("Preloaded image:", uri);
         } catch (err) {
           console.warn("Failed to preload image", err);
         }
@@ -21,7 +19,7 @@ const ImagePreloader = ({ uri }: ImagePreloaderProps) => {
     preload();
   }, [uri]);
 
-  return null; // không render gì ra UI
+  return null;
 };
 
 export default ImagePreloader;

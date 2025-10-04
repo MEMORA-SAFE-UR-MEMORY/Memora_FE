@@ -69,8 +69,6 @@ export async function createRoom(payload: {
 
   if (error) throw error;
 
-  console.log("createRoom raw:", data);
-
   let door: Door | undefined = undefined;
   let actualThemeId: number | null = null;
   if (data?.door_id) {
