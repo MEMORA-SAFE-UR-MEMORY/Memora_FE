@@ -12,8 +12,10 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { ShoppingCart, Gift, Star } from "lucide-react-native";
+import { ShoppingCart, Gift, Star, ArrowLeft } from "lucide-react-native";
 import { useThemes } from "@src/hooks/useThemes";
+import { router } from "expo-router";
+import CustomAlert from "@src/components/CustomAlert";
 
 // Update dimensions constants
 const { width, height } = Dimensions.get("window");
@@ -25,26 +27,26 @@ const Christmas = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const { themes, fetchThemes } = useThemes();
+  const [alertVisible, setAlertVisible] = useState(false);
 
   useEffect(() => {
     fetchItems();
     fetchThemes();
   }, [fetchItems, fetchThemes]);
 
+  const handleBuyTheme = async () => {
+    setAlertVisible(true); // hiển thị thông báo
+  };
+
   // Lọc item có theme_id = 2 (Giáng Sinh)
   const christmasItems =
     items?.filter((item: any) => item.theme_id === 2) || [];
-
-  const handleBuyTheme = async () => {
-    console.log("object");
-  };
 
   const renderItem = ({ item, index }: any) => (
     <View
       style={{
         width: ITEM_WIDTH,
-        height: ITEM_HEIGHT,
-        marginHorizontal: (width - ITEM_WIDTH) / 2,
+        height: ITEM_HEIGHT - 50,
         borderRadius: 24,
         overflow: "hidden",
         elevation: 8,
@@ -70,7 +72,6 @@ const Christmas = () => {
             alignItems: "center",
             alignSelf: "stretch",
             justifyContent: "space-between",
-            marginBottom: 20, // Increased from 10
           }}
         ></View>
 
@@ -134,7 +135,6 @@ const Christmas = () => {
       style={{
         flexDirection: "row",
         justifyContent: "center",
-        marginTop: 20,
         marginBottom: 30,
       }}
     >
@@ -190,6 +190,19 @@ const Christmas = () => {
           alignItems: "center",
         }}
       >
+        <TouchableOpacity
+          onPress={() => router.back()} // 👈 quay lại trang trước
+          style={{
+            position: "absolute",
+            padding: 8,
+            borderRadius: 50,
+            backgroundColor: "rgba(255,255,255,0.2)",
+            left: 20,
+            top: 20,
+          }}
+        >
+          <ArrowLeft size={24} color="white" />
+        </TouchableOpacity>
         <Text
           style={{
             fontSize: 28,
@@ -343,6 +356,13 @@ const Christmas = () => {
           </TouchableOpacity>
         </View>
       </View>
+      <CustomAlert
+        visible={alertVisible}
+        onClose={() => setAlertVisible(false)}
+        title="Thông báo"
+        message="Tính năng mua theme hiện chưa hỗ trợ. Vui lòng thử lại sau!"
+        buttonText="Đóng"
+      />
     </ScrollView>
   );
 };

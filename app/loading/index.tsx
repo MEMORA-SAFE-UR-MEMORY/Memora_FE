@@ -13,12 +13,53 @@ import {
   View,
 } from "react-native";
 import * as Progress from "react-native-progress";
+import { useUser } from "@src/hooks/useUser";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Loading = () => {
   const [progress, setProgress] = useState(0);
   const progressAnim = new Animated.Value(0);
   const fontsLoaded = useCustomFonts();
   const { width } = useWindowDimensions();
+  const { getUserById } = useUser();
+
+  const checkUserData = async () => {
+    try {
+      // Get user ID from AsyncStorage
+      const userData = await AsyncStorage.getItem("user");
+      if (!userData) {
+        router.replace("/");
+        return;
+      }
+
+      const parsedUser = JSON.parse(userData);
+      const userId = parsedUser.id;
+
+      // Fetch user data from Supabase
+      const supabaseUser = await getUserById(userId);
+
+      if (!supabaseUser) {
+        router.replace("/");
+        return;
+      }
+
+      // Split both username and email to compare only the parts before @
+      const emailUsername = supabaseUser.email.split("@")[0];
+      const userUsername = supabaseUser.username.split("@")[0];
+
+      console.log("Email username:", emailUsername);
+      console.log("User username:", userUsername);
+
+      if (userUsername === emailUsername) {
+        router.replace("/username");
+      } else {
+        router.replace("/home");
+      }
+    } catch (error) {
+      console.error("Error checking user data:", error);
+      router.replace("/");
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,7 +83,7 @@ const Loading = () => {
 
     if (progress === 1 && fontsLoaded) {
       setTimeout(() => {
-        router.replace("/home");
+        checkUserData();
       }, 500);
     }
   }, [progress, fontsLoaded]);
