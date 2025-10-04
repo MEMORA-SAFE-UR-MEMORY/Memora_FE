@@ -25,7 +25,6 @@ export const useLogin = () => {
   const decodeToken = (token: string): User | null => {
     try {
       const decoded = jwtDecode<User>(token);
-      console.log("Decoded token:", decoded);
       return decoded;
     } catch (error) {
       console.error("Error decoding token:", error);
@@ -44,7 +43,6 @@ export const useLogin = () => {
         // Decode và lưu thông tin user
         const decodedUser = decodeToken(data.accessToken);
         if (decodedUser) {
-          console.log(decodedUser);
           setUser(decodedUser);
           await AsyncStorage.setItem("user", JSON.stringify(decodedUser));
         }

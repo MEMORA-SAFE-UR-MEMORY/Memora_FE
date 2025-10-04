@@ -25,7 +25,6 @@ export function useUserThemes() {
   const reload = useCallback(async (uid: string) => {
     const data = await fetchUserThemesByUser(uid);
     try {
-      // console.log();
     } catch {}
     setItems(data);
   }, []);

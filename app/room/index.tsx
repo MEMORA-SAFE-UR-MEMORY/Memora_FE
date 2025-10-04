@@ -182,7 +182,9 @@ const Room = () => {
           {/* Home */}
           <Pressable style={styles.icon} onPress={() => exitToHall(hasChanges)}>
             <FontAwesome6 name="door-open" size={28} color="white" />
-            <Text style={styles.textIcon}>Sảnh</Text>
+            <Text style={styles.textIcon}>
+              {back === "/hall" ? "Sảnh" : "Home"}
+            </Text>
           </Pressable>
 
           {mode !== "view" && (
