@@ -2,7 +2,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { FrameView } from "@src/components/FrameView";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Image,
   Pressable,
