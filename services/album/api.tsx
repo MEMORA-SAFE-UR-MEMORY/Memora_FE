@@ -61,6 +61,7 @@ export async function fetchAllPagesOfTemplate(
   });
 }
 
+/** Lấy slots của 1 page */
 export async function fetchPageSlots(
   pageId: number
 ): Promise<TemplatePageSlot[]> {
@@ -76,6 +77,10 @@ export async function fetchPageSlots(
   return data ?? [];
 }
 
+/**
+ * Lấy full 1 template: pages + slots (nested).
+ * LƯU Ý: PostgREST không đảm bảo sort trong nested -> sort lại ở client nếu cần.
+ */
 export async function fetchTemplateFull(
   templateId: number
 ): Promise<TemplateWithPages | null> {

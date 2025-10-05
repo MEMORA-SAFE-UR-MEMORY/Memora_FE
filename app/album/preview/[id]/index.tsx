@@ -1,15 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+import { toCdnImageUrl } from "@src/utils/cdn";
 import { Image as ExpoImage } from "expo-image";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  PixelRatio,
   Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+
 import { fetchAllPagesOfTemplate } from "services/album/api";
 import { TemplatePage } from "services/album/type";
 
@@ -27,6 +30,7 @@ export default function TemplatePreviewOverlay() {
   const [pages, setPages] = useState<TemplatePage[]>([]);
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
+  const [attempt, setAttempt] = useState(0);
 
   const { width: winW, height: winH } = useWindowDimensions();
   const MAX_W = winW - 120;
@@ -63,23 +67,24 @@ export default function TemplatePreviewOverlay() {
 
   const current = pages[idx];
 
-  // Log chỉ khi đã có trang hiện tại
   useEffect(() => {
-    if (!current) return;
-    console.log(
-      "[Preview] current page idx/id/role/layout_url:",
-      idx,
-      current.id,
-      current.role,
-      current.layout_url
-    );
-  }, [idx, current]);
+    // Mỗi lần đổi trang reset lại thử CDN trước
+    setAttempt(0);
+  }, [idx, current?.id]);
 
-  useEffect(() => {
-    if (!pages.length) return;
-    const urls = pages.map((p) => p.layout_url).filter(Boolean) as string[];
-    urls.forEach((u) => ExpoImage.prefetch(u).catch(() => {}));
-  }, [pages]);
+  const srcList = (() => {
+    if (!current?.layout_url) return [];
+    const scale = PixelRatio.get();
+    const w = Math.round(MAX_W * scale);
+    const h = Math.round(MAX_H * scale);
+    const cdn = toCdnImageUrl(current.layout_url, {
+      w,
+      h,
+      q: 75,
+      format: "webp",
+    });
+    return [cdn, current.layout_url];
+  })();
 
   const go = (delta: number) => {
     if (!pages.length) return;
@@ -116,29 +121,18 @@ export default function TemplatePreviewOverlay() {
         ) : (
           <>
             <ExpoImage
-              source={current?.layout_url || undefined}
+              source={srcList[attempt] ? { uri: srcList[attempt] } : undefined}
               placeholder={{ blurhash }}
               contentFit="contain"
-              transition={200}
+              transition={160}
               cachePolicy="memory-disk"
               recyclingKey={String(current?.id)}
               priority="high"
-              onLoad={() => console.log("[Preview] image loaded:", current?.id)}
-              onError={(e) => {
-                try {
-                  const msg = (e?.error as string) || JSON.stringify(e);
-                  console.log("[Preview] image error:", msg);
-                } catch (err) {
-                  console.log("[Preview] image error (unknown)", err);
-                }
+              onError={() => {
+                // Fallback sang URL gốc nếu CDN timeout
+                setAttempt((a) => (a < srcList.length - 1 ? a + 1 : a));
               }}
-              style={[
-                styles.pageImage,
-                {
-                  width: MAX_W,
-                  height: MAX_H,
-                },
-              ]}
+              style={[styles.pageImage, { width: MAX_W, height: MAX_H }]}
             />
             {/* Prev */}
             <Pressable
