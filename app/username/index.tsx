@@ -50,6 +50,8 @@ const Username = () => {
       // Update username in Supabase
       const updatedUser = await updateUsername(parsedUser.id, username.trim());
 
+      console.log(updateUsername);
+
       // Update user data in AsyncStorage
       await AsyncStorage.setItem(
         "user",
@@ -158,20 +160,6 @@ const Username = () => {
         </View>
 
         {/* Link to login (optional) */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            marginTop: 12,
-          }}
-        >
-          <TouchableOpacity onPress={() => router.replace("/")}>
-            <Text style={{ fontFamily: "Baloo2-Regular" }}>
-              Đã có tài khoản?{" "}
-              <Text style={{ color: "#E41ABF" }}>Đăng nhập</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
