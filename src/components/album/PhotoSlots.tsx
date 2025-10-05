@@ -11,6 +11,8 @@ import {
   ViewStyle,
 } from "react-native";
 
+export type ShapeKind = "rect" | "rounded" | "circle" | "ellipse" | "diamond";
+
 export type SlotSpec = {
   slot_index: number;
   x_pct: number;
@@ -19,7 +21,8 @@ export type SlotSpec = {
   h_pct: number;
   rotation_deg?: number | null;
   z_index?: number | null;
-  shape?: string | null; // 'rect' | 'circle'
+  shape?: ShapeKind | null; // 'rect' | 'rounded' | 'circle' | 'ellipse' | 'diamond'
+  corner_radius_pct?: number;
 };
 
 export type SlotImage = {
@@ -71,12 +74,11 @@ export default function PhotoSlots({
       const ok = await ensureMediaPermission();
       if (!ok) return;
 
-      const aspect = slot.w_pct / slot.h_pct; // tỉ lệ theo slot
-      // Tính [x, y] nguyên cho tham số aspect Android
-      // ví dụ 1.333 -> [4,3]; 0.75 -> [3,4]
+      const aspect = slot.w_pct / slot.h_pct;
+
+      // chọn cặp aspect gần nhất cho Android (ImagePicker crop)
       const toPair = (r: number) => {
-        const eps = 1e-3;
-        const bases = [
+        const bases: [number, number][] = [
           [1, 1],
           [4, 3],
           [3, 4],
@@ -87,38 +89,33 @@ export default function PhotoSlots({
           [3, 2],
           [2, 3],
         ];
-        // pick cặp gần nhất
-        let best = [1, 1];
+        let best = bases[0];
         let bestDiff = Infinity;
         for (const [w, h] of bases) {
           const diff = Math.abs(w / h - r);
-          if (diff < bestDiff - eps) {
+          if (diff < bestDiff) {
             best = [w, h];
             bestDiff = diff;
           }
         }
-        return best as [number, number];
+        return best;
       };
       const [ax, ay] = toPair(aspect);
 
-      const isCircle =
-        (slot.shape ?? "rect").toLowerCase() === "circle" ? true : false;
+      const s = (slot.shape ?? "rect").toLowerCase() as ShapeKind;
+      const oval = s === "circle" || s === "ellipse";
 
       const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true, // dùng UI crop/zoom của hệ thống
-        // Android: dùng aspect + shape
-        aspect: [ax, ay], // chỉ có hiệu lực trên Android
-        shape: isCircle && Platform.OS === "android" ? "oval" : undefined,
-        quality: 1, // giữ chất lượng, tránh nén thêm
+        mediaTypes: ["images"], // an toàn cho tất cả phiên bản
+        allowsEditing: true,
+        aspect: [ax, ay], // Android: crop gần đúng tỉ lệ slot
+        shape: oval && Platform.OS === "android" ? "oval" : undefined, // Android: crop tròn/bầu dục
+        quality: 1,
       });
 
       if (res.canceled) return;
       const uri = res.assets?.[0]?.uri;
       if (!uri) return;
-
-      // iOS: crop luôn là vuông (Apple). Nếu slot không vuông, ảnh sẽ lệch tỉ lệ.
-      // Bạn chấp nhận điều này để có UX đơn giản như yêu cầu.
 
       onPick?.(slot.slot_index, uri);
     } catch (e) {
@@ -135,27 +132,80 @@ export default function PhotoSlots({
         .map((s) => {
           const imgUri = imgByIndex.get(s.slot_index);
           const rotate = `${s.rotation_deg ?? 0}deg`;
-          const borderRadius =
-            (s.shape ?? "rect").toLowerCase() === "circle" ? 9999 : 8;
+          const shape = (s.shape ?? "rect").toLowerCase() as ShapeKind;
 
+          // border radius cho các shape cơ bản
+          const borderRadius =
+            shape === "circle" || shape === "ellipse"
+              ? 9999
+              : shape === "rounded"
+                ? // bo theo % cạnh dài hơn
+                  Math.max(s.w_pct, s.h_pct) *
+                  (s.corner_radius_pct ?? 12) *
+                  0.01
+                : 0;
+
+          // style chung (không diamond)
+          const commonSlotStyle = {
+            left: `${s.x_pct}%`,
+            top: `${s.y_pct}%`,
+            width: `${s.w_pct}%`,
+            height: `${s.h_pct}%`,
+            zIndex: s.z_index ?? 0,
+            transform: [{ rotate }],
+          } as const;
+
+          // --- SHAPE: DIAMOND ---
+          // Dùng 2 lớp: wrapper xoay 45°, inner xoay -45° để ảnh đứng thẳng
+          if (shape === "diamond") {
+            return (
+              <View
+                key={`slot-${s.slot_index}`}
+                style={[
+                  styles.diamondWrap,
+                  commonSlotStyle,
+                  {
+                    transform: [{ rotate }, { rotateZ: "45deg" }],
+                  },
+                ]}
+                pointerEvents="box-none"
+              >
+                <Pressable
+                  onPress={() => handlePick(s)}
+                  disabled={!pickable}
+                  accessibilityRole={pickable ? "button" : undefined}
+                  style={styles.diamondClip}
+                >
+                  {imgUri ? (
+                    <Image
+                      source={{ uri: imgUri }}
+                      style={[
+                        styles.img,
+                        { transform: [{ rotateZ: "-45deg" }] },
+                      ]}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.placeholder}>
+                      <Text style={styles.phText}>Slot {s.slot_index}</Text>
+                      {pickable && (
+                        <Text style={styles.hint}>Chạm để chọn & cắt ảnh</Text>
+                      )}
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            );
+          }
+
+          // --- SHAPE: RECT / ROUNDED / CIRCLE / ELLIPSE ---
           return (
             <Pressable
-              key={s.slot_index}
+              key={`slot-${s.slot_index}`}
               onPress={() => handlePick(s)}
               disabled={!pickable}
               accessibilityRole={pickable ? "button" : undefined}
-              style={[
-                styles.slot,
-                {
-                  left: `${s.x_pct}%`,
-                  top: `${s.y_pct}%`,
-                  width: `${s.w_pct}%`,
-                  height: `${s.h_pct}%`,
-                  zIndex: s.z_index ?? 0,
-                  transform: [{ rotate }],
-                  borderRadius,
-                },
-              ]}
+              style={[styles.slot, commonSlotStyle, { borderRadius }]}
             >
               {imgUri ? (
                 <Image
@@ -196,4 +246,19 @@ const styles = StyleSheet.create({
   },
   phText: { color: "#cbd5e1", fontWeight: "600" },
   hint: { color: "#94a3b8", fontSize: 12 },
+
+  // Diamond: wrapper xoay 45°, inner là hình vuông (overflow hidden)
+  diamondWrap: {
+    position: "absolute",
+    overflow: "visible", // lớp clip ở con
+  },
+  diamondClip: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+    backgroundColor: "#0077efff",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
 });

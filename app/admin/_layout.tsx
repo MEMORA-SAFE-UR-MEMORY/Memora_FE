@@ -5,17 +5,17 @@ import React from "react";
 import { View } from "react-native";
 
 // 👉 đổi đường dẫn tới asset của bạn
-export const ADMIN_BG = require("../../assets/templates/02.png");
+export const ADMIN_BG = require("../../assets/templates/03.png");
 
 export default function AdminLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: "#0b0b0c" }}>
       {/* LAYER DƯỚI: Ảnh A4 landscape (nằm dưới làm nền/bìa) */}
-      <A4Overlay source={ADMIN_BG} mode="landscape" margin={12} />
+      {/* <A4Overlay source={ADMIN_BG} mode="landscape" margin={12} /> */}
 
       {/* LAYER TRÊN: nội dung từng screen (PhotoSlots, v.v.) */}
       <Slot />
-      {/* <A4Overlay source={ADMIN_BG} mode="landscape" margin={12} /> */}
+      <A4Overlay source={ADMIN_BG} mode="landscape" margin={12} />
     </View>
   );
 }

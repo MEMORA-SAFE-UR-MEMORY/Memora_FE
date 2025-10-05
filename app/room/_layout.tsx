@@ -1,39 +1,72 @@
 import RoomBg from "@src/components/RoomBg";
-import { InventoryProvider } from "@src/context/InventoryContext";
+import { RoomDraftProvider } from "@src/context/DraftContext";
+import { RoomProvider } from "@src/context/RoomContext";
 import { useRoom } from "@src/hooks/useRoom";
-import { Stack } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { RoomType } from "@src/types/room";
+import { Stack, useLocalSearchParams } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
-  const id = 1;
-  const { roomDetail, loading, getRoomDetail } = useRoom();
+  const { roomId } = useLocalSearchParams<{ roomId: string }>();
+  const { themeId } = useLocalSearchParams<{ themeId: string }>();
+  const { type } = useLocalSearchParams<{ type: RoomType }>();
 
-  useEffect(() => {
-    getRoomDetail(id);
-  }, [id]);
+  const roomIdNum = Number(roomId);
+  if (isNaN(roomIdNum)) {
+    console.warn("roomId không phải số hợp lệ:", roomId);
+  }
 
-  if (loading || !roomDetail) return null;
+  const themeIdNum = Number(themeId);
+  if (isNaN(themeIdNum)) {
+    console.warn("themeId không phải số hợp lệ:", themeId);
+  }
+
+  const { roomDetail, loading, error } = useRoom(roomIdNum, themeIdNum, type);
+
+  if (loading || !roomDetail)
+    return <View style={{ flex: 1, backgroundColor: "blue" }} />;
+
+  if (error) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "red",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ color: "white" }}>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <InventoryProvider>
-          <RoomBg
-            wallUrl={roomDetail.theme.wallUrl}
-            floorUrl={roomDetail.theme.floorUrl}
-          >
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: "transparent" },
-                animation: "fade",
-              }}
-            />
-          </RoomBg>
-        </InventoryProvider>
+        <RoomProvider
+          roomId={roomIdNum}
+          themeId={themeIdNum}
+          type={type}
+          mode="edit"
+        >
+          <RoomDraftProvider roomId={roomIdNum}>
+            <RoomBg
+              wallUrl={roomDetail.theme.wallUrl}
+              floorUrl={roomDetail.theme.floorUrl}
+            >
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: "transparent" },
+                  animation: "fade",
+                }}
+              />
+            </RoomBg>
+          </RoomDraftProvider>
+        </RoomProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

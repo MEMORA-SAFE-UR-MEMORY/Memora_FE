@@ -1,10 +1,8 @@
-import { ImageSourcePropType } from "react-native";
-
 export interface Theme {
   id: number;
   themeName: string;
   themePrice: number;
-  wallUrl: ImageSourcePropType;
-  floorUrl: ImageSourcePropType;
+  wallUrl: string;
+  floorUrl: string;
   createdAt: string;
 }

@@ -17,9 +17,12 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   memory: Memory;
-  onUpdate: (data: Memory) => void;
-  onDelete: () => void;
+  onUpdate: (frameId: number, slotId: number, data: Memory) => void;
+  onDelete: (frameId: number, slotId: number) => void;
+  frameId: number | null;
+  slotId: number | null;
   onFrameRemoved?: boolean;
+  mode: "view" | "edit";
 };
 
 const MemoryModal = ({
@@ -28,7 +31,10 @@ const MemoryModal = ({
   memory,
   onUpdate,
   onDelete,
+  frameId,
+  slotId,
   onFrameRemoved,
+  mode,
 }: Props) => {
   const { width, height } = useWindowDimensions();
   const [selected, setSelected] = useState<number>(1);
@@ -97,9 +103,11 @@ const MemoryModal = ({
   };
 
   const handleDelete = () => {
-    setShowConfirm(false);
-    onDelete();
-    handleClose();
+    if (frameId != null && slotId != null) {
+      setShowConfirm(false);
+      onDelete(frameId, slotId);
+      handleClose();
+    }
   };
 
   useEffect(() => {
@@ -107,10 +115,10 @@ const MemoryModal = ({
   }, [memory.id]);
 
   useEffect(() => {
-  if (onFrameRemoved) {
-    handleClose(); // chạy animation slide out
-  }
-}, [onFrameRemoved]);
+    if (onFrameRemoved) {
+      handleClose(); // chạy animation slide out
+    }
+  }, [onFrameRemoved]);
 
   if (!visible) return null;
 
@@ -125,28 +133,43 @@ const MemoryModal = ({
         },
       ]}
     >
-      <ModalMenu
-        modalWidth={modalWidth}
-        slideAnim={menuAnim}
-        selected={selected}
-        setSelected={(id) => {
-          if (id === 3) {
-            setShowConfirm(true);
-          } else {
-            setSelected(id);
-          }
-        }}
-      />
+      {/* Nếu mode edit thì mới có menu, ngược lại chỉ xem */}
+      {mode === "edit" && (
+        <ModalMenu
+          modalWidth={modalWidth}
+          slideAnim={menuAnim}
+          selected={selected}
+          setSelected={(id) => {
+            if (id === 3) {
+              setShowConfirm(true);
+            } else {
+              setSelected(id);
+            }
+          }}
+        />
+      )}
+
       <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
         <Ionicons name="close-circle" size={28} color="#B0B0B0" />
       </TouchableOpacity>
 
       <View style={{ flex: 1 }}>
-        {selected === 1 && <InfoMemory memory={memory} />}
-        {selected === 2 && <UpdateMemory memory={memory} onUpdate={onUpdate} />}
+        {mode === "view" ? (
+          <InfoMemory memory={memory} />
+        ) : (
+          <>
+            {selected === 1 && <InfoMemory memory={memory} />}
+            {selected === 2 && frameId != null && slotId != null && (
+              <UpdateMemory
+                memory={memory}
+                onUpdate={(data) => onUpdate(frameId, slotId, data)}
+              />
+            )}
+          </>
+        )}
       </View>
 
-      {showConfirm && (
+      {mode === "edit" && showConfirm && (
         <ModalConfirm
           visible={showConfirm}
           onClose={() => setShowConfirm(false)}
