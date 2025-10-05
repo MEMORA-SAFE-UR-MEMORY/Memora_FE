@@ -1,18 +1,17 @@
 // src/hooks/useRegister.ts
-import { useState } from "react";
 import { registerUser } from "@src/apis/authApi";
+import { useState } from "react";
 
 export const useRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async (userName: string, password: string) => {
-    console.log("username, password", userName, password);
     setLoading(true);
     setError(null);
+    console.log(userName);
     try {
       const data = await registerUser(userName, password);
-      console.log(data);
       return data;
     } catch (err: any) {
       setError(err.message);

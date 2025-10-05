@@ -12,6 +12,8 @@ export default function RootLayout() {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const { themeId } = useLocalSearchParams<{ themeId: string }>();
   const { type } = useLocalSearchParams<{ type: RoomType }>();
+  const { mode } = useLocalSearchParams<{ mode: "view" | "edit" }>();
+  const { back } = useLocalSearchParams<{ back: string }>();
 
   const roomIdNum = Number(roomId);
   if (isNaN(roomIdNum)) {
@@ -50,7 +52,8 @@ export default function RootLayout() {
           roomId={roomIdNum}
           themeId={themeIdNum}
           type={type}
-          mode="view"
+          mode={mode}
+          back={back}
         >
           <RoomDraftProvider roomId={roomIdNum}>
             <RoomBg

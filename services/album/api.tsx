@@ -54,9 +54,7 @@ export async function fetchAllPagesOfTemplate(
     const ra = rank(a.role);
     const rb = rank(b.role);
     if (ra !== rb) return ra - rb;
-    const pa = a.page_no ?? 0;
-    const pb = b.page_no ?? 0;
-    if (pa !== pb) return pa - pb;
+    if (a.page_no !== b.page_no) return a.page_no - b.page_no;
     return a.id - b.id;
   });
 }

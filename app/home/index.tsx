@@ -156,6 +156,7 @@ export default function HomeScreen() {
         themeId: String(r.themeId),
         type: r.type ?? "public",
         mode: "view",
+          back: "/home",
       };
       router.replace({ pathname: "/room", params });
       lastExploredRoomRef.current = r.roomId;

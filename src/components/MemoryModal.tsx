@@ -154,19 +154,19 @@ const MemoryModal = ({
       </TouchableOpacity>
 
       <View style={{ flex: 1 }}>
-        {/* luôn có tab 1 = InfoMemory */}
-        <InfoMemory memory={memory} />
-
-        {/* Nếu là edit mode mới có update */}
-        {mode === "edit" &&
-          selected === 2 &&
-          frameId != null &&
-          slotId != null && (
-            <UpdateMemory
-              memory={memory}
-              onUpdate={(data) => onUpdate(frameId, slotId, data)}
-            />
-          )}
+        {mode === "view" ? (
+          <InfoMemory memory={memory} />
+        ) : (
+          <>
+            {selected === 1 && <InfoMemory memory={memory} />}
+            {selected === 2 && frameId != null && slotId != null && (
+              <UpdateMemory
+                memory={memory}
+                onUpdate={(data) => onUpdate(frameId, slotId, data)}
+              />
+            )}
+          </>
+        )}
       </View>
 
       {mode === "edit" && showConfirm && (

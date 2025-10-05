@@ -52,7 +52,7 @@ const Welcome = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container} onPress={handlePlay}>
       {isLoggingOut && <LoadingOverlay />}
 
       <TouchableOpacity
@@ -63,20 +63,18 @@ const Welcome = () => {
         <Text style={styles.logoutText}>Đăng xuất</Text>
       </TouchableOpacity>
 
-      <View style={styles.bottomContent}>
-        <View style={styles.startContainer}>
-          <Pressable onPress={handlePlay}>
-            <Text style={styles.startText}>
-              Xin chào {userData?.username}, Chạm để bắt đầu.
-            </Text>
-          </Pressable>
+      <View style={styles.bottomContent} pointerEvents="box-none">
+        <View style={styles.startContainer} pointerEvents="none">
+          <Text style={styles.startText}>
+            Xin chào {userData?.username}, Chạm để bắt đầu.
+          </Text>
         </View>
 
         <Text style={styles.copyText}>
           © 2025. Memora Corp. All Rights Reserved.
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 };
 

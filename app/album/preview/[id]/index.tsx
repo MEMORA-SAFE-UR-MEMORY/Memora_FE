@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { toCdnImageUrl } from "@src/utils/cdn";
 import { Image as ExpoImage } from "expo-image";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   PixelRatio,
@@ -25,7 +25,6 @@ export default function TemplatePreviewOverlay() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const templateId = Number(id);
   const lastFetchedId = useRef<number | null>(null);
-  console.log("[Preview] templateId:", templateId);
 
   const [pages, setPages] = useState<TemplatePage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,12 +44,8 @@ export default function TemplatePreviewOverlay() {
     (async () => {
       setLoading(true);
       try {
-        console.log("[Preview] fetching pages for template:", templateId);
         const res = await fetchAllPagesOfTemplate(templateId);
         if (!ignore) {
-          console.log("[Preview] fetched pages count:", res?.length ?? 0);
-          if (res?.length)
-            console.log("[Preview] first 2 pages sample:", res.slice(0, 2));
           setPages(res);
           const start = res.findIndex((p) => !!p.layout_url);
           setIdx(start >= 0 ? start : 0);
@@ -72,8 +67,8 @@ export default function TemplatePreviewOverlay() {
     setAttempt(0);
   }, [idx, current?.id]);
 
-  const srcList = (() => {
-    if (!current?.layout_url) return [];
+  const srcList = useMemo(() => {
+    if (!current?.layout_url) return [] as string[];
     const scale = PixelRatio.get();
     const w = Math.round(MAX_W * scale);
     const h = Math.round(MAX_H * scale);
@@ -84,7 +79,7 @@ export default function TemplatePreviewOverlay() {
       format: "webp",
     });
     return [cdn, current.layout_url];
-  })();
+  }, [current?.layout_url, MAX_W, MAX_H]);
 
   const go = (delta: number) => {
     if (!pages.length) return;
@@ -103,6 +98,26 @@ export default function TemplatePreviewOverlay() {
       params: { focusId: String(templateId) },
     });
   };
+
+  // Prefetch next 1-2 pages for faster navigation
+  useEffect(() => {
+    if (!pages.length) return;
+    const scale = PixelRatio.get();
+    const w = Math.round(MAX_W * scale);
+    const h = Math.round(MAX_H * scale);
+    const toUrl = (p?: TemplatePage | null) =>
+      p?.layout_url
+        ? toCdnImageUrl(p.layout_url, { w, h, q: 75, format: "webp" })
+        : null;
+    const next1 = pages[(idx + 1) % pages.length];
+    const next2 = pages[(idx + 2) % pages.length];
+    const urls = [toUrl(next1), toUrl(next2)].filter(Boolean) as string[];
+    if (urls.length && (ExpoImage as any).prefetch) {
+      try {
+        (ExpoImage as any).prefetch(urls);
+      } catch {}
+    }
+  }, [idx, pages, MAX_W, MAX_H]);
 
   return (
     <View style={styles.backdrop}>
