@@ -1,4 +1,3 @@
-import DuplicateFabButton from "@src/components/album/DuplicateFabButton";
 import PreviewRippleButton from "@src/components/album/PreviewRippleButton";
 import { Image } from "expo-image";
 import React from "react";
@@ -80,9 +79,6 @@ export default function AlbumTemplateCard({
         iconColor="#fff"
         onPress={onPreview}
       />
-
-      {/* Nút tạo bản sao ở góc phải dưới */}
-      <DuplicateFabButton loading={!!cloning} onPress={onDuplicate} />
     </Pressable>
   );
 }
