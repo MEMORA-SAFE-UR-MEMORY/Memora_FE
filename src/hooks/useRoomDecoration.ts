@@ -25,9 +25,19 @@ export const useRoomDecoration = ({
 
   const { savePatch } = useRoomDraftContext();
 
+  const MAX_DECOR = 10;
+  const MAX_FRAME = 15;
+  const [decorCount, setDecorCount] = useState(0);
+  const [frameCount, setFrameCount] = useState(0);
+
   useEffect(() => {
     if (baseItems.length > 0) {
       setPlacedItems(baseItems);
+      setDecorCount(baseItems.filter((i) => i.item.categoryId === 2).length);
+      setFrameCount(baseItems.filter((i) => i.item.categoryId === 1).length);
+    } else {
+      setDecorCount(0);
+      setFrameCount(0);
     }
   }, [baseItems]);
 
@@ -75,6 +85,9 @@ export const useRoomDecoration = ({
         persistUpsert(createdRoomItem);
         return [...normalized, createdRoomItem];
       });
+
+      if (newItem.item.categoryId === 2) setDecorCount((c) => c + 1);
+      if (newItem.item.categoryId === 1) setFrameCount((c) => c + 1);
 
       decreaseQuantity(newItem.item.id);
       return createdRoomItem;
@@ -143,6 +156,10 @@ export const useRoomDecoration = ({
         const target = prev.find((it) => it.id === id);
         if (target) {
           increaseQuantity(target.item.id);
+          if (target.item.categoryId === 2)
+            setDecorCount((c) => Math.max(0, c - 1));
+          if (target.item.categoryId === 1)
+            setFrameCount((c) => Math.max(0, c - 1));
         }
         const filtered = prev.filter((item) => item.id !== id);
         return normalizeZIndex(filtered);
@@ -248,5 +265,9 @@ export const useRoomDecoration = ({
     setItemMemory,
     updateItemMemory,
     deleteItemMemory,
+    decorCount,
+    frameCount,
+    MAX_DECOR,
+    MAX_FRAME,
   };
 };

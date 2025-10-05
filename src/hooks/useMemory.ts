@@ -3,7 +3,7 @@ import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
 import { memoryService, MemoryStore } from "@src/services/memoryService";
 import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { SharedValue } from "react-native-reanimated";
 
@@ -28,12 +28,18 @@ export const useMemory = (
     updateItemMemory,
     deleteItemMemory,
     removeItem,
+    decorCount,
+    frameCount,
+    MAX_DECOR,
+    MAX_FRAME,
   } = useRoomDecoration({
     decreaseQuantity,
     increaseQuantity,
     roomId,
     baseItems,
   });
+
+  const { categories } = useInventory();
 
   const { width, height } = useWindowDimensions();
 
@@ -63,8 +69,15 @@ export const useMemory = (
   const [isTrashActive, setIsTrashActive] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
 
+  // Edit mode
+  const [activeEditingFrameId, setActiveEditingFrameId] = useState<
+    number | null
+  >(null);
+  const editTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Inventory modal
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isInventoryDisabled, setIsInventoryDisabled] = useState(false);
 
   // Memory modal
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -72,9 +85,47 @@ export const useMemory = (
   const [activeFrameId, setActiveFrameId] = useState<number | null>(null);
   const [activeSlotId, setActiveSlotId] = useState<number | null>(null);
 
+  // Noti modal
+  const [isNotiOpen, setIsNotiOpen] = useState(false);
+  const [NotiInven, setNotiInven] = useState<{
+    show: boolean;
+    categoryId: number | null;
+  }>({
+    show: false,
+    categoryId: null,
+  });
+
   // Inventory controls
-  const openInventory = () => setIsInventoryOpen(true);
+  const openInventory = () => {
+    if (isInventoryDisabled) {
+      setNotiInven({
+        show: true,
+        categoryId: null,
+      });
+      return;
+    }
+    setIsInventoryOpen(true);
+  };
   const closeInventory = () => setIsInventoryOpen(false);
+
+  // Noti controls
+  const closeNoti = () => setIsNotiOpen(false);
+
+  const disabledCategories = useMemo(() => {
+    const disabled: number[] = [];
+    if (decorCount >= MAX_DECOR) disabled.push(2);
+    if (frameCount >= MAX_FRAME) disabled.push(1);
+    return disabled;
+  }, [decorCount, frameCount]);
+
+  useEffect(() => {
+    if (disabledCategories.length === categories.length) {
+      setIsInventoryDisabled(true);
+      closeInventory();
+    } else {
+      setIsInventoryDisabled(false);
+    }
+  }, [disabledCategories, categories, closeInventory]);
 
   // Modal controls
   const openModal = (
@@ -98,6 +149,50 @@ export const useMemory = (
     setActiveSlotId(null);
   };
 
+  // Edit mode
+  // Hàm bắt đầu đếm ngược
+  const startEditCountdown = () => {
+    if (editTimer.current) clearTimeout(editTimer.current);
+    editTimer.current = setTimeout(() => {
+      setActiveEditingFrameId(null);
+      editTimer.current = null;
+    }, 10000);
+  };
+
+  // Vào edit mode
+  const enterEditMode = (frameId: number) => {
+    setActiveEditingFrameId(frameId);
+
+    // Nếu có timer trước đó thì clear (đảm bảo không chạy song song)
+    if (editTimer.current) clearTimeout(editTimer.current);
+
+    // Không start countdown ngay, chỉ start khi user rời tay
+  };
+
+  // Thoát edit mode
+  const exitEditMode = () => {
+    setActiveEditingFrameId(null);
+    if (editTimer.current) {
+      clearTimeout(editTimer.current);
+      editTimer.current = null;
+    }
+  };
+
+  // Khi user bắt đầu chạm => clear timer
+  const onUserInteractionStart = () => {
+    if (editTimer.current) {
+      clearTimeout(editTimer.current);
+      editTimer.current = null;
+    }
+  };
+
+  // Khi user kết thúc tương tác => restart timer
+  const onUserInteractionEnd = () => {
+    if (activeEditingFrameId) {
+      startEditCountdown();
+    }
+  };
+
   // Khi chọn item từ inventory → spawn vào Room
   const handleItemSelect = (inventoryItem: InventoryItem) => {
     const frameSize = 120; // khung 120x120
@@ -115,6 +210,14 @@ export const useMemory = (
     };
 
     const placed = placeItem(newRoomItem); // trả về RoomItem { id: number, ... }
+
+    if (
+      (inventoryItem.item.categoryId === 2 && decorCount + 1 === MAX_DECOR) ||
+      (inventoryItem.item.categoryId === 1 && frameCount + 1 === MAX_FRAME)
+    ) {
+      setIsNotiOpen(true);
+    }
+
     return placed.id;
   };
 
@@ -226,6 +329,10 @@ export const useMemory = (
     openModal,
     closeModal,
 
+    // Noti
+    isNotiOpen,
+    closeNoti,
+
     // Item operations
     handleItemSelect,
     moveItem,
@@ -243,5 +350,22 @@ export const useMemory = (
 
     // Resolve
     resolveMemory,
+
+    // Count item
+    decorCount,
+    frameCount,
+    MAX_DECOR,
+    MAX_FRAME,
+    disabledCategories,
+    NotiInven,
+    setNotiInven,
+    isInventoryDisabled,
+
+    // Edit mode
+    activeEditingFrameId,
+    enterEditMode,
+    exitEditMode,
+    onUserInteractionEnd,
+    onUserInteractionStart,
   };
 };

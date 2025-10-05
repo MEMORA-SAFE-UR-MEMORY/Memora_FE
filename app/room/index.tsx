@@ -1,9 +1,11 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import LoadingScreen from "@src/components/LoadingScreen";
 import MemoryModal from "@src/components/MemoryModal";
+import ModalConfirm from "@src/components/ModalConfirm";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
 import RoomSetting from "@src/components/RoomSetting";
@@ -40,7 +42,7 @@ const Room = () => {
   const roomHeight = screenHeight;
   const scrollX = useSharedValue(0);
   const delayedScrollX = useSharedValue(0);
-
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollX.value = event.contentOffset.x;
@@ -62,7 +64,7 @@ const Room = () => {
 
   const slowedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: -delayedScrollX.value * 0.000001 }],
+      transform: [{ translateX: -delayedScrollX.value * 0.00000001 }],
     };
   });
 
@@ -77,9 +79,6 @@ const Room = () => {
     closeSetting,
     handleSaveSetting,
   } = useRoom(roomId, themeId, type, effectiveRoom, draft, back);
-
-  // clearDraft();
-  // console.log("Draft: ", draft);
 
   const openStore = () => {
     router.push("/store");
@@ -96,8 +95,6 @@ const Room = () => {
   }, [roomDetail, draft, applyTo]);
 
   const hasChanges = isDraftChanged(effectiveRoom!, draft);
-
-  // console.log("room detail: ", roomDetail);
 
   const {
     modalType,
@@ -125,11 +122,35 @@ const Room = () => {
     activeFrameId,
     activeSlotId,
     resolveMemory,
+    decorCount,
+    frameCount,
+    MAX_DECOR,
+    MAX_FRAME,
+    isNotiOpen,
+    closeNoti,
+    disabledCategories,
+    NotiInven,
+    setNotiInven,
+    isInventoryDisabled,
+    activeEditingFrameId,
+    exitEditMode,
+    enterEditMode,
+    onUserInteractionEnd,
+    onUserInteractionStart,
   } = useMemory(roomId, scrollX, effectiveRoom?.items ?? [], mode);
 
-  if (!roomDetail) return null;
+  // Khi memory và items đã render xong
+  useEffect(() => {
+    if (roomDetail && effectiveRoom && fontsLoaded) {
+      const timeout = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000); // delay nhỏ để đảm bảo UI ổn định
+      return () => clearTimeout(timeout);
+    }
+  }, [roomDetail, effectiveRoom, fontsLoaded]);
 
-  // console.log("placed items: ", placedItems);
+  if (!roomDetail) return null;
+  if (isLoading) return <LoadingOverlay />;
 
   return (
     <View style={styles.container}>
@@ -148,30 +169,45 @@ const Room = () => {
       >
         <Animated.View
           style={[
-            { width: roomWidth, height: roomHeight, transitionDelay: "300ms" },
+            {
+              width: roomWidth,
+              height: roomHeight,
+              transitionDelay: "300ms",
+            },
             slowedStyle,
           ]}
         >
-          {/* Render placed frames */}
-          {placedItems.map((item) => (
-            <PlacedFrame
-              key={item.id}
-              item={item}
-              onMove={moveItem}
-              bringToFront={bringToFront}
-              onRotate={updateRotation}
-              onPress={(frameId, slotId) => handleFramePress(frameId, slotId)}
-              onDelete={removeItem}
-              trashLayout={trashLayout}
-              setTrashActive={setIsTrashActive}
-              setShowTrash={setShowTrash}
-              memoryResolver={resolveMemory}
-              roomWidth={roomWidth}
-              roomHeight={roomHeight}
-              scrollX={scrollX}
-              mode={mode ?? "edit"}
-            />
-          ))}
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+              if (activeEditingFrameId !== null) exitEditMode();
+            }}
+          >
+            {/* Render placed frames */}
+            {placedItems.map((item) => (
+              <PlacedFrame
+                key={item.id}
+                item={item}
+                onMove={moveItem}
+                bringToFront={bringToFront}
+                onRotate={updateRotation}
+                onPress={(frameId, slotId) => handleFramePress(frameId, slotId)}
+                onDelete={removeItem}
+                trashLayout={trashLayout}
+                setTrashActive={setIsTrashActive}
+                setShowTrash={setShowTrash}
+                memoryResolver={resolveMemory}
+                roomWidth={roomWidth}
+                roomHeight={roomHeight}
+                scrollX={scrollX}
+                mode={mode ?? "edit"}
+                isEditing={activeEditingFrameId === item.id}
+                enterEditMode={() => enterEditMode(item.id)}
+                onUserInteractionStart={onUserInteractionStart}
+                onUserInteractionEnd={onUserInteractionEnd}
+              />
+            ))}
+          </Pressable>
         </Animated.View>
       </Animated.ScrollView>
 
@@ -193,6 +229,7 @@ const Room = () => {
               <RoomMenu
                 onOpenInventory={openInventory}
                 onOpenSetting={openSetting}
+                isInventoryDisabled={isInventoryDisabled}
               />
             </>
           )}
@@ -230,6 +267,13 @@ const Room = () => {
           onClose={closeInventory}
           onItemSelect={handleItemSelect}
           onGoToShop={openStore}
+          disabledCategories={disabledCategories}
+          onCategoryDisabledPress={(categoryId) => {
+            setNotiInven({
+              show: true,
+              categoryId,
+            });
+          }}
         />
       )}
 
@@ -263,6 +307,52 @@ const Room = () => {
           frameId={activeFrameId}
           slotId={activeSlotId}
           mode={mode ?? "edit"}
+        />
+      )}
+
+      {isNotiOpen && (
+        <ModalConfirm
+          visible={true}
+          mode="noti"
+          onClose={closeNoti}
+          onConfirm={closeNoti}
+          titleText="Thông báo"
+          contentText={
+            decorCount === MAX_DECOR && frameCount === MAX_FRAME
+              ? "Bạn đã đạt giới hạn số lượng item."
+              : decorCount === MAX_DECOR
+                ? "Bạn đã đạt giới hạn số lượng item trang trí."
+                : frameCount === MAX_FRAME
+                  ? "Bạn đã đạt giới hạn số lượng item khung."
+                  : ""
+          }
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#F75270"
+          confirmBtnText="Đóng"
+          confirmBtnColor="red"
+          width={340}
+        />
+      )}
+
+      {NotiInven.show && (
+        <ModalConfirm
+          visible={true}
+          mode="noti"
+          onClose={() => setNotiInven({ show: false, categoryId: null })}
+          onConfirm={() => setNotiInven({ show: false, categoryId: null })}
+          titleText="Thông báo"
+          contentText={
+            NotiInven.categoryId
+              ? NotiInven.categoryId === 2
+                ? "Bạn không thể thêm item trang trí."
+                : "Bạn không thể thêm item khung."
+              : "Bạn không thể mở tủ đồ."
+          }
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#F75270"
+          confirmBtnText="Đóng"
+          confirmBtnColor="red"
+          width={340}
         />
       )}
     </View>

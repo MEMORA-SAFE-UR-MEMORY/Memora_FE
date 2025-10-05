@@ -2,7 +2,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { FrameView } from "@src/components/FrameView";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -33,6 +33,10 @@ type PlacedFrameProps = {
   memoryResolver: (frameId: number, slotId: number) => Memory | null;
   scrollX: SharedValue<number>;
   mode: "view" | "edit";
+  isEditing: boolean;
+  enterEditMode: () => void;
+  onUserInteractionStart: () => void;
+  onUserInteractionEnd: () => void;
 };
 
 function clamp(val: number, min: number, max: number): number {
@@ -55,6 +59,10 @@ const PlacedFrame = ({
   memoryResolver,
   scrollX,
   mode,
+  isEditing,
+  enterEditMode,
+  onUserInteractionEnd,
+  onUserInteractionStart,
 }: PlacedFrameProps) => {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const maxWidth = roomWidth || screenWidth;
@@ -67,25 +75,10 @@ const PlacedFrame = ({
   const prevTranslationX = useSharedValue(0);
   const prevTranslationY = useSharedValue(0);
 
-  const isRotatingByIcon = useSharedValue(false);
   const startAngle = useSharedValue(0);
   const startRotation = useSharedValue(0);
 
-  const [showRotateIcon, setShowRotateIcon] = useState(false);
-  const [isRotating, setIsRotating] = useState(false);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    if (showRotateIcon && !isRotating) {
-      timer = setTimeout(() => {
-        setShowRotateIcon(false);
-      }, 3000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [showRotateIcon, isRotating]);
+  const isOnRotateIcon = useSharedValue(false);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -95,137 +88,153 @@ const PlacedFrame = ({
     ],
   }));
 
-  // Pan gesture (move hoặc kéo icon để xoay)
-  const pan = Gesture.Pan()
-    .minDistance(1)
+  // Gesture xoay bằng icon (ưu tiên cao nhất)
+  const iconRotate = Gesture.Pan()
+    .enabled(isEditing && item.item.categoryId !== 1)
+    .minDistance(0)
     .onStart((event) => {
-      // check nếu bấm vào icon rotate
-      const touchX = event.x;
-      const touchY = event.y;
-      const iconX = item.item.dimension.w - 24; // icon nằm góc phải trên
-      const iconY = 0;
+      runOnJS(onUserInteractionStart)();
 
-      if (
-        item.item.categoryId !== 1 &&
-        showRotateIcon &&
-        touchX >= iconX - 30 &&
-        touchX <= iconX + 30 &&
-        touchY >= iconY - 30 &&
-        touchY <= iconY + 30
-      ) {
-        isRotatingByIcon.value = true;
-        runOnJS(setIsRotating)(true);
+      const centerX = item.item.dimension.w / 2;
+      const centerY = item.item.dimension.h / 2;
+      const dx = event.x - centerX;
+      const dy = event.y - centerY;
+      startAngle.value = Math.atan2(dy, dx);
+      startRotation.value = rotation.value;
 
-        const centerX = item.item.dimension.w / 2;
-        const centerY = item.item.dimension.h / 2;
-        const dx = event.x - centerX;
-        const dy = event.y - centerY;
-        startAngle.value = Math.atan2(dy, dx);
-        startRotation.value = rotation.value;
-      } else {
-        isRotatingByIcon.value = false;
-        prevTranslationX.value = translationX.value;
-        prevTranslationY.value = translationY.value;
+      runOnJS(bringToFront)(item.id);
+    })
+    .onUpdate((event) => {
+      const centerX = item.item.dimension.w / 2;
+      const centerY = item.item.dimension.h / 2;
+      const dx = event.x - centerX;
+      const dy = event.y - centerY;
+      const currentAngle = Math.atan2(dy, dx);
+
+      const delta = currentAngle - startAngle.value;
+      rotation.value = startRotation.value + delta;
+    })
+    .onEnd(() => {
+      runOnJS(onRotate)(item.id, rotation.value);
+      runOnJS(onUserInteractionEnd)();
+    });
+
+  // Gesture di chuyển item
+  const panMove = Gesture.Pan()
+    .enabled(isEditing)
+    .minDistance(5)
+    .onStart((event) => {
+      // 🔹 Kiểm tra nếu chạm vào vùng icon xoay thì vô hiệu pan
+      const iconCenterX = item.item.dimension.w / 2;
+      const iconCenterY = -50 + 20; // top + bán kính
+      const dx = event.x - iconCenterX;
+      const dy = event.y - iconCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 25) {
+        // đang bấm trong vùng icon xoay → bỏ qua pan
+        isOnRotateIcon.value = true;
+        return;
       }
-
+      runOnJS(onUserInteractionStart)();
+      prevTranslationX.value = translationX.value;
+      prevTranslationY.value = translationY.value;
       runOnJS(setShowTrash)(true);
       runOnJS(bringToFront)(item.id);
     })
     .onUpdate((event) => {
-      if (isRotatingByIcon.value) {
-        const centerX = item.item.dimension.w / 2;
-        const centerY = item.item.dimension.h / 2;
-        const dx = event.x - centerX;
-        const dy = event.y - centerY;
-        const currentAngle = Math.atan2(dy, dx);
+      if (isOnRotateIcon.value) return;
 
-        // Chênh lệch góc so với ban đầu
-        const delta = currentAngle - startAngle.value;
-        rotation.value = startRotation.value + delta;
+      const maxTranslateX = maxWidth - item.item.dimension.w;
+      const maxTranslateY = maxHeight - item.item.dimension.h;
+
+      translationX.value = clamp(
+        prevTranslationX.value + event.translationX,
+        0,
+        maxTranslateX
+      );
+      translationY.value = clamp(
+        prevTranslationY.value + event.translationY,
+        0,
+        maxTranslateY
+      );
+
+      const frameCenterX =
+        translationX.value - scrollX.value + item.item.dimension.w / 2;
+      const frameCenterY = translationY.value + item.item.dimension.h / 2;
+
+      if (
+        trashLayout &&
+        frameCenterX > trashLayout.x &&
+        frameCenterX < trashLayout.x + trashLayout.w &&
+        frameCenterY > trashLayout.y &&
+        frameCenterY < trashLayout.y + trashLayout.h
+      ) {
+        runOnJS(setTrashActive)(true);
       } else {
-        const maxTranslateX = maxWidth - item.item.dimension.w;
-        const maxTranslateY = maxHeight - item.item.dimension.h;
-
-        translationX.value = clamp(
-          prevTranslationX.value + event.translationX,
-          0,
-          maxTranslateX
-        );
-        translationY.value = clamp(
-          prevTranslationY.value + event.translationY,
-          0,
-          maxTranslateY
-        );
-
-        const frameCenterX =
-          translationX.value - scrollX.value + item.item.dimension.w / 2;
-        const frameCenterY = translationY.value + item.item.dimension.h / 2;
-
-        if (
-          trashLayout &&
-          frameCenterX > trashLayout.x &&
-          frameCenterX < trashLayout.x + trashLayout.w &&
-          frameCenterY > trashLayout.y &&
-          frameCenterY < trashLayout.y + trashLayout.h
-        ) {
-          runOnJS(setTrashActive)(true);
-        } else {
-          runOnJS(setTrashActive)(false);
-        }
+        runOnJS(setTrashActive)(false);
       }
     })
     .onEnd(() => {
-      if (isRotatingByIcon.value) {
-        runOnJS(onRotate)(item.id, rotation.value);
-        runOnJS(setIsRotating)(false);
-      } else {
-        const frameCenterX =
-          translationX.value - scrollX.value + item.item.dimension.w / 2;
-        const frameCenterY = translationY.value + item.item.dimension.h / 2;
-
-        if (
-          trashLayout &&
-          frameCenterX > trashLayout.x &&
-          frameCenterX < trashLayout.x + trashLayout.w &&
-          frameCenterY > trashLayout.y &&
-          frameCenterY < trashLayout.y + trashLayout.h
-        ) {
-          runOnJS(onDelete)(item.id);
-          runOnJS(setTrashActive)(false);
-          runOnJS(setShowTrash)(false);
-          return;
-        }
-
-        runOnJS(onMove)(item.id, translationX.value, translationY.value);
+      if (isOnRotateIcon.value) {
+        // reset lại sau khi xoay
+        isOnRotateIcon.value = false;
+        return;
       }
+
+      const frameCenterX =
+        translationX.value - scrollX.value + item.item.dimension.w / 2;
+      const frameCenterY = translationY.value + item.item.dimension.h / 2;
+
+      if (
+        trashLayout &&
+        frameCenterX > trashLayout.x &&
+        frameCenterX < trashLayout.x + trashLayout.w &&
+        frameCenterY > trashLayout.y &&
+        frameCenterY < trashLayout.y + trashLayout.h
+      ) {
+        runOnJS(onDelete)(item.id);
+        runOnJS(setTrashActive)(false);
+        runOnJS(setShowTrash)(false);
+        runOnJS(onUserInteractionEnd)();
+        return;
+      }
+
+      runOnJS(onMove)(item.id, translationX.value, translationY.value);
       runOnJS(setTrashActive)(false);
       runOnJS(setShowTrash)(false);
+      runOnJS(onUserInteractionEnd)();
     });
 
-  // Rotation gesture (xoay bằng 2 ngón)
-  const rotate = Gesture.Rotation()
+  // Gesture xoay bằng 2 ngón
+  const twoFingerRotate = Gesture.Rotation()
+    .enabled(isEditing && item.item.categoryId !== 1)
+    .onStart(() => {
+      runOnJS(onUserInteractionStart)();
+    })
     .onUpdate((event) => {
-      if (item.item.categoryId !== 1) {
-        rotation.value = (item.rotation ?? 0) + event.rotation;
-      }
+      rotation.value = (item.rotation ?? 0) + event.rotation;
     })
     .onEnd(() => {
-      if (item.item.categoryId !== 1) {
-        runOnJS(onRotate)(item.id, rotation.value);
-      }
+      runOnJS(onRotate)(item.id, rotation.value);
+      runOnJS(onUserInteractionEnd)();
     });
 
-  const composed = Gesture.Simultaneous(pan, rotate);
+  // Kết hợp gestures
+  const composed = Gesture.Simultaneous(
+    Gesture.Race(iconRotate, panMove),
+    twoFingerRotate
+  );
+
+  const handleLongPress = () => {
+    enterEditMode();
+  };
 
   const handlePress = () => {
-    if (item.item.categoryId !== 1) {
-      setShowRotateIcon((prev) => !prev);
-    } else {
+    if (item.item.categoryId === 1) {
       onPress(item.id, null);
     }
   };
-
-  // console.log("item", item);
 
   useEffect(() => {
     translationX.value = item.x ?? 0;
@@ -298,12 +307,34 @@ const PlacedFrame = ({
       >
         {item.item.categoryId !== 1 ? (
           <>
-            {showRotateIcon && (
-              <View style={styles.rotateIcon}>
+            {isEditing && (
+              <View
+                style={{
+                  position: "absolute",
+                  left: -10,
+                  top: -10,
+                  right: -10,
+                  bottom: -10,
+                  borderWidth: 2,
+                  borderColor: "#E9D8FF",
+                  backgroundColor: "rgba(159,122,234,0.1)",
+                  borderRadius: 8,
+                  zIndex: 1,
+                }}
+                pointerEvents="none"
+              />
+            )}
+            {isEditing && (
+              <View style={styles.rotateIcon} pointerEvents="box-none">
                 <FontAwesome6 name="arrows-rotate" size={20} color="white" />
               </View>
             )}
-            <Pressable onPress={handlePress} style={{ flex: 1 }}>
+            <Pressable
+              onPress={handlePress}
+              onLongPress={handleLongPress}
+              delayLongPress={300}
+              style={{ flex: 1 }}
+            >
               <Image
                 source={{ uri: item.item.imageUrl }}
                 style={[styles.itemImage]}
@@ -313,11 +344,34 @@ const PlacedFrame = ({
           </>
         ) : (
           <>
-            <View style={styles.contentArea}>
+            <Pressable
+              onLongPress={handleLongPress}
+              delayLongPress={300}
+              style={styles.contentArea}
+            >
+              {isEditing && (
+                <View
+                  style={{
+                    position: "absolute",
+                    left: -10,
+                    top: -10,
+                    right: -10,
+                    bottom: -10,
+                    borderWidth: 2,
+                    borderColor: "#E9D8FF",
+                    backgroundColor: "rgba(159,122,234,0.1)",
+                    borderRadius: 8,
+                    zIndex: 1,
+                  }}
+                  pointerEvents="none"
+                />
+              )}
               {item.item.slots?.map((slot) => (
                 <Pressable
                   key={slot.slotId}
                   onPress={() => onPress(item.id, slot.slotId)}
+                  onLongPress={enterEditMode}
+                  delayLongPress={300}
                   style={{ position: "absolute" }}
                 >
                   <FrameView
@@ -335,7 +389,7 @@ const PlacedFrame = ({
                   resizeMode="contain"
                 />
               </View>
-            </View>
+            </Pressable>
           </>
         )}
       </Animated.View>
@@ -363,7 +417,7 @@ const styles = StyleSheet.create({
   },
   rotateIcon: {
     position: "absolute",
-    top: -36,
+    top: -50,
     left: "50%",
     transform: [{ translateX: -12 }],
     backgroundColor: "#E9D8FF",
@@ -376,6 +430,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
+    zIndex: 2,
   },
   contentArea: {
     position: "absolute",

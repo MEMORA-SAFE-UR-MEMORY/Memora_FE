@@ -22,6 +22,7 @@ export const useRoom = (
   const [updating, setUpdating] = useState(false);
   // Setting modal
   const [isSettingOpen, setIsSettingOpen] = useState(false);
+  
 
   // load once từ props
   useEffect(() => {
