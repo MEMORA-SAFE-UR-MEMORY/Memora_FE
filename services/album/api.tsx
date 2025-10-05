@@ -54,13 +54,12 @@ export async function fetchAllPagesOfTemplate(
     const ra = rank(a.role);
     const rb = rank(b.role);
     if (ra !== rb) return ra - rb;
-    const pa = a.page_no ?? 0;
-    const pb = b.page_no ?? 0;
-    if (pa !== pb) return pa - pb;
+    if (a.page_no !== b.page_no) return a.page_no - b.page_no;
     return a.id - b.id;
   });
 }
 
+/** Lấy slots của 1 page */
 export async function fetchPageSlots(
   pageId: number
 ): Promise<TemplatePageSlot[]> {
@@ -76,6 +75,10 @@ export async function fetchPageSlots(
   return data ?? [];
 }
 
+/**
+ * Lấy full 1 template: pages + slots (nested).
+ * LƯU Ý: PostgREST không đảm bảo sort trong nested -> sort lại ở client nếu cần.
+ */
 export async function fetchTemplateFull(
   templateId: number
 ): Promise<TemplateWithPages | null> {

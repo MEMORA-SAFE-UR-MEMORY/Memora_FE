@@ -1,7 +1,6 @@
 // src/apis/authApi.ts
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
