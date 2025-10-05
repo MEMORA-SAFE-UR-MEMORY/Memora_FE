@@ -1,5 +1,6 @@
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
+import LoadingOverlay from "./LoadingOverlay";
 
 type Props = {
   wallUrl: any; // ImageSourcePropType
@@ -8,6 +9,27 @@ type Props = {
 };
 
 const RoomBg = ({ wallUrl, floorUrl, children }: Props) => {
+  const [wallLoaded, setWallLoaded] = React.useState(false);
+  const [floorLoaded, setFloorLoaded] = React.useState(false);
+  const [wallError, setWallError] = React.useState(false);
+  const [floorError, setFloorError] = React.useState(false);
+
+  React.useEffect(() => {
+    Image.getSize(
+      wallUrl,
+      (width, height) => setWallLoaded(true),
+      () => setWallError(true)
+    );
+    Image.getSize(
+      floorUrl,
+      (width, height) => setFloorLoaded(true),
+      () => setFloorError(true)
+    );
+  }, [wallUrl, floorUrl]);
+
+  if (wallError || floorError) return <Text>Không có ảnh</Text>;
+  if (!wallLoaded || !floorLoaded) return <LoadingOverlay />;
+
   return (
     <View style={styles.container}>
       {/* Wall */}

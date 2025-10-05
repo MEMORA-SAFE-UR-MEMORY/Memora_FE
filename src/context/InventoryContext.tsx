@@ -83,7 +83,13 @@ export const InventoryProvider = ({
       .filter(
         (it): it is InventoryItem => it.item.categoryId === selectedCategory
       )
-      .sort((a, b) => a.item.id - b.item.id);
+      .sort((a, b) => {
+        // 1. đẩy quantity = 0 xuống cuối
+        if (a.quantity === 0 && b.quantity > 0) return 1;
+        if (a.quantity > 0 && b.quantity === 0) return -1;
+        // 2. nếu quantity > 0 cả hai, sort theo id
+        return a.item.id - b.item.id;
+      });
 
     if (result.length % 2 !== 0) {
       const empty: EmptyInventoryItem = {

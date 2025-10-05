@@ -172,6 +172,7 @@ const MemoryModal = ({
       {mode === "edit" && showConfirm && (
         <ModalConfirm
           visible={showConfirm}
+          mode="confirm"
           onClose={() => setShowConfirm(false)}
           onConfirm={handleDelete}
           titleText="Xác nhận xóa"

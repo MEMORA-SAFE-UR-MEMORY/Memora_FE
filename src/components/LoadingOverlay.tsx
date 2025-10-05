@@ -14,13 +14,11 @@ const LoadingContent = () => {
         Platform.OS === "ios" && { paddingTop: insets.top },
       ]}
     >
-      <View style={styles.overlay}>
-        <ActivityIndicator
-          size="large"
-          color="#fff"
-          style={{ alignSelf: "center" }}
-        />
-      </View>
+      <ActivityIndicator
+        size="large"
+        color="#D2A4FF"
+        style={{ alignSelf: "center" }}
+      />
     </View>
   );
 };
@@ -57,7 +55,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(255,255,255,0.6)",
     zIndex: 9999,
     elevation: 9999,
   },

@@ -21,9 +21,17 @@ type InventoryProps = {
   onClose: () => void;
   onItemSelect: (inventoryItem: InventoryItem) => void;
   onGoToShop: () => void;
+  disabledCategories: number[];
+  onCategoryDisabledPress?: (categoryId: number) => void;
 };
 
-const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
+const Inventory = ({
+  onClose,
+  onItemSelect,
+  onGoToShop,
+  disabledCategories,
+  onCategoryDisabledPress,
+}: InventoryProps) => {
   const { width, height } = useWindowDimensions();
   const { categories, items, selectedCategory, setSelectedCategory } =
     useInventory();
@@ -63,6 +71,19 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
       onItemSelect(inventoryItem);
     }
   };
+
+  useEffect(() => {
+  if (disabledCategories.includes(selectedCategory)) {
+    const nextCategory = categories.find(
+      (cat) => !disabledCategories.includes(cat.id)
+    );
+    if (nextCategory) {
+      setSelectedCategory(nextCategory.id);
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }
+  }
+}, [disabledCategories, selectedCategory, categories, setSelectedCategory]);
+
 
   const renderItem = ({
     item,
@@ -133,11 +154,14 @@ const Inventory = ({ onClose, onItemSelect, onGoToShop }: InventoryProps) => {
           categories={categories}
           selectedCategory={selectedCategory}
           onSelect={(id) => {
+            if (disabledCategories.includes(id)) {
+              onCategoryDisabledPress?.(id);
+              return;
+            }
             setSelectedCategory(id);
-            setTimeout(() => {
-              listRef.current?.scrollToOffset({ offset: 0, animated: true });
-            }, 100);
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
           }}
+          disabledCategories={disabledCategories}
         />
 
         <Pressable onPress={handleClose} style={styles.closeButton}>
