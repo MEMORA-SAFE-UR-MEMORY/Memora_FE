@@ -1,23 +1,23 @@
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Add this
+import LoadingOverlay from "@src/components/LoadingOverlay";
+import useCustomFonts from "@src/hooks/useCustomFonts";
+import { useLogin } from "@src/hooks/useLogin";
+import { router } from "expo-router";
+import { useEffect, useState } from "react"; // Add useEffect
 import {
   Pressable,
   StyleSheet,
   Text,
-  View,
-  InteractionManager,
   TouchableOpacity,
+  View,
 } from "react-native";
-import { useState, useEffect } from "react"; // Add useEffect
-import useCustomFonts from "@src/hooks/useCustomFonts";
-import LoadingOverlay from "@src/components/LoadingOverlay";
-import { router } from "expo-router";
-import { useLogin } from "@src/hooks/useLogin";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Add this
 
 const Welcome = () => {
   const fontsLoaded = useCustomFonts();
   const { handleLogout, loading } = useLogin();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
     const getUserFromStorage = async () => {
@@ -36,7 +36,7 @@ const Welcome = () => {
   }, []);
 
   const handlePlay = () => {
-    InteractionManager.runAfterInteractions(() => {
+    requestAnimationFrame(() => {
       router.replace("/loading");
     });
   };
