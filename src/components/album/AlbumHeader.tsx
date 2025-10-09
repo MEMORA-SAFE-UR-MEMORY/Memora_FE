@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, Pressable, Text, View } from "react-native";
@@ -23,8 +24,8 @@ export default function AlbumHeader({
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 12,
-          borderBottomWidth: 1,
-          borderBottomColor: "#1f2227",
+          borderBottomWidth: 0.5,
+          borderBottomColor: "#fdfefeff",
         }}
       >
         <Pressable
@@ -50,6 +51,23 @@ export default function AlbumHeader({
         >
           {title}
         </Text>
+        <Pressable
+          onPress={() => router.push("/my-albums" as any)}
+          style={{
+            position: "absolute",
+            right: 24,
+            flexDirection: "row",
+            gap: 6,
+            alignItems: "center",
+            backgroundColor: "#ffcfdf",
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            borderRadius: 24,
+          }}
+        >
+          <Ionicons name="albums-outline" size={16} color="#374151" />
+          <Text style={{ color: "#374151", fontWeight: "600" }}>Kho album</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );

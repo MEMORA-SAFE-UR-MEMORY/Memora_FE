@@ -1,22 +1,21 @@
 import Cloud from "@src/components/login/Cloud";
 import { Stack } from "expo-router";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function HomeLayout() {
-  const { width } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
 
   const BG = require("../../assets/images/loginScreen/nen_troi.png");
   const HOUSE = require("../../assets/images/loginScreen/nhà.png");
   const CLOUD = require("../../assets/images/loginScreen/mây 2.png");
+
+  const IMG_AR = 1365 / 768;
+  const TARGET_OVERFLOW = 1;
+  const houseScaleX = TARGET_OVERFLOW;
+
+  const DROP_RATIO = 0.3;
 
   return (
     <SafeAreaProvider>
@@ -109,21 +108,32 @@ export default function HomeLayout() {
           />
 
           {/* Nhà */}
-          <Image
-            source={HOUSE}
-            resizeMode="contain"
+          <View
             style={{
               position: "absolute",
               bottom: 0,
-              width,
-              height: undefined,
-              aspectRatio: 1365 / 768,
-              alignSelf: "center",
+              width: "100%",
+              aspectRatio: IMG_AR,
+              overflow: "hidden",
               zIndex: 5,
             }}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-          />
+          >
+            <Image
+              source={HOUSE}
+              resizeMode="contain"
+              style={{
+                width: "100%",
+                height: "100%",
+                transform: [
+                  { scaleX: houseScaleX },
+                  { translateY: DROP_RATIO * (1 / IMG_AR) * 100 },
+                ],
+                alignSelf: "center",
+              }}
+              onLoadStart={() => setLoading(true)}
+              onLoadEnd={() => setLoading(false)}
+            />
+          </View>
         </View>
 
         <View style={{ flex: 1, zIndex: 30 }}>
