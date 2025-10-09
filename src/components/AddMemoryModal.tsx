@@ -5,7 +5,7 @@ import ScrollingText from "@src/components/ScrollingText";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -44,20 +44,19 @@ const AddMemoryModal: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<string>("");
 
   const { width, height } = useWindowDimensions();
-  const isSmallDevice = width < 360;
-  const isTablet = width > 700;
+  const isSmallDevice = width <= 700;
+  const isTablet = width > 1000;
 
-  /** Hàm scale thông minh theo kích thước màn hình */
   const scale = (size: number) => {
-    if (isSmallDevice) return size * 0.9; // nhỏ → giảm nhẹ 10%
-    if (isTablet) return size * 1.2; // tablet → tăng nhẹ 20%
-    return (width / 375) * size; // mặc định: tỉ lệ theo iPhone 11
+    if (isSmallDevice) return size * 0.9;
+    if (isTablet) return size * 1.2;
+    return size; // thiết bị trung bình giữ nguyên
   };
 
   // Calendar
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const showListener = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true);
     });
@@ -70,11 +69,13 @@ const AddMemoryModal: React.FC<Props> = ({
       hideListener.remove();
     };
   }, []);
+
   const handleCalendarOpen = () => {
-    if (!keyboardVisible) {
-      setIsCalendarOpen(true);
+    if (keyboardVisible) {
+      Keyboard.dismiss();
+      setTimeout(() => setIsCalendarOpen(true), 150);
     } else {
-      Keyboard.dismiss(); 
+      setIsCalendarOpen(true);
     }
   };
   const handleDateSelect = (date: string) => {
@@ -82,6 +83,13 @@ const AddMemoryModal: React.FC<Props> = ({
     setIsCalendarOpen(false);
   };
   const handleCalendarClose = () => setIsCalendarOpen(false);
+
+  useEffect(() => {
+    if (isCalendarOpen) {
+      Keyboard.dismiss();
+      setIsEditing(false);
+    }
+  }, [isCalendarOpen]);
 
   // Ảnh
   const pickImage = async () => {
@@ -118,8 +126,7 @@ const AddMemoryModal: React.FC<Props> = ({
     onClose();
   };
 
-  const isFormValid = () =>
-    title.trim() !== "" && selectedDate !== "" && selectedImage !== null;
+  const isFormValid = () => selectedImage !== null;
 
   return (
     <Modal
@@ -134,13 +141,18 @@ const AddMemoryModal: React.FC<Props> = ({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+            if (isCalendarOpen) handleCalendarClose();
+          }}
+        >
           <View style={styles.overlay}>
             <View
               style={[
                 styles.content,
                 {
-                  width: isTablet ? "60%" : isSmallDevice ? "90%" : "80%",
+                  width: isTablet ? "60%" : isSmallDevice ? "90%" : "70%",
                   padding: scale(18),
                   borderWidth: scale(6),
                   borderRadius: scale(20),
@@ -171,7 +183,6 @@ const AddMemoryModal: React.FC<Props> = ({
                 style={[
                   styles.row1,
                   {
-                    flexDirection: isTablet ? "row" : "column",
                     gap: scale(10),
                   },
                 ]}
@@ -187,7 +198,7 @@ const AddMemoryModal: React.FC<Props> = ({
                       { height: scale(40), borderRadius: scale(20) },
                     ]}
                   >
-                    {isEditing ? (
+                    {isEditing && !isCalendarOpen ? (
                       <TextInput
                         value={title}
                         onChangeText={setTitle}
@@ -205,7 +216,10 @@ const AddMemoryModal: React.FC<Props> = ({
                     ) : (
                       <TouchableOpacity
                         style={{ flex: 1 }}
-                        onPress={() => setIsEditing(true)}
+                        onPress={() => {
+                          if (!isCalendarOpen) setIsEditing(true);
+                        }}
+                        disabled={isCalendarOpen}
                       >
                         {title.length > 23 ? (
                           <ScrollingText text={title} />
@@ -245,8 +259,8 @@ const AddMemoryModal: React.FC<Props> = ({
                         style={[
                           styles.calendarContainer,
                           {
-                            width: isTablet ? 400 : width * 0.8,
-                            height: height * 0.4,
+                            width: isTablet ? 500 : width * 0.8,
+                            height: height * (isTablet ? 0.5 : 0.4),
                           },
                         ]}
                       >
@@ -311,6 +325,10 @@ const AddMemoryModal: React.FC<Props> = ({
                   multiline={true}
                   numberOfLines={4}
                   textAlignVertical="top"
+                  editable={!isCalendarOpen}
+                  onFocus={() => {
+                    if (isCalendarOpen) Keyboard.dismiss();
+                  }}
                 />
               </View>
 
@@ -342,6 +360,7 @@ const AddMemoryModal: React.FC<Props> = ({
                       },
                     ]}
                     onPress={pickImage}
+                    disabled={isCalendarOpen || keyboardVisible}
                   >
                     <Text
                       style={[styles.fileButtonText, { fontSize: scale(13) }]}
@@ -399,6 +418,8 @@ const styles = StyleSheet.create({
   },
   row1: {
     justifyContent: "space-between",
+    flexDirection: "row",
+    gap: 10,
   },
   inputRow: {
     flexDirection: "row",
@@ -444,6 +465,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
+    gap: 10,
   },
   dateButtonText: {
     color: "#333333",
@@ -451,8 +473,8 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     position: "absolute",
-    top: -50,
-    right: -90,
+    top: -45,
+    left: -5,
     zIndex: 1000,
   },
   descriptionRow: {

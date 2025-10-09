@@ -5,7 +5,7 @@ import ScrollingText from "@src/components/ScrollingText";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -36,8 +36,30 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
 
   // Calendar
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideListener = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
   const handleCalendarOpen = () => {
-    setIsCalendarOpen(true);
+    if (keyboardVisible) {
+      Keyboard.dismiss();
+      setTimeout(() => setIsCalendarOpen(true), 150);
+    } else {
+      setIsCalendarOpen(true);
+    }
   };
 
   const handleDateSelect = (date: string) => {
@@ -48,6 +70,13 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
   const handleCalendarClose = () => {
     setIsCalendarOpen(false);
   };
+
+  useEffect(() => {
+    if (isCalendarOpen) {
+      Keyboard.dismiss();
+      setIsEditing(false);
+    }
+  }, [isCalendarOpen]);
 
   // Ảnh
   const pickImage = async () => {
@@ -61,7 +90,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
 
     // Mở album ảnh
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -87,7 +116,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
 
   // Kiểm tra form hợp lệ
   const isFormValid = () => {
-    return title.trim() !== "" && selectedDate !== "" && selectedImage !== null;
+    return selectedImage !== null;
   };
 
   // Kiểm tra có thay đổi không
@@ -108,14 +137,19 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+          if (isCalendarOpen) handleCalendarClose();
+        }}
+      >
         <View>
           <Text style={styles.titleText}>Cập nhật</Text>
 
           <View style={styles.inputRow}>
             <Text style={styles.label}>Tựa đề</Text>
             <View style={styles.titleInputContainer}>
-              {isEditing ? (
+              {isEditing && !isCalendarOpen ? (
                 <TextInput
                   value={title}
                   onChangeText={setTitle}
@@ -130,12 +164,22 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               ) : (
                 <TouchableOpacity
                   style={{ flex: 1 }}
-                  onPress={() => setIsEditing(true)}
+                  onPress={() => {
+                    if (!isCalendarOpen) setIsEditing(true);
+                  }}
+                  disabled={isCalendarOpen}
                 >
                   {title.length > 30 ? (
                     <ScrollingText text={title} threshold={30} />
                   ) : (
-                    <Text style={styles.titleInput}>{title}</Text>
+                    <Text
+                      style={[
+                        styles.titleInput,
+                        title.length === 0 && { color: "#999" },
+                      ]}
+                    >
+                      {title.length === 0 ? "Không có tựa đề" : title}
+                    </Text>
                   )}
                 </TouchableOpacity>
               )}
@@ -162,7 +206,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
                   onPress={handleCalendarOpen}
                 >
                   <Text style={styles.dateButtonText}>
-                    {formatDate(selectedDate)}
+                    {selectedDate ? formatDate(selectedDate) : "Chọn ngày"}
                   </Text>
                   <Text style={styles.dateButtonText}>▼</Text>
                 </TouchableOpacity>
@@ -183,6 +227,11 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               numberOfLines={4}
               textAlignVertical="top"
               placeholder="Không có miêu tả"
+              placeholderTextColor="#999"
+              editable={!isCalendarOpen}
+              onFocus={() => {
+                if (isCalendarOpen) Keyboard.dismiss();
+              }}
             />
           </View>
 
@@ -192,6 +241,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               <TouchableOpacity
                 onPress={pickImage}
                 style={styles.imageContainer}
+                disabled={isCalendarOpen || keyboardVisible}
               >
                 <Image
                   source={{ uri: selectedImage }}
@@ -205,7 +255,11 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
                 />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.fileButton} onPress={pickImage}>
+              <TouchableOpacity
+                style={styles.fileButton}
+                onPress={pickImage}
+                disabled={isCalendarOpen || keyboardVisible}
+              >
                 <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
               </TouchableOpacity>
             )}

@@ -8,19 +8,27 @@ type Props = {
 };
 
 const InfoMemory = ({ memory }: Props) => {
+  const hasTitle = memory.title && memory.title.length > 0;
+  const hasDate = memory.date && memory.date.length > 0;
+  const hasDescription = memory.description && memory.description.length > 0;
+
   return (
     <>
       <View style={styles.headerContainer}>
         <Text style={styles.infoText}>THÔNG TIN</Text>
-        <Text style={styles.titleText}>{memory.title}</Text>
+        <Text style={[styles.titleText, !hasTitle && { color: "#999" }]}>
+          {hasTitle ? memory.title : "Không có tựa đề"}
+        </Text>
         <View style={styles.dateRow}>
           <FontAwesome6 name="calendar" size={20} color="black" />
-          <Text style={styles.dateText}>{formatDate(memory.date)}</Text>
+          <Text style={[styles.dateText, !hasDate && { color: "#999" }]}>
+            {hasDate ? formatDate(memory.date) : "Chưa chọn ngày"}
+          </Text>
         </View>
       </View>
 
       <View style={styles.descContainer}>
-        {memory.description.length > 0 ? (
+        {hasDescription ? (
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.descText}>{memory.description}</Text>
           </ScrollView>

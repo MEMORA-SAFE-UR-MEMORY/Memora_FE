@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   StyleSheet,
-  Text,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -19,9 +17,14 @@ const ModalCalendar = ({ onSelectDate, onClose, initialDate }: Props) => {
   const [selected, setSelected] = useState(initialDate || "");
   const [rowCount, setRowCount] = useState<number>(5);
 
-  const onDayPress = useCallback((day: DateData) => {
-    setSelected(day.dateString);
-  }, []);
+  const onDayPress = useCallback(
+    (day: DateData) => {
+      setSelected(day.dateString);
+      onSelectDate(day.dateString);
+      onClose();
+    },
+    [onSelectDate, onClose]
+  );
 
   const marked = useMemo(
     () => ({
@@ -35,13 +38,6 @@ const ModalCalendar = ({ onSelectDate, onClose, initialDate }: Props) => {
     }),
     [selected]
   );
-
-  const handleClose = useCallback(() => {
-    if (selected) {
-      onSelectDate(selected);
-    }
-    onClose();
-  }, [selected, onSelectDate, onClose]);
 
   const theme: CalendarProps["theme"] = {
     backgroundColor: "#ffffff",
@@ -142,15 +138,6 @@ const ModalCalendar = ({ onSelectDate, onClose, initialDate }: Props) => {
             setRowCount(rows);
           }}
         />
-        <TouchableOpacity
-          style={[
-            styles.closeButton,
-            { marginTop: calendarStyles.buttonMarginTop },
-          ]}
-          onPress={handleClose}
-        >
-          <Text style={styles.closeButtonText}>Đóng</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
