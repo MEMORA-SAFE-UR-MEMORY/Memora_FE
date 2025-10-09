@@ -34,8 +34,6 @@ type User = {
   username: string;
 };
 
-const EXPLORE_HIDE_KEY = "hall.explore_intro.hide";
-
 export default function HomeScreen() {
   const [settingVisible, setSettingVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -56,24 +54,12 @@ export default function HomeScreen() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [userData, setUserData] = useState<User | null>(null);
   const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
-  const [hideExploreIntro, setHideExploreIntro] = useState(false);
   const lastExploredRoomRef = useRef<number | null>(null);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
   const formatNumber = (n: number) => n.toLocaleString("vi-VN");
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const v = await AsyncStorage.getItem(EXPLORE_HIDE_KEY);
-        setHideExploreIntro(v === "1");
-        const last = await AsyncStorage.getItem("explore.lastRoomId");
-        if (last) lastExploredRoomRef.current = Number(last) || null;
-      } catch {}
-    })();
-  }, []);
 
   const headerPaddingTop = isLandscape
     ? Math.min(Math.max(12, insets.top), 32)
@@ -125,7 +111,7 @@ export default function HomeScreen() {
 
   const intoHousePos = useMemo(() => {
     const leftPx = width * 0.5;
-    const topPx = height * 0.55;
+    const topPx = height * 0.6;
     return { left: leftPx, top: topPx } as const;
   }, [width, height]);
 
@@ -156,7 +142,7 @@ export default function HomeScreen() {
         themeId: String(r.themeId),
         type: r.type ?? "public",
         mode: "view",
-          back: "/home",
+        back: "/home",
       };
       router.replace({ pathname: "/room", params });
       lastExploredRoomRef.current = r.roomId;
@@ -167,26 +153,13 @@ export default function HomeScreen() {
   }, []);
 
   const handleExplorePress = useCallback(() => {
-    if (hideExploreIntro) {
-      handleExploreRandom();
-    } else {
-      setExploreIntroVisible(true);
-    }
-  }, [hideExploreIntro, handleExploreRandom]);
+    setExploreIntroVisible(true);
+  }, []);
 
-  const onConfirmExploreIntro = useCallback(
-    async (dontShowAgain: boolean) => {
-      try {
-        if (dontShowAgain) {
-          await AsyncStorage.setItem(EXPLORE_HIDE_KEY, "1");
-          setHideExploreIntro(true);
-        }
-      } catch {}
-      setExploreIntroVisible(false);
-      handleExploreRandom();
-    },
-    [handleExploreRandom]
-  );
+  const onConfirmExploreIntro = useCallback(() => {
+    setExploreIntroVisible(false);
+    handleExploreRandom();
+  }, [handleExploreRandom]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -195,7 +168,7 @@ export default function HomeScreen() {
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
-          paddingHorizontal: 26,
+          paddingHorizontal: 40,
           paddingTop: headerPaddingTop,
         }}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}

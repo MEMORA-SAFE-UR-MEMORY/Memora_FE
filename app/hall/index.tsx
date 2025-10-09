@@ -40,8 +40,6 @@ type User = {
   username: string;
 };
 
-const EXPLORE_HIDE_KEY = "hall.explore_intro.hide";
-
 export default function HallScreen() {
   const [userData, setUserData] = useState<User | null>(null);
   const { rooms, loading: roomsLoading, addRoom, removeRoom } = useRooms();
@@ -63,7 +61,6 @@ export default function HallScreen() {
   const { deleteAccount, loading } = useDeleteAccount();
   const [headerHeight, setHeaderHeight] = useState(0);
   const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
-  const [hideExploreIntro, setHideExploreIntro] = useState(false);
   const lastExploredRoomRef = useRef<number | null>(null);
 
   // Delete modal state
@@ -100,8 +97,6 @@ export default function HallScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const v = await AsyncStorage.getItem("hall.explore_intro.hide");
-        setHideExploreIntro(v === "1");
         const last = await AsyncStorage.getItem("explore.lastRoomId");
         if (last) lastExploredRoomRef.current = Number(last) || null;
       } catch {}
@@ -243,26 +238,13 @@ export default function HallScreen() {
   }, []);
 
   const handleExplorePress = useCallback(() => {
-    if (hideExploreIntro) {
-      handleExploreRandom();
-    } else {
-      setExploreIntroVisible(true);
-    }
-  }, [hideExploreIntro, handleExploreRandom]);
+    setExploreIntroVisible(true); // luôn mở modal
+  }, []);
 
-  const onConfirmExploreIntro = useCallback(
-    async (dontShowAgain: boolean) => {
-      try {
-        if (dontShowAgain) {
-          await AsyncStorage.setItem(EXPLORE_HIDE_KEY, "1");
-          setHideExploreIntro(true);
-        }
-      } catch {}
-      setExploreIntroVisible(false);
-      handleExploreRandom();
-    },
-    [handleExploreRandom]
-  );
+  const onConfirmExploreIntro = useCallback(() => {
+    setExploreIntroVisible(false);
+    handleExploreRandom();
+  }, [handleExploreRandom]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -291,7 +273,7 @@ export default function HallScreen() {
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 26,
+            paddingHorizontal: 40,
             paddingTop: headerPaddingTop,
           }}
           onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
@@ -385,6 +367,57 @@ export default function HallScreen() {
             alignSelf: "flex-end",
           }}
         >
+          <View style={{ alignItems: "center" }}>
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                marginBottom: -5,
+                elevation: 4,
+              }}
+              onPress={() => router.replace("/album")}
+            >
+              <View
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderColor: "#663530",
+                  borderWidth: 2,
+                  width: 41,
+                  height: 41,
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Animated.View style={albumShake}>
+                  <Image
+                    source={require("../../assets/icons/Album.png")}
+                    style={{
+                      width: 42,
+                      height: 42,
+                      marginTop: -4,
+                    }}
+                    resizeMode="contain"
+                  />
+                </Animated.View>
+              </View>
+            </TouchableOpacity>
+            <Text
+              style={{
+                color: "#663530",
+                fontSize: 15,
+                fontFamily: "Baloo2_bold",
+                textAlign: "center",
+                textShadowColor: "#d0948dff",
+                textShadowRadius: 1,
+                elevation: 1,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.25,
+                shadowRadius: 1,
+              }}
+            >
+              Album
+            </Text>
+          </View>
           {/* ====== QUÀ NGÀY ====== */}
           <View style={{ alignItems: "center" }}>
             <TouchableOpacity

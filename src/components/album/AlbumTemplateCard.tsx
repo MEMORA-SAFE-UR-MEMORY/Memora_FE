@@ -1,7 +1,11 @@
+import CloneSuccessModal from "@src/components/album/CloneSuccessModal";
+import DuplicateFabButton from "@src/components/album/DuplicateFabButton";
 import PreviewRippleButton from "@src/components/album/PreviewRippleButton";
 import { Image } from "expo-image";
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCloneAlbum } from "services/album/hook";
 import { Template } from "services/album/type";
 
 type Dims = {
@@ -20,7 +24,6 @@ type Props = {
   onDuplicate: () => Promise<void>;
   cloning?: boolean;
 };
-
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
@@ -32,6 +35,17 @@ export default function AlbumTemplateCard({
   cloning,
 }: Props) {
   const { cardW, cardH, leftW, leftH, rightW, a4Ratio } = dims;
+
+  const { clone, loading } = useCloneAlbum();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const handleDuplicate = async () => {
+    try {
+      await clone(item.id);
+      setShowSuccess(true);
+    } catch (e: any) {
+      Alert.alert("Lỗi", e?.message ?? "Không thể tạo bản sao.");
+    }
+  };
 
   return (
     <Pressable
@@ -79,6 +93,20 @@ export default function AlbumTemplateCard({
         iconColor="#fff"
         onPress={onPreview}
       />
+
+      {/* Nút tạo bản sao ở góc phải dưới */}
+      <DuplicateFabButton
+        loading={loading || !!cloning}
+        onPress={handleDuplicate}
+      />
+      <CloneSuccessModal
+        visible={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        onPrimary={() => {
+          setShowSuccess(false);
+          router.push("/my-albums" as any);
+        }}
+      />
     </Pressable>
   );
 }
@@ -92,7 +120,6 @@ const s = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 0,
     gap: 12,
-
     shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 10,
