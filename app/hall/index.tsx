@@ -15,7 +15,13 @@ import { useLogin } from "@src/hooks/useLogin";
 
 import { router } from "expo-router";
 import { Menu } from "lucide-react-native";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Image,
@@ -27,13 +33,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fetchRandomPublicRoom } from "services/rooms/api";
 import { useRooms } from "services/rooms/hook";
-
 import { useDeleteAccount } from "services/users/hook";
 import { useDailyReward, useWalletGet } from "services/wallet/hook";
 
 type User = {
   username: string;
 };
+
+const EXPLORE_HIDE_KEY = "hall.explore_intro.hide";
 
 export default function HallScreen() {
   const [userData, setUserData] = useState<User | null>(null);
@@ -57,6 +64,7 @@ export default function HallScreen() {
   const [headerHeight, setHeaderHeight] = useState(0);
   const [exploreIntroVisible, setExploreIntroVisible] = useState(false);
   const [hideExploreIntro, setHideExploreIntro] = useState(false);
+  const lastExploredRoomRef = useRef<number | null>(null);
 
   // Delete modal state
   const [deleteRoomVisible, setDeleteRoomVisible] = useState(false);
@@ -78,9 +86,7 @@ export default function HallScreen() {
           const user = JSON.parse(userStr);
           setUserData(user);
         }
-      } catch (error) {
-        console.error("Error getting user from storage:", error);
-      }
+      } catch {}
     };
     getUserFromStorage();
   }, []);
@@ -96,6 +102,8 @@ export default function HallScreen() {
       try {
         const v = await AsyncStorage.getItem("hall.explore_intro.hide");
         setHideExploreIntro(v === "1");
+        const last = await AsyncStorage.getItem("explore.lastRoomId");
+        if (last) lastExploredRoomRef.current = Number(last) || null;
       } catch {}
     })();
   }, []);
@@ -123,14 +131,11 @@ export default function HallScreen() {
   ) => {
     try {
       if (themeId == null) {
-        console.warn("[CreateRoom] themeId is required");
         return;
       }
       setModalVisible(false);
       await addRoom(roomName, themeId, doorId);
-    } catch (e) {
-      console.log("Create room failed:", e);
-    }
+    } catch {}
   };
 
   const openDeleteModal = (roomId: number, roomName: string) => {
@@ -147,8 +152,7 @@ export default function HallScreen() {
       setDeleteRoomVisible(false);
       setSelectedRoomId(null);
       setSelectedRoomName("");
-    } catch (e) {
-      console.log("Delete room failed:", e);
+    } catch {
     } finally {
       setDeletingRoom(false);
     }
@@ -163,9 +167,7 @@ export default function HallScreen() {
 
       await new Promise((r) => setTimeout(r, 100));
       await handleLogout();
-    } catch (e) {
-      console.log("Delete account failed:", e);
-    }
+    } catch {}
   };
 
   const outHomePos = useMemo(() => {
@@ -189,43 +191,55 @@ export default function HallScreen() {
   const openRoom = useCallback(
     (room: { id: number; theme_id?: number | null; type?: string }) => {
       if (room.theme_id == null) {
-        console.warn(`[openRoom] room ${room.id} has null theme_id`);
         return;
       }
       const params = {
         roomId: String(room.id),
         themeId: String(room.theme_id),
         type: room.type ?? "private",
+        back: "/hall",
       };
-
-      console.log("[Hall] onDoorPress -> params:", params);
 
       router.replace({ pathname: "/room", params });
     },
     []
   );
 
+  // Discovery
   const handleExploreRandom = useCallback(async () => {
     try {
-      const r = await fetchRandomPublicRoom();
+      let excludeUserId: string | null = null;
+      try {
+        const userStr = await AsyncStorage.getItem("user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          excludeUserId = u?.id ?? u?.user_id ?? null;
+        }
+        if (!excludeUserId) {
+          excludeUserId = (await AsyncStorage.getItem("userId")) ?? null;
+        }
+      } catch {}
+
+      const r = await fetchRandomPublicRoom(
+        excludeUserId ?? undefined,
+        lastExploredRoomRef.current
+      );
       if (!r) {
-        console.warn("No public rooms available");
         return;
       }
       const params = {
         roomId: String(r.roomId),
         themeId: String(r.themeId),
         type: r.type ?? "public",
-        mode: "view",
-      } as const;
-      console.log("[Hall] Explore -> params:", params);
-      router.replace({
-        pathname: "/room",
-        params,
-      });
-    } catch (e) {
-      console.log("Explore random failed:", e);
-    }
+        mode: "view" as const,
+        back: "/hall",
+      };
+      router.replace({ pathname: "/room", params });
+      lastExploredRoomRef.current = r.roomId;
+      try {
+        await AsyncStorage.setItem("explore.lastRoomId", String(r.roomId));
+      } catch {}
+    } catch {}
   }, []);
 
   const handleExplorePress = useCallback(() => {
@@ -240,7 +254,7 @@ export default function HallScreen() {
     async (dontShowAgain: boolean) => {
       try {
         if (dontShowAgain) {
-          await AsyncStorage.setItem("hall.explore_intro.hide", "1");
+          await AsyncStorage.setItem(EXPLORE_HIDE_KEY, "1");
           setHideExploreIntro(true);
         }
       } catch {}

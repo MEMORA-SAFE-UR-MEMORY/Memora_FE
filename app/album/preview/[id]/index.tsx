@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image as ExpoImage } from "expo-image";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -13,16 +13,11 @@ import {
 import { fetchAllPagesOfTemplate } from "services/album/api";
 import { TemplatePage } from "services/album/type";
 
-const blurhash =
-  "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
-
 export default function TemplatePreviewOverlay() {
   const router = useRouter();
-  const navigation: any = useNavigation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const templateId = Number(id);
   const lastFetchedId = useRef<number | null>(null);
-  console.log("[Preview] templateId:", templateId);
 
   const [pages, setPages] = useState<TemplatePage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +36,9 @@ export default function TemplatePreviewOverlay() {
     (async () => {
       setLoading(true);
       try {
-        console.log("[Preview] fetching pages for template:", templateId);
         const res = await fetchAllPagesOfTemplate(templateId);
         if (!ignore) {
-          console.log("[Preview] fetched pages count:", res?.length ?? 0);
-          if (res?.length)
-            console.log("[Preview] first 2 pages sample:", res.slice(0, 2));
-          setPages(res);
+          if (res?.length) setPages(res);
           const start = res.findIndex((p) => !!p.layout_url);
           setIdx(start >= 0 ? start : 0);
         }
@@ -63,22 +54,10 @@ export default function TemplatePreviewOverlay() {
 
   const current = pages[idx];
 
-  // Log chỉ khi đã có trang hiện tại
-  useEffect(() => {
-    if (!current) return;
-    console.log(
-      "[Preview] current page idx/id/role/layout_url:",
-      idx,
-      current.id,
-      current.role,
-      current.layout_url
-    );
-  }, [idx, current]);
-
   useEffect(() => {
     if (!pages.length) return;
     const urls = pages.map((p) => p.layout_url).filter(Boolean) as string[];
-    urls.forEach((u) => ExpoImage.prefetch(u).catch(() => {}));
+    urls.forEach((u) => Image.prefetch(u).catch(() => {}));
   }, [pages]);
 
   const go = (delta: number) => {
@@ -87,12 +66,6 @@ export default function TemplatePreviewOverlay() {
   };
 
   const closeOverlay = () => {
-    try {
-      if (navigation?.canGoBack?.()) {
-        navigation.goBack();
-        return;
-      }
-    } catch {}
     router.replace({
       pathname: "/album",
       params: { focusId: String(templateId) },
@@ -115,31 +88,33 @@ export default function TemplatePreviewOverlay() {
           </View>
         ) : (
           <>
-            <ExpoImage
-              source={current?.layout_url || undefined}
-              placeholder={{ blurhash }}
-              contentFit="contain"
-              transition={200}
-              cachePolicy="memory-disk"
-              recyclingKey={String(current?.id)}
-              priority="high"
-              onLoad={() => console.log("[Preview] image loaded:", current?.id)}
-              onError={(e) => {
-                try {
-                  const msg = (e?.error as string) || JSON.stringify(e);
-                  console.log("[Preview] image error:", msg);
-                } catch (err) {
-                  console.log("[Preview] image error (unknown)", err);
-                }
-              }}
-              style={[
-                styles.pageImage,
-                {
-                  width: MAX_W,
-                  height: MAX_H,
-                },
-              ]}
-            />
+            {current?.layout_url ? (
+              <Image
+                source={{ uri: current.layout_url }}
+                resizeMode="contain"
+                onLoad={() => {}}
+                onError={() => {}}
+                style={[
+                  styles.pageImage,
+                  {
+                    width: MAX_W,
+                    height: MAX_H,
+                  },
+                ]}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.center,
+                  {
+                    width: MAX_W,
+                    height: MAX_H,
+                  },
+                ]}
+              >
+                <Text style={styles.muted}>Trang này không có ảnh.</Text>
+              </View>
+            )}
             {/* Prev */}
             <Pressable
               style={[styles.navBtn, { left: 24 }]}

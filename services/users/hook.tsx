@@ -33,12 +33,9 @@ export function useDeleteAccount() {
 
       if (uid) {
         await deleteUserHard(uid);
-      } else {
-        console.warn("No UID in storage, skip server delete");
       }
     } catch (e) {
       setError(e);
-      console.log("Delete account (server) failed:", e);
     } finally {
       await AsyncStorage.multiRemove([
         "user",

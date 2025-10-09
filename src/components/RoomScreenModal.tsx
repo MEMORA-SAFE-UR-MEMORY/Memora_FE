@@ -11,9 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useDoors } from "services/rooms/hook";
-import { Door } from "services/rooms/type";
-
+import { useDoors } from "../../services/rooms/hook";
+import { Door } from "../../services/rooms/type";
 import { useUserThemes } from "services/userThemes/hook";
 
 type Props = {
@@ -100,29 +99,9 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
         : Number(selectedThemeId);
 
     if (selectedThemeId === "default" && !themeId) {
-      console.warn("[CreateRoom] Không tìm thấy id theme 'Mặc định' trong DB");
       return;
     }
     const roomDoorIdToSave: number | null = selectedDoorId;
-
-    try {
-      console.log(
-        "[CreateRoom] selectedThemeId:",
-        selectedThemeId,
-        "-> themeId:",
-        themeId,
-        "defaultThemeIdFromDb:",
-        defaultThemeIdFromDb
-      );
-      console.log(
-        "[CreateRoom] selectedDoorId:",
-        selectedDoorId,
-        "roomDoorIdToSave:",
-        roomDoorIdToSave,
-        "roomName:",
-        roomName
-      );
-    } catch {}
 
     if (!roomName) return;
     if (!selectedDoorId) return;
