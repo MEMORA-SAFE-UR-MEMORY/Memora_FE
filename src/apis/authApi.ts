@@ -23,6 +23,7 @@ export const loginUser = async (email: string, password: string) => {
       email,
       password,
     });
+
     return response.data; // thường sẽ trả về token hoặc thông tin user
   } catch (err: any) {
     throw new Error(err.response?.data?.message || "Đăng nhập thất bại");

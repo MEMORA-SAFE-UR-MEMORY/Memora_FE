@@ -120,7 +120,6 @@ const s = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 0,
     gap: 12,
-
     shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 10,

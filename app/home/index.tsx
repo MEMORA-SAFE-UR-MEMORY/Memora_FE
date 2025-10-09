@@ -111,7 +111,7 @@ export default function HomeScreen() {
 
   const intoHousePos = useMemo(() => {
     const leftPx = width * 0.5;
-    const topPx = height * 0.55;
+    const topPx = height * 0.6;
     return { left: leftPx, top: topPx } as const;
   }, [width, height]);
 
@@ -168,7 +168,7 @@ export default function HomeScreen() {
           flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
-          paddingHorizontal: 26,
+          paddingHorizontal: 40,
           paddingTop: headerPaddingTop,
         }}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}

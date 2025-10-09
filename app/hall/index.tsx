@@ -273,7 +273,7 @@ export default function HallScreen() {
             flexDirection: "row",
             justifyContent: "space-between",
             alignItems: "center",
-            paddingHorizontal: 26,
+            paddingHorizontal: 40,
             paddingTop: headerPaddingTop,
           }}
           onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}

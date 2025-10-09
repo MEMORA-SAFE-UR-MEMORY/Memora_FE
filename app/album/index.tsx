@@ -11,7 +11,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { duplicateTemplate } from "services/album/api";
 import { useAlbumTemplates } from "services/album/hook";
 
 import { Template } from "services/album/type";
@@ -157,7 +156,6 @@ export default function AlbumScreen() {
                 if (cloningId) return;
                 try {
                   setCloningId(item.id);
-                  await duplicateTemplate(item.id);
                 } finally {
                   setCloningId(null);
                 }
@@ -222,7 +220,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 16,
+    paddingVertical: 10,
     paddingHorizontal: 115,
   },
   navBtn: {

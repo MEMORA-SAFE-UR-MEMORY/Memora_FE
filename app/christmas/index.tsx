@@ -315,7 +315,7 @@ const Christmas = () => {
                 color: "#2E7D32",
               }}
             >
-              {themes[1].theme_price}vnd
+              {themes[1]?.theme_price}vnd
             </Text>
           </View>
 

@@ -23,6 +23,7 @@ type Props = {
   categories: Category[];
   selectedCategory: number;
   onSelect: (id: number) => void;
+  disabledCategories?: number[];
 };
 
 const iconComponents: Record<string, any> = {
@@ -32,7 +33,12 @@ const iconComponents: Record<string, any> = {
   Ionicons,
 };
 
-const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
+const CategoryInven = ({
+  categories,
+  selectedCategory,
+  onSelect,
+  disabledCategories,
+}: Props) => {
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -52,6 +58,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
           const IconComponent =
             iconComponents[category.iconPackage] || MaterialIcons;
           const isSelected = selectedCategory === category.id;
+          const isDisabled = disabledCategories?.includes(category.id);
 
           return (
             <Pressable
@@ -60,7 +67,10 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
               onPress={() => onSelect(category.id)}
             >
               <View
-                style={[isSelected ? styles.iconWrapper : styles.iconContainer]}
+                style={[
+                  isSelected ? styles.iconWrapper : styles.iconContainer,
+                  isDisabled && { opacity: 0.4 }, // mờ icon khi disable
+                ]}
               >
                 <IconComponent
                   name={category.iconName || "help-outline"}
@@ -68,7 +78,7 @@ const CategoryInven = ({ categories, selectedCategory, onSelect }: Props) => {
                   color="white"
                 />
               </View>
-              {isSelected && (
+              {isSelected && !isDisabled && (
                 <View style={styles.textOverlayWrapper}>
                   <View style={styles.textOverlayContainer}>
                     <Text

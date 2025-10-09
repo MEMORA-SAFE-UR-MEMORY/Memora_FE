@@ -5,6 +5,7 @@ import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   visible: boolean;
+  mode: "confirm" | "noti";
   onClose: () => void;
   onConfirm: () => void;
   titleText: string;
@@ -19,10 +20,14 @@ type Props = {
   // cancel button
   cancelBtnText?: string;
   cancelBtnColor?: ColorType;
+
+  // custom width
+  width?: number;
 };
 
 const ModalConfirm = ({
   visible,
+  mode,
   onClose,
   onConfirm,
   titleText,
@@ -33,6 +38,7 @@ const ModalConfirm = ({
   confirmBtnColor = "green",
   cancelBtnText = "Hủy",
   cancelBtnColor = "grey",
+  width = 550,
 }: Props) => {
   return (
     <Modal
@@ -44,7 +50,7 @@ const ModalConfirm = ({
       supportedOrientations={["portrait", "landscape"]}
     >
       <View style={styles.overlay}>
-        <View style={styles.container}>
+        <View style={[styles.container, { width }]}>
           {/* Title */}
           <Text style={styles.titleText}>{titleText}</Text>
 
@@ -66,18 +72,28 @@ const ModalConfirm = ({
             <Text style={styles.contentText}>{contentText}</Text>
 
             {/* Buttons */}
-            <View style={styles.btnContainer}>
-              <BtnBorder
-                text={cancelBtnText}
-                colorType={cancelBtnColor}
-                onPress={onClose}
-              />
-              <BtnBorder
-                text={confirmBtnText}
-                colorType={confirmBtnColor}
-                onPress={onConfirm}
-              />
-            </View>
+            {mode === "confirm" ? (
+              <View style={styles.btnConfirm}>
+                <BtnBorder
+                  text={cancelBtnText}
+                  colorType={cancelBtnColor}
+                  onPress={onClose}
+                />
+                <BtnBorder
+                  text={confirmBtnText}
+                  colorType={confirmBtnColor}
+                  onPress={onConfirm}
+                />
+              </View>
+            ) : (
+              <View style={styles.btnNoti}>
+                <BtnBorder
+                  text={confirmBtnText}
+                  colorType={confirmBtnColor}
+                  onPress={onConfirm}
+                />
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -128,14 +144,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   iconContainer: {
-    padding: 10,
+    width: 50, 
+    height: 50,
     borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
   },
-  btnContainer: {
+  btnConfirm: {
     flexDirection: "row",
     gap: 10,
+    marginBottom: 5,
+  },
+  btnNoti: {
+    alignSelf: "flex-end",
     marginBottom: 5,
   },
 });

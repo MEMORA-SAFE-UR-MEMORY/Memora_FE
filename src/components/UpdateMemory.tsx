@@ -80,6 +80,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
       description,
       image: selectedImage,
       date: selectedDate,
+      createdAt: memory.createdAt,
     };
     onUpdate(updatedMemory);
   };
@@ -131,8 +132,8 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
                   style={{ flex: 1 }}
                   onPress={() => setIsEditing(true)}
                 >
-                  {title.length > 23 ? (
-                    <ScrollingText text={title} />
+                  {title.length > 30 ? (
+                    <ScrollingText text={title} threshold={30} />
                   ) : (
                     <Text style={styles.titleInput}>{title}</Text>
                   )}
