@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "memora",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },
@@ -19,8 +19,6 @@
       "edgeToEdgeEnabled": true,
       "jsEngine": "hermes",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
@@ -49,6 +47,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e4ed3c0e-dd28-4053-a3d8-2dd425046862"
+      }
     }
   }
 }
