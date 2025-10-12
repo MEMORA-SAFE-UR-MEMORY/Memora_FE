@@ -20,12 +20,15 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import ImageCropModal from "@src/components/ImageCropModal";
+import { RoomItem } from "@src/types/item";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   onSave: (frameId: number, slotId: number, data: Memory) => void;
   frameId: number | null;
+  frameItem: RoomItem | null;
   slotId: number | null;
 };
 
@@ -34,6 +37,7 @@ const AddMemoryModal: React.FC<Props> = ({
   onClose,
   onSave,
   frameId,
+  frameItem,
   slotId,
 }) => {
   const [title, setTitle] = useState("");
@@ -42,6 +46,8 @@ const AddMemoryModal: React.FC<Props> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   const { width, height } = useWindowDimensions();
   const isSmallDevice = width <= 700;
@@ -93,20 +99,27 @@ const AddMemoryModal: React.FC<Props> = ({
 
   // Ảnh
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Xin lỗi, chúng tôi cần quyền truy cập vào thư viện ảnh!");
-      return;
-    }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false,
       quality: 1,
     });
 
-    if (!result.canceled) setSelectedImage(result.assets[0].uri);
+    if (!result.canceled) {
+      setTempImage(result.assets[0].uri);
+      setIsCropOpen(true);
+    }
+  };
+
+  const handleCropConfirm = (croppedUri: string) => {
+    console.log("✅ Received cropped image:", croppedUri);
+    setSelectedImage(croppedUri);
+    setIsCropOpen(false);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropOpen(false);
+    setTempImage(null);
   };
 
   const handleSave = () => {
@@ -126,7 +139,8 @@ const AddMemoryModal: React.FC<Props> = ({
     onClose();
   };
 
-  const isFormValid = () => selectedImage !== null;
+  const isFormValid = () =>
+    selectedImage !== null && title.trim().length > 0 && selectedDate !== "";
 
   return (
     <Modal
@@ -382,6 +396,36 @@ const AddMemoryModal: React.FC<Props> = ({
                 />
               </View>
             </View>
+
+            {/* Modal Crop */}
+            {tempImage &&
+              isCropOpen &&
+              frameItem?.item?.slots &&
+              slotId !== null &&
+              (() => {
+                // Dàn phẳng mảng slot
+                const slots = Array.isArray(frameItem.item.slots[0])
+                  ? frameItem.item.slots.flat()
+                  : frameItem.item.slots;
+
+                const slot = slots.find((s) => s.slotId === slotId);
+
+                if (!slot) {
+                  console.warn("Không tìm thấy slot với id:", slotId);
+                  return null;
+                }
+
+                return (
+                  <ImageCropModal
+                    key={slotId}
+                    visible={isCropOpen}
+                    imageUri={tempImage}
+                    slot={slot}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                  />
+                );
+              })()}
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

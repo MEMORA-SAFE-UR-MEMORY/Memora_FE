@@ -23,7 +23,7 @@ type PlacedFrameProps = {
   onMove: (id: number, x: number, y: number) => void;
   onRotate: (id: number, rotation: number) => void;
   bringToFront: (id: number) => void;
-  onPress: (frameId: number, slotId: number | null) => void;
+  onPress: (frameId: number, slotId: number | null, frame: RoomItem) => void;
   onDelete: (id: number) => void;
   trashLayout?: { x: number; y: number; w: number; h: number } | null;
   setTrashActive: (active: boolean) => void;
@@ -124,15 +124,13 @@ const PlacedFrame = ({
     .enabled(isEditing)
     .minDistance(5)
     .onStart((event) => {
-      // 🔹 Kiểm tra nếu chạm vào vùng icon xoay thì vô hiệu pan
       const iconCenterX = item.item.dimension.w / 2;
-      const iconCenterY = -50 + 20; // top + bán kính
+      const iconCenterY = -50 + 20;
       const dx = event.x - iconCenterX;
       const dy = event.y - iconCenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance < 25) {
-        // đang bấm trong vùng icon xoay → bỏ qua pan
         isOnRotateIcon.value = true;
         return;
       }
@@ -177,7 +175,6 @@ const PlacedFrame = ({
     })
     .onEnd(() => {
       if (isOnRotateIcon.value) {
-        // reset lại sau khi xoay
         isOnRotateIcon.value = false;
         return;
       }
@@ -206,7 +203,6 @@ const PlacedFrame = ({
       runOnJS(onUserInteractionEnd)();
     });
 
-  // Gesture xoay bằng 2 ngón
   const twoFingerRotate = Gesture.Rotation()
     .enabled(isEditing && item.item.categoryId !== 1)
     .onStart(() => {
@@ -220,7 +216,6 @@ const PlacedFrame = ({
       runOnJS(onUserInteractionEnd)();
     });
 
-  // Kết hợp gestures
   const composed = Gesture.Simultaneous(
     Gesture.Race(iconRotate, panMove),
     twoFingerRotate
@@ -231,9 +226,7 @@ const PlacedFrame = ({
   };
 
   const handlePress = () => {
-    if (item.item.categoryId === 1) {
-      onPress(item.id, null);
-    }
+    onPress(item.id, null, item);
   };
 
   useEffect(() => {
@@ -256,7 +249,7 @@ const PlacedFrame = ({
         ]}
       >
         {item.item.categoryId !== 1 ? (
-          <Pressable onPress={() => onPress(item.id, null)} style={{ flex: 1 }}>
+          <Pressable onPress={handlePress} style={{ flex: 1 }}>
             <Image
               source={{ uri: item.item.imageUrl }}
               style={styles.itemImage}
@@ -268,7 +261,7 @@ const PlacedFrame = ({
             {item.item.slots?.map((slot) => (
               <Pressable
                 key={slot.slotId}
-                onPress={() => onPress(item.id, slot.slotId)}
+                onPress={() => onPress(item.id, slot.slotId, item)}
                 style={{ position: "absolute" }}
               >
                 <FrameView
@@ -369,7 +362,7 @@ const PlacedFrame = ({
               {item.item.slots?.map((slot) => (
                 <Pressable
                   key={slot.slotId}
-                  onPress={() => onPress(item.id, slot.slotId)}
+                  onPress={() => onPress(item.id, slot.slotId, item)}
                   onLongPress={enterEditMode}
                   delayLongPress={300}
                   style={{ position: "absolute" }}
@@ -411,10 +404,6 @@ const styles = StyleSheet.create({
     height: "100%",
     position: "absolute",
   },
-  memoryImage: {
-    width: "100%",
-    height: "100%",
-  },
   rotateIcon: {
     position: "absolute",
     top: -50,
@@ -438,20 +427,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  emptyContent: {
-    flex: 1,
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 5,
-  },
-  emptyText: {
-    fontSize: 10,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 2,
-    fontFamily: "Baloo2_medium",
   },
 });
 

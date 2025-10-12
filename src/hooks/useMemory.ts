@@ -83,6 +83,7 @@ export const useMemory = (
   const [modalType, setModalType] = useState<ModalType>(null);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [activeFrameId, setActiveFrameId] = useState<number | null>(null);
+  const [activeFrameItem, setActiveFrameItem] = useState<RoomItem | null>(null);
   const [activeSlotId, setActiveSlotId] = useState<number | null>(null);
 
   // Noti modal
@@ -222,21 +223,22 @@ export const useMemory = (
   };
 
   // Khi bấm vào frame (có thể có hoặc chưa có Memory)
-  const handleFramePress = (frameId: number, slotId: number | null) => {
+  const handleFramePress = (
+    frameId: number,
+    slotId: number | null,
+    frameItem: RoomItem
+  ) => {
     setActiveFrameId(frameId);
     setActiveSlotId(slotId);
+    setActiveFrameItem(frameItem);
 
     if (slotId !== null) {
       const memory = resolveMemory(frameId, slotId);
 
       if (memory) {
-        // Có memory thì luôn cho mở view
         openModal("view", memory, frameId, slotId);
-      } else {
-        // Nếu chưa có memory → chỉ cho add khi mode = edit
-        if (mode === "edit") {
-          openModal("add", undefined, frameId, slotId);
-        }
+      } else if (mode === "edit") {
+        openModal("add", undefined, frameId, slotId);
       }
     }
   };
@@ -320,6 +322,8 @@ export const useMemory = (
     setIsTrashActive,
     showTrash,
     setShowTrash,
+    activeFrameItem,
+    setActiveFrameItem,
 
     // Inventory
     openInventory,

@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
+import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
@@ -18,13 +19,16 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import ImageCropModal from "@src/components/ImageCropModal";
 
 type Props = {
   memory: Memory;
+  frameItem: RoomItem | null;
+  slotId: number | null;
   onUpdate: (data: Memory) => void;
 };
 
-const UpdateMemory = ({ memory, onUpdate }: Props) => {
+const UpdateMemory = ({ memory, frameItem, slotId, onUpdate }: Props) => {
   const id = memory.id;
   const [title, setTitle] = useState(memory.title);
   const [description, setDescription] = useState(memory.description ?? "");
@@ -34,6 +38,10 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
   );
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
+
+  // === Crop State ===
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Calendar
 
@@ -80,25 +88,26 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
 
   // Ảnh
   const pickImage = async () => {
-    // Yêu cầu quyền truy cập vào thư viện ảnh
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      alert("Xin lỗi, chúng tôi cần quyền truy cập vào thư viện ảnh!");
-      return;
-    }
-
-    // Mở album ảnh
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      setTempImage(result.assets[0].uri);
+      setIsCropOpen(true);
     }
+  };
+
+  const handleCropConfirm = (croppedUri: string) => {
+    setSelectedImage(croppedUri);
+    setIsCropOpen(false);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropOpen(false);
+    setTempImage(null);
   };
 
   // Modal
@@ -116,7 +125,9 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
 
   // Kiểm tra form hợp lệ
   const isFormValid = () => {
-    return selectedImage !== null;
+    return (
+      selectedImage !== null && title.trim().length > 0 && selectedDate !== ""
+    );
   };
 
   // Kiểm tra có thay đổi không
@@ -274,6 +285,35 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               onPress={handleUpdate}
               disabled={!canUpdate}
             />
+
+            {/* === Modal Crop === */}
+            {tempImage &&
+              isCropOpen &&
+              frameItem?.item?.slots &&
+              slotId !== null &&
+              (() => {
+                const slots = Array.isArray(frameItem.item.slots[0])
+                  ? frameItem.item.slots.flat()
+                  : frameItem.item.slots;
+
+                const slot = slots.find((s) => s.slotId === slotId);
+
+                if (!slot) {
+                  console.warn("Không tìm thấy slot với id:", slotId);
+                  return null;
+                }
+
+                return (
+                  <ImageCropModal
+                    key={slotId}
+                    visible={isCropOpen}
+                    imageUri={tempImage}
+                    slot={slot}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                  />
+                );
+              })()}
           </View>
         </View>
       </TouchableWithoutFeedback>

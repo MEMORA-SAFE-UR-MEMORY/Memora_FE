@@ -3,15 +3,27 @@ import InfoMemory from "@src/components/InfoMemory";
 import ModalConfirm from "@src/components/ModalConfirm";
 import ModalMenu from "@src/components/ModalMenu";
 import UpdateMemory from "@src/components/UpdateMemory";
+import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Animated,
+  Image,
+  Pressable,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
+import { FrameView } from "@src/components/FrameView";
 
 type Props = {
   visible: boolean;
@@ -19,10 +31,11 @@ type Props = {
   memory: Memory;
   onUpdate: (frameId: number, slotId: number, data: Memory) => void;
   onDelete: (frameId: number, slotId: number) => void;
-  frameId: number | null;
+  frameItem: RoomItem | null;
   slotId: number | null;
   onFrameRemoved?: boolean;
   mode: "view" | "edit";
+  memoryResolver: (frameId: number, slotId: number) => Memory | null;
 };
 
 const MemoryModal = ({
@@ -31,81 +44,107 @@ const MemoryModal = ({
   memory,
   onUpdate,
   onDelete,
-  frameId,
+  frameItem,
   slotId,
   onFrameRemoved,
   mode,
+  memoryResolver,
 }: Props) => {
   const { width, height } = useWindowDimensions();
+  const leftWidth = width * 0.6;
+  const rightWidth = width * 0.4;
+
   const [selected, setSelected] = useState<number>(1);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const modalWidth = width * 0.4;
-  const modalAnim = useRef(new Animated.Value(modalWidth)).current; // MemoryModal
-  const menuAnim = useRef(new Animated.Value(modalWidth)).current; // ModalMenu
+  // --- Animation setup (fade only) ---
+  const progress = useSharedValue(0);
 
-  // Khi visible thay đổi → animate in/out
   useEffect(() => {
     if (visible) {
-      // Slide in
-      Animated.parallel([
-        Animated.timing(menuAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(modalAnim, {
-          toValue: 0,
-          duration: 300,
-          delay: 200, // delay nhẹ
-          useNativeDriver: true,
-        }),
-      ]).start();
+      progress.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.out(Easing.exp),
+      });
+      scale.value = withSpring(initialZoom, { damping: 15 });
+      savedScale.value = initialZoom;
+      translateX.value = 0;
+      translateY.value = 0;
+      savedX.value = 0;
+      savedY.value = 0;
     } else {
-      // Slide out
-      Animated.parallel([
-        Animated.timing(modalAnim, {
-          toValue: modalWidth,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(menuAnim, {
-          toValue: modalWidth,
-          duration: 300,
-          delay: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) onClose();
+      progress.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.in(Easing.exp),
       });
     }
   }, [visible]);
 
+  // --- Zoom / Pan gesture ---
+  const initialZoom = 1.8;
+  const scale = useSharedValue(initialZoom);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedScale = useSharedValue(initialZoom);
+  const savedX = useSharedValue(0);
+  const savedY = useSharedValue(0);
+
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .onUpdate((e) => {
+          scale.value = savedScale.value * e.scale;
+        })
+        .onEnd(() => {
+          savedScale.value = Math.min(Math.max(scale.value, 0.7), 2.5);
+          scale.value = withSpring(savedScale.value, { damping: 15 });
+        }),
+    []
+  );
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onUpdate((e) => {
+          translateX.value = savedX.value + e.translationX;
+          translateY.value = savedY.value + e.translationY;
+        })
+        .onEnd(() => {
+          savedX.value = translateX.value;
+          savedY.value = translateY.value;
+        }),
+    []
+  );
+
+  const composedGesture = useMemo(
+    () => Gesture.Simultaneous(pinchGesture, panGesture),
+    [pinchGesture, panGesture]
+  );
+
+  // --- Animated Styles ---
+  const containerAnim = useAnimatedStyle(() => ({
+    opacity: progress.value,
+  }));
+
+  const previewAnim = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
+
+  // --- Handlers ---
   const handleClose = () => {
-    if (visible) {
-      // để trigger slide out
-      Animated.parallel([
-        Animated.timing(modalAnim, {
-          toValue: modalWidth,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(menuAnim, {
-          toValue: modalWidth,
-          duration: 300,
-          delay: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) onClose();
-      });
-    }
+    progress.value = withTiming(0, { duration: 300 }, (finished) => {
+      if (finished) runOnJS(onClose)();
+    });
   };
 
   const handleDelete = () => {
-    if (frameId != null && slotId != null) {
+    if (frameItem && slotId != null) {
       setShowConfirm(false);
-      onDelete(frameId, slotId);
+      onDelete(frameItem.id, slotId);
       handleClose();
     }
   };
@@ -115,96 +154,153 @@ const MemoryModal = ({
   }, [memory.id]);
 
   useEffect(() => {
-    if (onFrameRemoved) {
-      handleClose(); // chạy animation slide out
-    }
+    if (onFrameRemoved) handleClose();
   }, [onFrameRemoved]);
 
-  if (!visible) return null;
+  if (!visible && progress.value === 0) return null;
 
   return (
     <Animated.View
-      style={[
-        styles.overlay,
-        {
-          width: modalWidth,
-          height: height,
-          transform: [{ translateX: modalAnim }],
-        },
-      ]}
+      style={[styles.backdrop, containerAnim]}
+      pointerEvents={visible ? "auto" : "none"}
     >
-      {/* Nếu mode edit thì mới có menu, ngược lại chỉ xem */}
-      {mode === "edit" && (
-        <ModalMenu
-          modalWidth={modalWidth}
-          slideAnim={menuAnim}
-          selected={selected}
-          setSelected={(id) => {
-            if (id === 3) {
-              setShowConfirm(true);
-            } else {
-              setSelected(id);
-            }
-          }}
-        />
-      )}
+      <View style={[styles.modalContainer, { width, height }]}>
+        {/* LEFT: Frame Preview */}
+        <View style={[styles.leftPane, { width: leftWidth }]}>
+          <GestureDetector gesture={composedGesture}>
+            <Animated.View
+              style={[
+                styles.previewContainer,
+                previewAnim,
+                {
+                  width: frameItem?.item.dimension.w ?? 0,
+                  height: frameItem?.item.dimension.h ?? 0,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  width: frameItem?.item.dimension.w ?? 0,
+                  height: frameItem?.item.dimension.h ?? 0,
+                }}
+              >
+                {frameItem?.item.slots?.map((slot) => (
+                  <Pressable key={slot.slotId} style={{ position: "absolute" }}>
+                    <FrameView
+                      slot={slot}
+                      memory={memoryResolver(frameItem.id, slot.slotId)}
+                      frameWidth={frameItem.item.dimension.w}
+                      frameHeight={frameItem.item.dimension.h}
+                    />
+                  </Pressable>
+                ))}
+                <Image
+                  source={{ uri: frameItem?.item.imageUrl }}
+                  style={styles.frameImage}
+                />
+              </View>
+            </Animated.View>
+          </GestureDetector>
+        </View>
 
-      <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-        <Ionicons name="close-circle" size={28} color="#B0B0B0" />
-      </TouchableOpacity>
+        {/* RIGHT: Memory Info */}
+        <View style={[styles.rightPane, { width: rightWidth }]}>
+          {mode === "edit" && (
+            <ModalMenu
+              modalWidth={rightWidth}
+              selected={selected}
+              setSelected={(id) => {
+                if (id === 3) setShowConfirm(true);
+                else setSelected(id);
+              }}
+            />
+          )}
 
-      <View style={{ flex: 1 }}>
-        {mode === "view" ? (
-          <InfoMemory memory={memory} />
-        ) : (
-          <>
-            {selected === 1 && <InfoMemory memory={memory} />}
-            {selected === 2 && frameId != null && slotId != null && (
-              <UpdateMemory
-                memory={memory}
-                onUpdate={(data) => onUpdate(frameId, slotId, data)}
-              />
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <Ionicons name="close-circle" size={30} color="#B0B0B0" />
+          </TouchableOpacity>
+
+          <View style={{ flex: 1 }}>
+            {mode === "view" ? (
+              <InfoMemory memory={memory} />
+            ) : (
+              <>
+                {selected === 1 && <InfoMemory memory={memory} />}
+                {selected === 2 && frameItem && slotId != null && (
+                  <UpdateMemory
+                    memory={memory}
+                    frameItem={frameItem}
+                    slotId={slotId}
+                    onUpdate={(data) => onUpdate(frameItem.id, slotId, data)}
+                  />
+                )}
+              </>
             )}
-          </>
-        )}
-      </View>
+          </View>
 
-      {mode === "edit" && showConfirm && (
-        <ModalConfirm
-          visible={showConfirm}
-          mode="confirm"
-          onClose={() => setShowConfirm(false)}
-          onConfirm={handleDelete}
-          titleText="Xác nhận xóa"
-          contentText="Bạn có chắc chắn muốn xóa kỷ niệm này không?"
-          icon={<MaterialIcons name="delete-forever" size={40} color="white" />}
-          iconBgColor="#F75270"
-          confirmBtnText="Xóa"
-          confirmBtnColor="red"
-          cancelBtnText="Hủy"
-          cancelBtnColor="grey"
-        />
-      )}
+          {mode === "edit" && showConfirm && (
+            <ModalConfirm
+              visible={showConfirm}
+              mode="confirm"
+              onClose={() => setShowConfirm(false)}
+              onConfirm={handleDelete}
+              titleText="Xác nhận xóa"
+              contentText="Bạn có chắc chắn muốn xóa kỷ niệm này không?"
+              icon={
+                <MaterialIcons name="delete-forever" size={40} color="white" />
+              }
+              iconBgColor="#F75270"
+              confirmBtnText="Xóa"
+              confirmBtnColor="red"
+              cancelBtnText="Hủy"
+              cancelBtnColor="grey"
+            />
+          )}
+        </View>
+      </View>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalContainer: {
+    flexDirection: "row",
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  leftPane: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  previewContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  frameImage: {
+    width: "100%",
+    height: "100%",
     position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
+    resizeMode: "contain",
+  },
+  rightPane: {
     backgroundColor: "#fff",
-    padding: 5,
-    zIndex: 200,
+    borderLeftWidth: 1,
+    borderLeftColor: "#eee",
+    paddingHorizontal: 16,
   },
   closeButton: {
     position: "absolute",
     right: 10,
-    top: 5,
-    padding: 5,
+    top: 10,
     zIndex: 10,
   },
 });
+
 export default MemoryModal;

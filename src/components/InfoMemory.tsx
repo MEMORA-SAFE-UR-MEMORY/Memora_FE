@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 10,
   },
   infoText: {
     fontFamily: "Baloo2",
