@@ -1,27 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
-import { toCdnImageUrl } from "@src/utils/cdn";
-import { Image as ExpoImage } from "expo-image";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  PixelRatio,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
-
 import { fetchAllPagesOfTemplate } from "services/album/api";
 import { TemplatePage } from "services/album/type";
 
-const blurhash =
-  "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
-
 export default function TemplatePreviewOverlay() {
   const router = useRouter();
-  const navigation: any = useNavigation();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const templateId = Number(id);
   const lastFetchedId = useRef<number | null>(null);
@@ -29,7 +22,6 @@ export default function TemplatePreviewOverlay() {
   const [pages, setPages] = useState<TemplatePage[]>([]);
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
-  const [attempt, setAttempt] = useState(0);
 
   const { width: winW, height: winH } = useWindowDimensions();
   const MAX_W = winW - 120;
@@ -46,7 +38,7 @@ export default function TemplatePreviewOverlay() {
       try {
         const res = await fetchAllPagesOfTemplate(templateId);
         if (!ignore) {
-          setPages(res);
+          if (res?.length) setPages(res);
           const start = res.findIndex((p) => !!p.layout_url);
           setIdx(start >= 0 ? start : 0);
         }
@@ -63,23 +55,10 @@ export default function TemplatePreviewOverlay() {
   const current = pages[idx];
 
   useEffect(() => {
-    // Mỗi lần đổi trang reset lại thử CDN trước
-    setAttempt(0);
-  }, [idx, current?.id]);
-
-  const srcList = useMemo(() => {
-    if (!current?.layout_url) return [] as string[];
-    const scale = PixelRatio.get();
-    const w = Math.round(MAX_W * scale);
-    const h = Math.round(MAX_H * scale);
-    const cdn = toCdnImageUrl(current.layout_url, {
-      w,
-      h,
-      q: 75,
-      format: "webp",
-    });
-    return [cdn, current.layout_url];
-  }, [current?.layout_url, MAX_W, MAX_H]);
+    if (!pages.length) return;
+    const urls = pages.map((p) => p.layout_url).filter(Boolean) as string[];
+    urls.forEach((u) => Image.prefetch(u).catch(() => {}));
+  }, [pages]);
 
   const go = (delta: number) => {
     if (!pages.length) return;
@@ -87,37 +66,11 @@ export default function TemplatePreviewOverlay() {
   };
 
   const closeOverlay = () => {
-    try {
-      if (navigation?.canGoBack?.()) {
-        navigation.goBack();
-        return;
-      }
-    } catch {}
     router.replace({
       pathname: "/album",
       params: { focusId: String(templateId) },
     });
   };
-
-  // Prefetch next 1-2 pages for faster navigation
-  useEffect(() => {
-    if (!pages.length) return;
-    const scale = PixelRatio.get();
-    const w = Math.round(MAX_W * scale);
-    const h = Math.round(MAX_H * scale);
-    const toUrl = (p?: TemplatePage | null) =>
-      p?.layout_url
-        ? toCdnImageUrl(p.layout_url, { w, h, q: 75, format: "webp" })
-        : null;
-    const next1 = pages[(idx + 1) % pages.length];
-    const next2 = pages[(idx + 2) % pages.length];
-    const urls = [toUrl(next1), toUrl(next2)].filter(Boolean) as string[];
-    if (urls.length && (ExpoImage as any).prefetch) {
-      try {
-        (ExpoImage as any).prefetch(urls);
-      } catch {}
-    }
-  }, [idx, pages, MAX_W, MAX_H]);
 
   return (
     <View style={styles.backdrop}>
@@ -135,20 +88,33 @@ export default function TemplatePreviewOverlay() {
           </View>
         ) : (
           <>
-            <ExpoImage
-              source={srcList[attempt] ? { uri: srcList[attempt] } : undefined}
-              placeholder={{ blurhash }}
-              contentFit="contain"
-              transition={160}
-              cachePolicy="memory-disk"
-              recyclingKey={String(current?.id)}
-              priority="high"
-              onError={() => {
-                // Fallback sang URL gốc nếu CDN timeout
-                setAttempt((a) => (a < srcList.length - 1 ? a + 1 : a));
-              }}
-              style={[styles.pageImage, { width: MAX_W, height: MAX_H }]}
-            />
+            {current?.layout_url ? (
+              <Image
+                source={{ uri: current.layout_url }}
+                resizeMode="contain"
+                onLoad={() => {}}
+                onError={() => {}}
+                style={[
+                  styles.pageImage,
+                  {
+                    width: MAX_W,
+                    height: MAX_H,
+                  },
+                ]}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.center,
+                  {
+                    width: MAX_W,
+                    height: MAX_H,
+                  },
+                ]}
+              >
+                <Text style={styles.muted}>Trang này không có ảnh.</Text>
+              </View>
+            )}
             {/* Prev */}
             <Pressable
               style={[styles.navBtn, { left: 24 }]}

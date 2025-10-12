@@ -1,26 +1,55 @@
 import { useFloatPulse } from "@src/hooks/transitions/useFloatPulseOptions";
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import {
   Animated,
   Image,
+  StyleSheet,
   TouchableOpacity,
-  View,
   ViewStyle,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   onPress: () => void;
   containerStyle?: ViewStyle;
+  // neo vị trí theo mép màn hình (đã tính safe-area)
+  anchor?: "bottom-left" | "bottom-right" | "top-left" | "top-right";
+  offset?: { x?: number; y?: number };
 };
 
-const TRI_OUTER = 10;
-const TRI_INNER = 8;
-const TRI_OUTER_RIGHT = 14;
-const TRI_INNER_RIGHT = 12;
-const TRI_GAP = 2;
-const BORDER_WIDTH = 2;
+const BORDER_COLOR = "#663530";
 
-function IntoHouseButtonComp({ onPress, containerStyle }: Props) {
+function IntoHouseButtonComp({
+  onPress,
+  containerStyle,
+  anchor = "bottom-left",
+  offset,
+}: Props) {
+  const insets = useSafeAreaInsets();
+  const padX = offset?.x ?? 16;
+  const padY = offset?.y ?? 16;
+
+  const basePos = useMemo(() => {
+    switch (anchor) {
+      case "bottom-right":
+        return { right: insets.right + padX, bottom: insets.bottom + padY };
+      case "top-left":
+        return { left: insets.left + padX, top: insets.top + padY };
+      case "top-right":
+        return { right: insets.right + padX, top: insets.top + padY };
+      default:
+        return { left: insets.left + padX, bottom: insets.bottom + padY };
+    }
+  }, [
+    anchor,
+    insets.bottom,
+    insets.left,
+    insets.right,
+    insets.top,
+    padX,
+    padY,
+  ]);
+
   const { animatedStyle } = useFloatPulse({
     amplitude: 10,
     duration: 1600,
@@ -33,6 +62,7 @@ function IntoHouseButtonComp({ onPress, containerStyle }: Props) {
     <Animated.View
       style={[
         { position: "absolute", zIndex: 20 },
+        basePos,
         animatedStyle,
         containerStyle,
       ]}
@@ -43,65 +73,8 @@ function IntoHouseButtonComp({ onPress, containerStyle }: Props) {
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={onPress}
-        style={{
-          backgroundColor: "white",
-          width: 48,
-          height: 48,
-          borderRadius: 27,
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#663530",
-          shadowOpacity: 0.35,
-          shadowRadius: 6,
-          shadowOffset: { width: 0, height: 2 },
-          elevation: 6,
-          borderWidth: 2,
-          borderColor: "#663530",
-          position: "relative",
-        }}
+        style={styles.btn}
       >
-        {/* Tam giác viền bám mép */}
-        <View
-          style={{
-            position: "absolute",
-            left: "-29%",
-            marginRight: -BORDER_WIDTH,
-            top: "29%",
-            transform: [{ translateY: -TRI_OUTER }],
-            width: 0,
-            height: 0,
-          }}
-          pointerEvents="none"
-        >
-          <View
-            style={{
-              position: "absolute",
-              width: 0,
-              height: 0,
-              borderTopWidth: TRI_OUTER,
-              borderBottomWidth: TRI_OUTER,
-              borderRightWidth: TRI_OUTER_RIGHT,
-              borderTopColor: "transparent",
-              borderBottomColor: "transparent",
-              borderRightColor: "#663530",
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              left: TRI_GAP,
-              top: TRI_GAP,
-              width: 0,
-              height: 0,
-              borderTopWidth: TRI_INNER,
-              borderBottomWidth: TRI_INNER,
-              borderRightWidth: TRI_INNER_RIGHT,
-              borderTopColor: "transparent",
-              borderBottomColor: "transparent",
-              borderRightColor: "white",
-            }}
-          />
-        </View>
         <Image
           source={require("../../../assets/icons/Door.png")}
           style={{ width: 28, height: 28 }}
@@ -111,6 +84,25 @@ function IntoHouseButtonComp({ onPress, containerStyle }: Props) {
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  btn: {
+    backgroundColor: "white",
+    width: 48,
+    height: 48,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: BORDER_COLOR,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: BORDER_COLOR,
+    position: "relative",
+  },
+});
 
 const IntoHouseButton = memo(IntoHouseButtonComp);
 export default IntoHouseButton;

@@ -17,6 +17,7 @@ const Welcome = () => {
   const { handleLogout, loading } = useLogin();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
     const getUserFromStorage = async () => {

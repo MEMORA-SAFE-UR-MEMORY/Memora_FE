@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useUserThemes } from "services/userThemes/hook";
 import { useDoors } from "../../services/rooms/hook";
 import { Door } from "../../services/rooms/type";
-import { useUserThemes } from "services/userThemes/hook";
 
 type Props = {
   visible: boolean;
@@ -147,7 +147,7 @@ const RoomScreenModal = ({ visible, onClose, onConfirm }: Props) => {
           flex: 1,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          backgroundColor: "rgba(0, 0, 0, 0.42)",
           justifyContent: "center",
           alignItems: "center",
         }}

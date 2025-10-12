@@ -1,6 +1,8 @@
 import { Entypo } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import useCustomFonts from "@src/hooks/useCustomFonts";
+import { useUser } from "@src/hooks/useUser";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -13,8 +15,6 @@ import {
   View,
 } from "react-native";
 import * as Progress from "react-native-progress";
-import { useUser } from "@src/hooks/useUser";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Loading = () => {
   const [progress, setProgress] = useState(0);

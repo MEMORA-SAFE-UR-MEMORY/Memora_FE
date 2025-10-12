@@ -3,7 +3,7 @@ import HallBackground from "@src/components/inHome/HallBackground";
 import { ScrollXContext } from "@src/context/ScrollXContext";
 
 import { Stack } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Animated, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -13,15 +13,34 @@ export default function HallLayout() {
 
   const WALL = require("../../assets/images/inHomeScreen/wall.png");
   const FLOOR = require("../../assets/images/inHomeScreen/floor.png");
+
   const FLOOR_HEIGHT = 290;
 
   const { width: SCREEN_WIDTH } = useWindowDimensions();
   const [contentWidth, setContentWidth] = useState(SCREEN_WIDTH);
 
   const BG_PARALLAX = 0.35;
+
+  const EXTRA_SCREENS = 1;
+  const EXTRA_PX = useMemo(
+    () => Math.ceil(SCREEN_WIDTH * EXTRA_SCREENS),
+    [SCREEN_WIDTH]
+  );
+
   const maxScroll = Math.max(0, contentWidth - SCREEN_WIDTH);
-  const WALL_WIDTH = SCREEN_WIDTH + BG_PARALLAX * maxScroll;
-  const FLOOR_WIDTH = SCREEN_WIDTH + BG_PARALLAX * maxScroll;
+
+  const parallaxWidth = useMemo(
+    () => SCREEN_WIDTH + BG_PARALLAX * maxScroll,
+    [SCREEN_WIDTH, BG_PARALLAX, maxScroll]
+  );
+
+  const TARGET_BG_WIDTH = useMemo(
+    () => Math.ceil(Math.max(contentWidth, parallaxWidth) + EXTRA_PX),
+    [contentWidth, parallaxWidth, EXTRA_PX]
+  );
+
+  const WALL_WIDTH = TARGET_BG_WIDTH;
+  const FLOOR_WIDTH = TARGET_BG_WIDTH;
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const blocking = loading || !uiReady;

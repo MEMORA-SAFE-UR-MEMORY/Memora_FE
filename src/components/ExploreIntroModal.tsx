@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (dontShowAgain: boolean) => void;
+  onConfirm: () => void;
 };
 
 export default function ExploreIntroModal({
@@ -12,8 +12,6 @@ export default function ExploreIntroModal({
   onClose,
   onConfirm,
 }: Props) {
-  const [dontShow, setDontShow] = useState(false);
-
   return (
     <Modal
       visible={visible}
@@ -34,7 +32,7 @@ export default function ExploreIntroModal({
         <View
           style={{
             width: "100%",
-            maxWidth: 420,
+            maxWidth: 460,
             backgroundColor: "#FFF",
             borderRadius: 16,
             borderWidth: 2,
@@ -60,55 +58,13 @@ export default function ExploreIntroModal({
               fontSize: 16,
               textAlign: "center",
               lineHeight: 20,
-              marginBottom: 14,
+              marginBottom: 20,
             }}
           >
-            Tụi mình sẽ đưa bạn đến ngẫu nhiên một căn phòng đang được mở. Bạn
-            chỉ việc ngồi xem thật nhẹ, như ghé qua một góc nhỏ ấm áp của ai đó.
-            Khi muốn, bạn có thể rời đi bất kỳ lúc nào.
+            Tụi mình sẽ đưa bạn đến ngẫu nhiên một căn phòng đang được mở.{"\n"}{" "}
+            Bạn chỉ việc ngồi xem thật nhẹ, như ghé qua một góc nhỏ ấm áp của ai
+            đó. Khi muốn, bạn có thể rời đi bất kỳ lúc nào.
           </Text>
-
-          <TouchableOpacity
-            onPress={() => setDontShow((v) => !v)}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 4,
-              marginBottom: 14,
-            }}
-            activeOpacity={0.8}
-          >
-            <View
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: 4,
-                borderWidth: 2,
-                borderColor: "#663530",
-                backgroundColor: dontShow ? "#663530" : "#fff",
-                alignItems: "center",
-                justifyContent: "center",
-                marginRight: 8,
-              }}
-            >
-              {dontShow ? (
-                <Text
-                  style={{ color: "#fff", fontWeight: "700", marginTop: -2 }}
-                >
-                  ✓
-                </Text>
-              ) : null}
-            </View>
-            <Text
-              style={{
-                color: "#663530",
-                fontFamily: "Baloo2_medium",
-                fontSize: 14,
-              }}
-            >
-              Không hiện lại
-            </Text>
-          </TouchableOpacity>
 
           <View
             style={{
@@ -141,7 +97,7 @@ export default function ExploreIntroModal({
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => onConfirm(dontShow)}
+              onPress={onConfirm}
               style={{
                 flex: 1,
                 height: 42,
