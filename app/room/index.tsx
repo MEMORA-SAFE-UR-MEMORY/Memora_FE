@@ -3,7 +3,6 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
-import LoadingScreen from "@src/components/LoadingScreen";
 import MemoryModal from "@src/components/MemoryModal";
 import ModalConfirm from "@src/components/ModalConfirm";
 import PlacedFrame from "@src/components/PlacedFrame";
@@ -137,6 +136,7 @@ const Room = () => {
     enterEditMode,
     onUserInteractionEnd,
     onUserInteractionStart,
+    activeFrameItem,
   } = useMemory(roomId, scrollX, effectiveRoom?.items ?? [], mode);
 
   // Khi memory và items đã render xong
@@ -191,7 +191,9 @@ const Room = () => {
                 onMove={moveItem}
                 bringToFront={bringToFront}
                 onRotate={updateRotation}
-                onPress={(frameId, slotId) => handleFramePress(frameId, slotId)}
+                onPress={(frameId, slotId, frame) =>
+                  handleFramePress(frameId, slotId, frame)
+                }
                 onDelete={removeItem}
                 trashLayout={trashLayout}
                 setTrashActive={setIsTrashActive}
@@ -292,6 +294,7 @@ const Room = () => {
           onClose={closeModal}
           onSave={handleSaveMemory}
           frameId={activeFrameId}
+          frameItem={activeFrameItem}
           slotId={activeSlotId}
         />
       )}
@@ -304,9 +307,10 @@ const Room = () => {
           onUpdate={handleUpdateMemory}
           onDelete={handleDeleteMemory}
           onFrameRemoved={activeFrameId === null}
-          frameId={activeFrameId}
+          frameItem={activeFrameItem}
           slotId={activeSlotId}
           mode={mode ?? "edit"}
+          memoryResolver={resolveMemory}
         />
       )}
 

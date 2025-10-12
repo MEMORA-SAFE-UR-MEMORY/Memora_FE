@@ -1,9 +1,8 @@
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
-import { Animated, StyleSheet, TouchableOpacity } from "react-native";
+import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 
 type Props = {
   modalWidth: number;
-  slideAnim: Animated.Value;
   selected: number;
   setSelected: (id: number) => void;
 };
@@ -21,7 +20,7 @@ const iconComponents: Record<string, any> = {
   MaterialIcons,
 };
 
-const ModalMenu = ({ modalWidth, slideAnim, selected, setSelected }: Props) => {
+const ModalMenu = ({ modalWidth, selected, setSelected }: Props) => {
   const actions: Action[] = [
     {
       id: 1,
@@ -47,15 +46,7 @@ const ModalMenu = ({ modalWidth, slideAnim, selected, setSelected }: Props) => {
   ];
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          right: modalWidth,
-          transform: [{ translateX: slideAnim }],
-        },
-      ]}
-    >
+    <View style={[styles.container, { right: modalWidth }]}>
       {actions.map((action) => {
         const IconComponent = iconComponents[action.iconPackage];
         const isSelected = selected === action.id;
@@ -76,7 +67,7 @@ const ModalMenu = ({ modalWidth, slideAnim, selected, setSelected }: Props) => {
           </TouchableOpacity>
         );
       })}
-    </Animated.View>
+    </View>
   );
 };
 

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
-export type ColorType = "grey" | "red" | "green" | "pink" | "blue";
+export type ColorType = "grey" | "red" | "green" | "pink" | "blue" | "purple";
 
 type Props = {
   text: string;
@@ -32,10 +32,16 @@ const getColors = (type: ColorType) => {
         borderColor: "#EC4F9D",
         textColor: "black",
       };
-     case "blue":
+    case "blue":
       return {
         backgroundColor: "#B1E1FF",
         borderColor: "#3377FE",
+        textColor: "black",
+      };
+    case "purple":
+      return {
+        backgroundColor: "#E9D8FF",
+        borderColor: "#5C4D90",
         textColor: "black",
       };
     case "grey":

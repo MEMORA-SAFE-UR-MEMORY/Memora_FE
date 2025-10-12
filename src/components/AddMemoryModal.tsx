@@ -5,7 +5,7 @@ import ScrollingText from "@src/components/ScrollingText";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -20,12 +20,15 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import ImageCropModal from "@src/components/ImageCropModal";
+import { RoomItem } from "@src/types/item";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   onSave: (frameId: number, slotId: number, data: Memory) => void;
   frameId: number | null;
+  frameItem: RoomItem | null;
   slotId: number | null;
 };
 
@@ -34,6 +37,7 @@ const AddMemoryModal: React.FC<Props> = ({
   onClose,
   onSave,
   frameId,
+  frameItem,
   slotId,
 }) => {
   const [title, setTitle] = useState("");
@@ -42,22 +46,23 @@ const AddMemoryModal: React.FC<Props> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
 
   const { width, height } = useWindowDimensions();
-  const isSmallDevice = width < 360;
-  const isTablet = width > 700;
+  const isSmallDevice = width <= 700;
+  const isTablet = width > 1000;
 
-  /** Hàm scale thông minh theo kích thước màn hình */
   const scale = (size: number) => {
-    if (isSmallDevice) return size * 0.9; // nhỏ → giảm nhẹ 10%
-    if (isTablet) return size * 1.2; // tablet → tăng nhẹ 20%
-    return (width / 375) * size; // mặc định: tỉ lệ theo iPhone 11
+    if (isSmallDevice) return size * 0.9;
+    if (isTablet) return size * 1.2;
+    return size; // thiết bị trung bình giữ nguyên
   };
 
   // Calendar
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const showListener = Keyboard.addListener("keyboardDidShow", () => {
       setKeyboardVisible(true);
     });
@@ -70,11 +75,13 @@ const AddMemoryModal: React.FC<Props> = ({
       hideListener.remove();
     };
   }, []);
+
   const handleCalendarOpen = () => {
-    if (!keyboardVisible) {
-      setIsCalendarOpen(true);
+    if (keyboardVisible) {
+      Keyboard.dismiss();
+      setTimeout(() => setIsCalendarOpen(true), 150);
     } else {
-      Keyboard.dismiss(); 
+      setIsCalendarOpen(true);
     }
   };
   const handleDateSelect = (date: string) => {
@@ -83,22 +90,36 @@ const AddMemoryModal: React.FC<Props> = ({
   };
   const handleCalendarClose = () => setIsCalendarOpen(false);
 
+  useEffect(() => {
+    if (isCalendarOpen) {
+      Keyboard.dismiss();
+      setIsEditing(false);
+    }
+  }, [isCalendarOpen]);
+
   // Ảnh
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Xin lỗi, chúng tôi cần quyền truy cập vào thư viện ảnh!");
-      return;
-    }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false,
       quality: 1,
     });
 
-    if (!result.canceled) setSelectedImage(result.assets[0].uri);
+    if (!result.canceled) {
+      setTempImage(result.assets[0].uri);
+      setIsCropOpen(true);
+    }
+  };
+
+  const handleCropConfirm = (croppedUri: string) => {
+    console.log("✅ Received cropped image:", croppedUri);
+    setSelectedImage(croppedUri);
+    setIsCropOpen(false);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropOpen(false);
+    setTempImage(null);
   };
 
   const handleSave = () => {
@@ -119,7 +140,7 @@ const AddMemoryModal: React.FC<Props> = ({
   };
 
   const isFormValid = () =>
-    title.trim() !== "" && selectedDate !== "" && selectedImage !== null;
+    selectedImage !== null && title.trim().length > 0 && selectedDate !== "";
 
   return (
     <Modal
@@ -134,13 +155,18 @@ const AddMemoryModal: React.FC<Props> = ({
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+            if (isCalendarOpen) handleCalendarClose();
+          }}
+        >
           <View style={styles.overlay}>
             <View
               style={[
                 styles.content,
                 {
-                  width: isTablet ? "60%" : isSmallDevice ? "90%" : "80%",
+                  width: isTablet ? "60%" : isSmallDevice ? "90%" : "70%",
                   padding: scale(18),
                   borderWidth: scale(6),
                   borderRadius: scale(20),
@@ -171,7 +197,6 @@ const AddMemoryModal: React.FC<Props> = ({
                 style={[
                   styles.row1,
                   {
-                    flexDirection: isTablet ? "row" : "column",
                     gap: scale(10),
                   },
                 ]}
@@ -187,7 +212,7 @@ const AddMemoryModal: React.FC<Props> = ({
                       { height: scale(40), borderRadius: scale(20) },
                     ]}
                   >
-                    {isEditing ? (
+                    {isEditing && !isCalendarOpen ? (
                       <TextInput
                         value={title}
                         onChangeText={setTitle}
@@ -205,7 +230,10 @@ const AddMemoryModal: React.FC<Props> = ({
                     ) : (
                       <TouchableOpacity
                         style={{ flex: 1 }}
-                        onPress={() => setIsEditing(true)}
+                        onPress={() => {
+                          if (!isCalendarOpen) setIsEditing(true);
+                        }}
+                        disabled={isCalendarOpen}
                       >
                         {title.length > 23 ? (
                           <ScrollingText text={title} />
@@ -245,8 +273,8 @@ const AddMemoryModal: React.FC<Props> = ({
                         style={[
                           styles.calendarContainer,
                           {
-                            width: isTablet ? 400 : width * 0.8,
-                            height: height * 0.4,
+                            width: isTablet ? 500 : width * 0.8,
+                            height: height * (isTablet ? 0.5 : 0.4),
                           },
                         ]}
                       >
@@ -311,6 +339,10 @@ const AddMemoryModal: React.FC<Props> = ({
                   multiline={true}
                   numberOfLines={4}
                   textAlignVertical="top"
+                  editable={!isCalendarOpen}
+                  onFocus={() => {
+                    if (isCalendarOpen) Keyboard.dismiss();
+                  }}
                 />
               </View>
 
@@ -342,6 +374,7 @@ const AddMemoryModal: React.FC<Props> = ({
                       },
                     ]}
                     onPress={pickImage}
+                    disabled={isCalendarOpen || keyboardVisible}
                   >
                     <Text
                       style={[styles.fileButtonText, { fontSize: scale(13) }]}
@@ -363,6 +396,36 @@ const AddMemoryModal: React.FC<Props> = ({
                 />
               </View>
             </View>
+
+            {/* Modal Crop */}
+            {tempImage &&
+              isCropOpen &&
+              frameItem?.item?.slots &&
+              slotId !== null &&
+              (() => {
+                // Dàn phẳng mảng slot
+                const slots = Array.isArray(frameItem.item.slots[0])
+                  ? frameItem.item.slots.flat()
+                  : frameItem.item.slots;
+
+                const slot = slots.find((s) => s.slotId === slotId);
+
+                if (!slot) {
+                  console.warn("Không tìm thấy slot với id:", slotId);
+                  return null;
+                }
+
+                return (
+                  <ImageCropModal
+                    key={slotId}
+                    visible={isCropOpen}
+                    imageUri={tempImage}
+                    slot={slot}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                  />
+                );
+              })()}
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -399,6 +462,8 @@ const styles = StyleSheet.create({
   },
   row1: {
     justifyContent: "space-between",
+    flexDirection: "row",
+    gap: 10,
   },
   inputRow: {
     flexDirection: "row",
@@ -444,6 +509,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
+    gap: 10,
   },
   dateButtonText: {
     color: "#333333",
@@ -451,8 +517,8 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     position: "absolute",
-    top: -50,
-    right: -90,
+    top: -45,
+    left: -5,
     zIndex: 1000,
   },
   descriptionRow: {

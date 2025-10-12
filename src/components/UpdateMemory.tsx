@@ -2,10 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
+import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -18,13 +19,16 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import ImageCropModal from "@src/components/ImageCropModal";
 
 type Props = {
   memory: Memory;
+  frameItem: RoomItem | null;
+  slotId: number | null;
   onUpdate: (data: Memory) => void;
 };
 
-const UpdateMemory = ({ memory, onUpdate }: Props) => {
+const UpdateMemory = ({ memory, frameItem, slotId, onUpdate }: Props) => {
   const id = memory.id;
   const [title, setTitle] = useState(memory.title);
   const [description, setDescription] = useState(memory.description ?? "");
@@ -35,9 +39,35 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
 
+  // === Crop State ===
+  const [tempImage, setTempImage] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+
   // Calendar
+
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideListener = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
+  }, []);
+
   const handleCalendarOpen = () => {
-    setIsCalendarOpen(true);
+    if (keyboardVisible) {
+      Keyboard.dismiss();
+      setTimeout(() => setIsCalendarOpen(true), 150);
+    } else {
+      setIsCalendarOpen(true);
+    }
   };
 
   const handleDateSelect = (date: string) => {
@@ -49,27 +79,35 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
     setIsCalendarOpen(false);
   };
 
+  useEffect(() => {
+    if (isCalendarOpen) {
+      Keyboard.dismiss();
+      setIsEditing(false);
+    }
+  }, [isCalendarOpen]);
+
   // Ảnh
   const pickImage = async () => {
-    // Yêu cầu quyền truy cập vào thư viện ảnh
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      alert("Xin lỗi, chúng tôi cần quyền truy cập vào thư viện ảnh!");
-      return;
-    }
-
-    // Mở album ảnh
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
-      allowsEditing: true,
-      aspect: [4, 3],
+      mediaTypes: ["images"],
+      allowsEditing: false,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      setTempImage(result.assets[0].uri);
+      setIsCropOpen(true);
     }
+  };
+
+  const handleCropConfirm = (croppedUri: string) => {
+    setSelectedImage(croppedUri);
+    setIsCropOpen(false);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropOpen(false);
+    setTempImage(null);
   };
 
   // Modal
@@ -87,7 +125,9 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
 
   // Kiểm tra form hợp lệ
   const isFormValid = () => {
-    return title.trim() !== "" && selectedDate !== "" && selectedImage !== null;
+    return (
+      selectedImage !== null && title.trim().length > 0 && selectedDate !== ""
+    );
   };
 
   // Kiểm tra có thay đổi không
@@ -108,14 +148,19 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+          if (isCalendarOpen) handleCalendarClose();
+        }}
+      >
         <View>
           <Text style={styles.titleText}>Cập nhật</Text>
 
           <View style={styles.inputRow}>
             <Text style={styles.label}>Tựa đề</Text>
             <View style={styles.titleInputContainer}>
-              {isEditing ? (
+              {isEditing && !isCalendarOpen ? (
                 <TextInput
                   value={title}
                   onChangeText={setTitle}
@@ -130,12 +175,22 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               ) : (
                 <TouchableOpacity
                   style={{ flex: 1 }}
-                  onPress={() => setIsEditing(true)}
+                  onPress={() => {
+                    if (!isCalendarOpen) setIsEditing(true);
+                  }}
+                  disabled={isCalendarOpen}
                 >
                   {title.length > 30 ? (
                     <ScrollingText text={title} threshold={30} />
                   ) : (
-                    <Text style={styles.titleInput}>{title}</Text>
+                    <Text
+                      style={[
+                        styles.titleInput,
+                        title.length === 0 && { color: "#999" },
+                      ]}
+                    >
+                      {title.length === 0 ? "Không có tựa đề" : title}
+                    </Text>
                   )}
                 </TouchableOpacity>
               )}
@@ -162,7 +217,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
                   onPress={handleCalendarOpen}
                 >
                   <Text style={styles.dateButtonText}>
-                    {formatDate(selectedDate)}
+                    {selectedDate ? formatDate(selectedDate) : "Chọn ngày"}
                   </Text>
                   <Text style={styles.dateButtonText}>▼</Text>
                 </TouchableOpacity>
@@ -183,6 +238,11 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               numberOfLines={4}
               textAlignVertical="top"
               placeholder="Không có miêu tả"
+              placeholderTextColor="#999"
+              editable={!isCalendarOpen}
+              onFocus={() => {
+                if (isCalendarOpen) Keyboard.dismiss();
+              }}
             />
           </View>
 
@@ -192,6 +252,7 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               <TouchableOpacity
                 onPress={pickImage}
                 style={styles.imageContainer}
+                disabled={isCalendarOpen || keyboardVisible}
               >
                 <Image
                   source={{ uri: selectedImage }}
@@ -205,7 +266,11 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
                 />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.fileButton} onPress={pickImage}>
+              <TouchableOpacity
+                style={styles.fileButton}
+                onPress={pickImage}
+                disabled={isCalendarOpen || keyboardVisible}
+              >
                 <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
               </TouchableOpacity>
             )}
@@ -220,6 +285,35 @@ const UpdateMemory = ({ memory, onUpdate }: Props) => {
               onPress={handleUpdate}
               disabled={!canUpdate}
             />
+
+            {/* === Modal Crop === */}
+            {tempImage &&
+              isCropOpen &&
+              frameItem?.item?.slots &&
+              slotId !== null &&
+              (() => {
+                const slots = Array.isArray(frameItem.item.slots[0])
+                  ? frameItem.item.slots.flat()
+                  : frameItem.item.slots;
+
+                const slot = slots.find((s) => s.slotId === slotId);
+
+                if (!slot) {
+                  console.warn("Không tìm thấy slot với id:", slotId);
+                  return null;
+                }
+
+                return (
+                  <ImageCropModal
+                    key={slotId}
+                    visible={isCropOpen}
+                    imageUri={tempImage}
+                    slot={slot}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                  />
+                );
+              })()}
           </View>
         </View>
       </TouchableWithoutFeedback>
