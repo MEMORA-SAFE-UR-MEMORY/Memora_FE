@@ -9,8 +9,7 @@ import { useInventory } from "@src/hooks/useInventories";
 import { useInventoryItems } from "@src/hooks/useInventoryItems";
 import { useWallet } from "@src/hooks/useWallet";
 import { useState } from "react";
-import { Image, Text, View } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { Image, ScrollView, Text, View } from "react-native";
 
 const Shop = () => {
   const [category, setCategory] = useState<number>(0);
@@ -52,6 +51,7 @@ const Shop = () => {
           setShowConfirm(false);
         }}
       />
+
       <View
         style={{
           width: "40%",
@@ -64,6 +64,7 @@ const Shop = () => {
           />
         </ScrollView>
       </View>
+
       <View
         style={{
           width: "60%",
