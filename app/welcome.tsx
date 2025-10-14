@@ -35,10 +35,23 @@ const Welcome = () => {
     getUserFromStorage();
   }, []);
 
-  const handlePlay = () => {
-    requestAnimationFrame(() => {
+  const handlePlay = async () => {
+    try {
+      setNavigating(true);
+      const userStr = await AsyncStorage.getItem("user");
+
+      if (!userStr) {
+        console.log("[Welcome] No user data found");
+        setNavigating(false);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
       router.replace("/loading");
-    });
+    } catch (error) {
+      console.error("[Welcome] Error:", error);
+      setNavigating(false);
+    }
   };
 
   const onLogout = async () => {
