@@ -1,10 +1,9 @@
 import { Entypo } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingOverlay from "@src/components/LoadingOverlay";
+import { useCheckUser } from "@src/hooks/useCheckUser";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useUser } from "@src/hooks/useUser";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -18,72 +17,69 @@ import * as Progress from "react-native-progress";
 
 const Loading = () => {
   const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const progressAnim = new Animated.Value(0);
   const fontsLoaded = useCustomFonts();
   const { width } = useWindowDimensions();
   const { getUserById } = useUser();
+  const checkUserData = useCheckUser(getUserById);
+  const hasNavigated = useRef(false);
 
-  const checkUserData = async () => {
-    try {
-      // Get user ID from AsyncStorage
-      const userData = await AsyncStorage.getItem("user");
-      if (!userData) {
-        router.replace("/");
-        return;
-      }
-
-      const parsedUser = JSON.parse(userData);
-      const userId = parsedUser.id;
-
-      // Fetch user data from Supabase
-      const supabaseUser = await getUserById(userId);
-
-      if (!supabaseUser) {
-        router.replace("/");
-        return;
-      }
-
-      // Split both username and email to compare only the parts before @
-      const emailUsername = supabaseUser.email.split("@")[0];
-      const userUsername = supabaseUser.username.split("@")[0];
-
-      if (userUsername === emailUsername) {
-        router.replace("/username");
-      } else {
-        router.replace("/home");
-      }
-    } catch (error) {
-      console.error("Error checking user data:", error);
-      router.replace("/");
-    }
-  };
-
+  // Xử lý progress animation
   useEffect(() => {
+    const animation = Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 3000,
+      useNativeDriver: false,
+    });
+
+    animation.start();
+
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 1) {
           clearInterval(interval);
+          setIsReady(true);
           return 1;
         }
         return prev + 0.01;
       });
-    }, 50);
-    return () => clearInterval(interval);
+    }, 30);
+
+    return () => {
+      clearInterval(interval);
+      animation.stop();
+    };
   }, []);
 
+  // Xử lý navigation sau khi loading xong
   useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: progress,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    let navigationTimer;
 
-    if (progress === 1 && fontsLoaded) {
-      setTimeout(() => {
-        checkUserData();
-      }, 500);
-    }
-  }, [progress, fontsLoaded]);
+    const handleNavigation = async () => {
+      if (isReady && fontsLoaded && !hasNavigated.current) {
+        hasNavigated.current = true;
+
+        try {
+          navigationTimer = setTimeout(async () => {
+            console.log("[Loading] Starting navigation check...");
+            await checkUserData();
+          }, 2000);
+        } catch (error) {
+          console.error("[Loading] Navigation error:", error);
+          hasNavigated.current = false;
+        }
+      }
+    };
+
+    handleNavigation();
+
+    return () => {
+      if (navigationTimer) {
+        clearTimeout(navigationTimer);
+      }
+    };
+  }, [isReady, fontsLoaded, checkUserData]);
 
   return (
     <View style={styles.container}>
