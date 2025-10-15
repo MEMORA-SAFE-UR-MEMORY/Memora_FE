@@ -1,8 +1,8 @@
 import { Entypo } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingOverlay from "@src/components/LoadingOverlay";
-import { useCheckUser } from "@src/hooks/useCheckUser";
 import useCustomFonts from "@src/hooks/useCustomFonts";
-import { useUser } from "@src/hooks/useUser";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,13 +17,18 @@ import * as Progress from "react-native-progress";
 
 const Loading = () => {
   const [progress, setProgress] = useState(0);
-  const [isReady, setIsReady] = useState(false);
   const progressAnim = new Animated.Value(0);
   const fontsLoaded = useCustomFonts();
   const { width } = useWindowDimensions();
-  const { getUserById } = useUser();
-  const checkUserData = useCheckUser(getUserById);
   const hasNavigated = useRef(false);
+  const mounted = useRef(true);
+
+  // Xử lý cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   // Xử lý progress animation
   useEffect(() => {
@@ -36,10 +41,11 @@ const Loading = () => {
     animation.start();
 
     const interval = setInterval(() => {
+      if (!mounted.current) return;
+
       setProgress((prev) => {
         if (prev >= 1) {
           clearInterval(interval);
-          setIsReady(true);
           return 1;
         }
         return prev + 0.01;
@@ -54,32 +60,56 @@ const Loading = () => {
 
   // Xử lý navigation sau khi loading xong
   useEffect(() => {
-    let navigationTimer;
+    let navigationTimer: NodeJS.Timeout;
 
     const handleNavigation = async () => {
-      if (isReady && fontsLoaded && !hasNavigated.current) {
+      if (
+        progress >= 1 &&
+        fontsLoaded &&
+        !hasNavigated.current &&
+        mounted.current
+      ) {
         hasNavigated.current = true;
+        console.log("[Loading] Progress complete, preparing navigation...");
 
         try {
-          navigationTimer = setTimeout(async () => {
-            console.log("[Loading] Starting navigation check...");
-            await checkUserData();
-          }, 2000);
+          // Đợi animation hoàn thành
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          if (!mounted.current) return;
+
+          // Lấy target navigation từ AsyncStorage
+          const navigationTarget =
+            await AsyncStorage.getItem("navigationTarget");
+          console.log("[Loading] Navigation target:", navigationTarget);
+
+          if (!navigationTarget) {
+            console.error("[Loading] No navigation target found");
+            router.replace("/");
+            return;
+          }
+
+          // Navigate to target
+          router.replace(navigationTarget);
         } catch (error) {
           console.error("[Loading] Navigation error:", error);
-          hasNavigated.current = false;
+          if (mounted.current) {
+            router.replace("/");
+          }
         }
       }
     };
 
-    handleNavigation();
+    if (progress >= 1 && fontsLoaded) {
+      navigationTimer = setTimeout(handleNavigation, 1000);
+    }
 
     return () => {
       if (navigationTimer) {
         clearTimeout(navigationTimer);
       }
     };
-  }, [isReady, fontsLoaded, checkUserData]);
+  }, [progress, fontsLoaded]);
 
   return (
     <View style={styles.container}>

@@ -1,24 +1,21 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Alert,
-  InteractionManager,
-  ActivityIndicator,
-  SafeAreaView,
-} from "react-native";
-import BlurBox from "@src/components/BlurBox";
 import { AntDesign } from "@expo/vector-icons";
-import { useState, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import BlurBox from "@src/components/BlurBox";
+import CustomAlert from "@src/components/CustomAlert";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import LoginModal from "@src/components/LoginModal";
 import RegisterModal from "@src/components/RegisterModal";
-import { router } from "expo-router";
 import { useAuth } from "@src/hooks/useAuth";
-import useCustomFonts from "@src/hooks/useCustomFonts";
-import LoadingOverlay from "@src/components/LoadingOverlay";
-import CustomAlert from "@src/components/CustomAlert";
+import { useUser } from "@src/hooks/useUser";
+import { router } from "expo-router";
+import { useCallback, useState } from "react";
+import {
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -27,6 +24,7 @@ export default function Home() {
   const { loading } = useAuth();
   const [alertMessage, setAlertMessage] = useState("");
   const [showAlert, setShowAlert] = useState(false);
+  const { getUserById } = useUser();
 
   const handleRegisterPress = useCallback(() => {
     setTimeout(() => {
@@ -49,24 +47,6 @@ export default function Home() {
     router.push("/forgotPassword");
   }, []);
 
-  const handleLogin = useCallback(() => {
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-      setModalVisible(false);
-      // Alert.alert("Đăng nhập thành công", "Chào mừng quay lại!", [
-      //   {
-      //     text: "OK",
-      //     onPress: () => router.push("/welcome"),
-      //   },
-      // ]);
-      InteractionManager.runAfterInteractions(() => {
-        router.replace("/welcome");
-      });
-    }, 3000);
-  }, []);
-
   const showCustomAlert = (message: string) => {
     setAlertMessage(message);
     setShowAlert(true);
@@ -75,6 +55,45 @@ export default function Home() {
   const handlePopUp = () => {
     showCustomAlert("Tính năng chưa được hỗ trợ!");
   };
+
+  const handleLogin = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // Kiểm tra user data
+      const userStr = await AsyncStorage.getItem("user");
+      if (!userStr) {
+        showCustomAlert("Đăng nhập thất bại");
+        return;
+      }
+
+      const userData = JSON.parse(userStr);
+      const supabaseUser = await getUserById(userData.id);
+
+      if (!supabaseUser) {
+        showCustomAlert("Không tìm thấy thông tin người dùng");
+        return;
+      }
+
+      const emailUsername = supabaseUser.email.split("@")[0];
+      const userUsername = supabaseUser.username.split("@")[0];
+
+      // Lưu target navigation
+      await AsyncStorage.setItem(
+        "navigationTarget",
+        userUsername === emailUsername ? "/username" : "/home"
+      );
+
+      // Chuyển sang loading screen
+      setModalVisible(false);
+      router.replace("/loading");
+    } catch (error) {
+      console.error("[Login] Error:", error);
+      showCustomAlert("Đã có lỗi xảy ra");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getUserById]);
 
   if (loading) {
     return <LoadingOverlay />;
