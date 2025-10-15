@@ -2,14 +2,14 @@ import { useThemeContext } from "@src/context/ThemeContext";
 import { useDraft } from "@src/hooks/useDraft";
 import { DraftManager } from "@src/services/draftService";
 import * as service from "@src/services/roomService";
-import { Draft, RoomDetail } from "@src/types/room";
+import { Draft, RoomDetail, RoomType } from "@src/types/room";
 import { router } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useRoom = (
   roomId?: number,
   themeId?: number,
-  initialType?: "private" | "public",
+  initialType?: RoomType,
   initialRoom?: RoomDetail | null,
   draft?: Draft,
   back?: string
@@ -20,9 +20,13 @@ export const useRoom = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+
+  const initialRoomRef = useRef<RoomDetail | null>(
+    initialRoom ? structuredClone(initialRoom) : null
+  );
+
   // Setting modal
   const [isSettingOpen, setIsSettingOpen] = useState(false);
-  
 
   // load once từ props
   useEffect(() => {
@@ -51,6 +55,9 @@ export const useRoom = (
         };
 
         setRoomDetail(updatedRoom);
+        if (!initialRoomRef.current) {
+          initialRoomRef.current = structuredClone(updatedRoom);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load room");
         setRoomDetail(null);
@@ -76,7 +83,10 @@ export const useRoom = (
 
       const prev = roomDetail;
       // optimistic update
-      setRoomDetail({ ...roomDetail, type: newType });
+      setRoomDetail((prev) => {
+        if (!prev) return prev;
+        return { ...prev, type: newType };
+      });
 
       try {
         await service.setRoomType(roomDetail.id, newType);
@@ -101,27 +111,51 @@ export const useRoom = (
 
   const exitToHall = async (hasChanges?: boolean) => {
     try {
-      if (!initialRoom || !draft) {
+      const typeChanged = roomDetail?.type !== initialRoomRef.current?.type;
+
+      if (!initialRoom) {
         goBack();
         return;
       }
 
-      if (!hasChanges) {
-        // User chỉ xem room, không chỉnh sửa
+      if (!hasChanges && !typeChanged) {
         goBack();
         return;
       }
 
-      // Nếu có chỉnh sửa thì mới gọi save
+      setLoading(true);
+
       const compacted = await compactDraft();
+
+      if (!hasChanges && typeChanged) {
+        const draftToSave: Draft = compacted ?? {
+          roomId: roomId!,
+          patches: [],
+          lastEdited: new Date().toISOString(),
+        };
+
+        await service.saveRoom(
+          roomDetail!,
+          draftToSave,
+          initialType ?? "private"
+        );
+      }
+
       if (compacted) {
         const appliedRoom = DraftManager.applyDraft(initialRoom, compacted);
-        await service.saveRoom(appliedRoom, compacted);
+        await service.saveRoom(
+          appliedRoom,
+          compacted,
+          initialType ?? "private"
+        );
       }
+
       goBack();
     } catch (err) {
       console.error("Save room failed:", err);
       goBack();
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -10,12 +10,16 @@ type RoomMenuProps = {
   onOpenInventory: () => void;
   onOpenSetting: () => void;
   isInventoryDisabled: boolean;
+  mode?: "view" | "edit";
+  onNext?: () => void; // callback cho nút "Tiếp" nếu cần
 };
 
 const RoomMenu = ({
   onOpenInventory,
   onOpenSetting,
   isInventoryDisabled,
+  mode = "edit",
+  onNext,
 }: RoomMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,6 +50,19 @@ const RoomMenu = ({
     outputRange: [1, 0],
   });
 
+  // Nếu mode là "view" thì chỉ hiển thị nút "Tiếp"
+  if (mode === "view") {
+    return (
+      <View style={styles.nextContainer}>
+        <Pressable style={styles.nextButton} onPress={onNext}>
+          <Ionicons name="arrow-forward-circle" size={35} color="white" />
+          <Text style={styles.nextText}>Tiếp</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  // Còn nếu là "edit" thì hiển thị menu cũ
   return (
     <View>
       <Animated.View
@@ -138,6 +155,21 @@ const styles = StyleSheet.create({
     borderColor: "white",
     marginHorizontal: 5,
     marginBottom: 10,
+  },
+  nextContainer: {
+    position: "absolute",
+    right: 20,
+    alignItems: "center",
+  },
+  nextButton: {
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  nextText: {
+    marginTop: -5,
+    color: "white",
+    fontSize: 12,
+    fontFamily: "Baloo2_medium",
   },
 });
 

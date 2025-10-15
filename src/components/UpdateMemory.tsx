@@ -26,9 +26,16 @@ type Props = {
   frameItem: RoomItem | null;
   slotId: number | null;
   onUpdate: (data: Memory) => void;
+  onLoadingChange?: (loading: boolean) => void;
 };
 
-const UpdateMemory = ({ memory, frameItem, slotId, onUpdate }: Props) => {
+const UpdateMemory = ({
+  memory,
+  frameItem,
+  slotId,
+  onUpdate,
+  onLoadingChange,
+}: Props) => {
   const id = memory.id;
   const [title, setTitle] = useState(memory.title);
   const [description, setDescription] = useState(memory.description ?? "");
@@ -95,8 +102,42 @@ const UpdateMemory = ({ memory, frameItem, slotId, onUpdate }: Props) => {
     });
 
     if (!result.canceled) {
-      setTempImage(result.assets[0].uri);
-      setIsCropOpen(true);
+      handleOpenCropModal(result.assets[0].uri);
+    }
+  };
+
+  const handleOpenCropModal = async (imageUri: string) => {
+    try {
+      onLoadingChange?.(true);
+
+      if (!frameItem?.item?.slots || slotId == null) {
+        console.warn("Không có slot hợp lệ để crop ảnh");
+        onLoadingChange?.(false);
+        return;
+      }
+
+      const slots = Array.isArray(frameItem.item.slots[0])
+        ? frameItem.item.slots.flat()
+        : frameItem.item.slots;
+
+      const slot = slots.find((s) => s.slotId === slotId);
+      if (!slot) {
+        console.warn("Không tìm thấy slot với id:", slotId);
+        onLoadingChange?.(false);
+        return;
+      }
+
+      // Set ảnh tạm để modal crop sử dụng
+      setTempImage(imageUri);
+
+      // Mở modal sau 1 nhịp để đảm bảo render overlay trước
+      setTimeout(() => {
+        setIsCropOpen(true);
+        onLoadingChange?.(false);
+      }, 300);
+    } catch (err) {
+      console.error("Lỗi khi mở crop modal:", err);
+      onLoadingChange?.(false);
     }
   };
 
