@@ -3,7 +3,8 @@ import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
 import { memoryService, MemoryStore } from "@src/services/memoryService";
 import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { RoomDetail } from "@src/types/room";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { SharedValue } from "react-native-reanimated";
 
@@ -12,7 +13,7 @@ type ModalType = "add" | "view" | null;
 export const useMemory = (
   roomId: number,
   scrollX: SharedValue<number>,
-  baseItems: RoomItem[],
+  roomDetail: RoomDetail | null,
   mode: "view" | "edit" = "edit"
 ) => {
   const { decreaseQuantity, increaseQuantity } = useInventory();
@@ -36,7 +37,7 @@ export const useMemory = (
     decreaseQuantity,
     increaseQuantity,
     roomId,
-    baseItems,
+    baseItems: roomDetail?.items,
   });
 
   const { categories } = useInventory();
@@ -233,7 +234,7 @@ export const useMemory = (
     setActiveFrameItem(frameItem);
 
     if (slotId !== null) {
-      const memory = resolveMemory(frameId, slotId);
+      const memory = getResolver(frameId, slotId);
 
       if (memory) {
         openModal("view", memory, frameId, slotId);
@@ -294,18 +295,92 @@ export const useMemory = (
   };
 
   // Xóa item khỏi room
-  const removeItemWithModalCheck = (id: number) => {
+  const removeItemWithModalCheck = async (id: number) => {
     if (mode === "view") return;
     removeItem(id);
+    const updated = await memoryService.deleteFrameMemory(roomId, id);
+    setMemoryStore(updated);
 
     if (activeFrameId === id) {
       setActiveFrameId(null);
     }
   };
 
-  const resolveMemory = (frameId: number, slotId: number): Memory | null => {
-    return memoryStore[frameId]?.[slotId] ?? null;
-  };
+  const resolveLocalMemory = useCallback(
+    (frameId: number, slotId: number): Memory | null => {
+      const localFrame = memoryStore?.[frameId];
+      if (localFrame && localFrame[slotId]) {
+        console.log(
+          "Resolving from memoryStore (local)",
+          frameId,
+          slotId,
+          localFrame[slotId]
+        );
+        console.log("Full localFrame data", memoryStore);
+        return localFrame[slotId];
+      }
+      return null;
+    },
+    [memoryStore]
+  );
+
+  const resolvePublicMemory = useCallback(
+    (frameId: number, slotId: number): Memory | null => {
+      if (roomDetail?.type !== "public") return null;
+      const memoryId = placedItems.find((it) => it.id === frameId)
+        ?.slotMemories?.[slotId];
+      if (!memoryId) return null;
+      return roomDetail.memories?.find((m) => m.id === memoryId) ?? null;
+    },
+    [roomDetail, placedItems]
+  );
+
+  const getResolver = useCallback(
+    (frameId: number, slotId: number): Memory | null => {
+      if (mode === "view") {
+        return resolvePublicMemory(frameId, slotId);
+      }
+
+      if (mode === "edit") {
+        if (roomDetail?.type === "public") {
+          return (
+            resolveLocalMemory(frameId, slotId) ??
+            resolvePublicMemory(frameId, slotId)
+          );
+        } else {
+          return resolveLocalMemory(frameId, slotId);
+        }
+      }
+
+      return null;
+    },
+    [mode, roomDetail, resolveLocalMemory, resolvePublicMemory]
+  );
+
+  const resolveMemory = useCallback(
+    (frameId: number, slotId: number): Memory | null => {
+      // 1) Nếu có memory local (đã edit/hoặc mới thêm) -> trả về luôn
+      const localFrame = memoryStore?.[frameId];
+      if (localFrame && localFrame[slotId]) {
+        return localFrame[slotId];
+      }
+
+      // 2) Nếu roomDetail tồn tại và là public -> tìm trong roomDetail.memories (by id)
+      if (roomDetail?.type === "public") {
+        const memoryId = placedItems.find((it) => it.id === frameId)
+          ?.slotMemories?.[slotId];
+        if (!memoryId) return null;
+        // console.log("MemoryId from placedItems", slotId, frameId);
+        // console.log("Resolving from roomDetail (public)", memoryId);
+        return roomDetail.memories?.find((m) => m.id === memoryId) ?? null;
+      }
+
+      // 3) Nếu roomDetail không phải public (private room) -> memoryStore nên chứa data; fallback null
+      // console.log("No memory found", frameId, slotId);
+      return null;
+    },
+    [roomDetail, memoryStore, placedItems]
+  );
 
   return {
     // State
@@ -324,6 +399,7 @@ export const useMemory = (
     setShowTrash,
     activeFrameItem,
     setActiveFrameItem,
+    memoryStore,
 
     // Inventory
     openInventory,
@@ -354,6 +430,9 @@ export const useMemory = (
 
     // Resolve
     resolveMemory,
+    resolveLocalMemory,
+    resolvePublicMemory,
+    getResolver,
 
     // Count item
     decorCount,

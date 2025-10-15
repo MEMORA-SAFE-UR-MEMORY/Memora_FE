@@ -24,6 +24,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { FrameView } from "@src/components/FrameView";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 
 type Props = {
   visible: boolean;
@@ -56,6 +57,7 @@ const MemoryModal = ({
 
   const [selected, setSelected] = useState<number>(1);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // --- Animation setup (fade only) ---
   const progress = useSharedValue(0);
@@ -165,6 +167,8 @@ const MemoryModal = ({
       pointerEvents={visible ? "auto" : "none"}
     >
       <View style={[styles.modalContainer, { width, height }]}>
+        {isLoading && <LoadingOverlay />}
+
         {/* LEFT: Frame Preview */}
         <View style={[styles.leftPane, { width: leftWidth }]}>
           <GestureDetector gesture={composedGesture}>
@@ -232,6 +236,7 @@ const MemoryModal = ({
                     frameItem={frameItem}
                     slotId={slotId}
                     onUpdate={(data) => onUpdate(frameItem.id, slotId, data)}
+                    onLoadingChange={setIsLoading}
                   />
                 )}
               </>
@@ -268,6 +273,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 200,
   },
   modalContainer: {
     flexDirection: "row",

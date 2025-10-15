@@ -1,21 +1,23 @@
 import { RoomItem } from "@src/types/item";
+import { Memory } from "@src/types/memory";
 import { Theme } from "@src/types/theme";
 
 export type RoomType = "private" | "public";
 
 export interface Room {
   id: number;
-  themeId: number;
-  roomName: string;
-  userId: string;
-  doorId: string;
+  themeId?: number;
+  roomName?: string;
+  userId?: string;
+  doorId?: string;
   type: RoomType;
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface RoomDetail extends Room {
   theme: Theme;
   items: RoomItem[];
+  memories?: Memory[];
   [key: string]: any;
 }
 

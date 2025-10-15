@@ -22,6 +22,8 @@ import {
 } from "react-native";
 import ImageCropModal from "@src/components/ImageCropModal";
 import { RoomItem } from "@src/types/item";
+import { generateTempId } from "@src/utils/idGenerator";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 
 type Props = {
   visible: boolean;
@@ -48,6 +50,7 @@ const AddMemoryModal: React.FC<Props> = ({
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { width, height } = useWindowDimensions();
   const isSmallDevice = width <= 700;
@@ -106,13 +109,46 @@ const AddMemoryModal: React.FC<Props> = ({
     });
 
     if (!result.canceled) {
-      setTempImage(result.assets[0].uri);
-      setIsCropOpen(true);
+      handleOpenCropModal(result.assets[0].uri);
+    }
+  };
+
+  const handleOpenCropModal = async (imageUri: string) => {
+    try {
+      setIsLoading(true);
+
+      if (!frameItem?.item?.slots || slotId == null) {
+        console.warn("Không có slot hợp lệ để crop ảnh");
+        setIsLoading(false);
+        return;
+      }
+
+      const slots = Array.isArray(frameItem.item.slots[0])
+        ? frameItem.item.slots.flat()
+        : frameItem.item.slots;
+
+      const slot = slots.find((s) => s.slotId === slotId);
+      if (!slot) {
+        console.warn("Không tìm thấy slot với id:", slotId);
+        setIsLoading(false);
+        return;
+      }
+
+      // Set ảnh tạm để modal crop sử dụng
+      setTempImage(imageUri);
+
+      // Mở modal sau 1 nhịp để đảm bảo render overlay trước
+      setTimeout(() => {
+        setIsCropOpen(true);
+        setIsLoading(false);
+      }, 300);
+    } catch (err) {
+      console.error("Lỗi khi mở crop modal:", err);
+      setIsLoading(false);
     }
   };
 
   const handleCropConfirm = (croppedUri: string) => {
-    console.log("✅ Received cropped image:", croppedUri);
     setSelectedImage(croppedUri);
     setIsCropOpen(false);
   };
@@ -125,7 +161,7 @@ const AddMemoryModal: React.FC<Props> = ({
   const handleSave = () => {
     if (frameId == null || slotId == null) return;
     onSave(frameId, slotId, {
-      id: Date.now(),
+      id: generateTempId(),
       title,
       description,
       image: selectedImage,
@@ -151,6 +187,7 @@ const AddMemoryModal: React.FC<Props> = ({
       statusBarTranslucent
       supportedOrientations={["portrait", "landscape"]}
     >
+      {isLoading && <LoadingOverlay />}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -352,17 +389,22 @@ const AddMemoryModal: React.FC<Props> = ({
                   Nhập tập tin:
                 </Text>
                 {selectedImage ? (
-                  <Image
-                    source={{ uri: selectedImage }}
-                    style={[
-                      styles.thumbnailImage,
-                      {
-                        width: scale(45),
-                        height: scale(45),
-                        borderRadius: scale(8),
-                      },
-                    ]}
-                  />
+                  <TouchableOpacity
+                    onPress={pickImage}
+                    disabled={isCalendarOpen || keyboardVisible}
+                  >
+                    <Image
+                      source={{ uri: selectedImage }}
+                      style={[
+                        styles.thumbnailImage,
+                        {
+                          width: scale(45),
+                          height: scale(45),
+                          borderRadius: scale(8),
+                        },
+                      ]}
+                    />
+                  </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     style={[

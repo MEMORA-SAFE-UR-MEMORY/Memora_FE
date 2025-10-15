@@ -8,11 +8,13 @@ import ModalConfirm from "@src/components/ModalConfirm";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
 import RoomSetting from "@src/components/RoomSetting";
+import { useAuthContext } from "@src/context/AuthContext";
 import { useRoomDraftContext } from "@src/context/DraftContext";
 import { useRoomContext } from "@src/context/RoomContext";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useMemory } from "@src/hooks/useMemory";
 import { useRoom } from "@src/hooks/useRoom";
+import { getNextRoomToDiscover } from "@src/services/roomService";
 import { RoomDetail } from "@src/types/room";
 import { isDraftChanged } from "@src/utils/draftUtils";
 import { router } from "expo-router";
@@ -33,7 +35,9 @@ import Animated, {
 } from "react-native-reanimated";
 
 const Room = () => {
-  const { roomId, themeId, type, mode, back } = useRoomContext();
+  const { user } = useAuthContext();
+  const { roomId, themeId, type, mode, back, setRoomContext } =
+    useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   // Room dimensions - 3x wider than screen
@@ -67,7 +71,7 @@ const Room = () => {
     };
   });
 
-  const { draft, clearDraft, applyTo } = useRoomDraftContext();
+  const { draft, applyTo } = useRoomDraftContext();
 
   const [effectiveRoom, setEffectiveRoom] = useState<RoomDetail | null>(null);
   const {
@@ -77,6 +81,7 @@ const Room = () => {
     openSetting,
     closeSetting,
     handleSaveSetting,
+    loading,
   } = useRoom(roomId, themeId, type, effectiveRoom, draft, back);
 
   const openStore = () => {
@@ -137,7 +142,7 @@ const Room = () => {
     onUserInteractionEnd,
     onUserInteractionStart,
     activeFrameItem,
-  } = useMemory(roomId, scrollX, effectiveRoom?.items ?? [], mode);
+  } = useMemory(roomId, scrollX, effectiveRoom, mode);
 
   // Khi memory và items đã render xong
   useEffect(() => {
@@ -149,8 +154,46 @@ const Room = () => {
     }
   }, [roomDetail, effectiveRoom, fontsLoaded]);
 
+  const onNext = async () => {
+    try {
+      if (!user?.id) return;
+      setIsLoading(true);
+
+      const nextRoom = await getNextRoomToDiscover(user.id, roomId);
+      if (!nextRoom) return;
+
+      const newRoomId = nextRoom.id;
+      const newThemeId = nextRoom.themeId;
+      const newType = nextRoom.type ?? "public";
+      const newBack = back === "/hall" ? "/hall" : "/home";
+
+      setRoomContext({
+        roomId: newRoomId,
+        themeId: newThemeId,
+        type: newType,
+        mode: "view",
+        back: newBack,
+      });
+
+      router.replace({
+        pathname: "/room",
+        params: {
+          roomId: newRoomId,
+          themeId: newThemeId,
+          type: newType,
+          mode: "view",
+          back: newBack,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching next room:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!roomDetail) return null;
-  if (isLoading) return <LoadingOverlay />;
+  if (isLoading || loading) return <LoadingOverlay />;
 
   return (
     <View style={styles.container}>
@@ -225,16 +268,13 @@ const Room = () => {
             </Text>
           </Pressable>
 
-          {mode !== "view" && (
-            <>
-              {/* Menu */}
-              <RoomMenu
-                onOpenInventory={openInventory}
-                onOpenSetting={openSetting}
-                isInventoryDisabled={isInventoryDisabled}
-              />
-            </>
-          )}
+          <RoomMenu
+            mode={mode}
+            onOpenInventory={openInventory}
+            onOpenSetting={openSetting}
+            isInventoryDisabled={isInventoryDisabled}
+            onNext={onNext}
+          />
         </View>
 
         {/* Trash (Fixed position) */}
@@ -249,7 +289,7 @@ const Room = () => {
               },
             ]}
             onLayout={(e) => {
-              const { x, y, width, height } = e.nativeEvent.layout;
+              const { width, height } = e.nativeEvent.layout;
               setTrashLayout({
                 x: screenWidth / 2 - width / 2,
                 y: screenHeight - 60 - height,

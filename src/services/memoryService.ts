@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Memory } from "@src/types/memory";
+import { generateTempId } from "@src/utils/idGenerator";
 
 const STORE_KEY = (roomId: number) => `memories_${roomId}`;
 
@@ -73,8 +74,82 @@ export const memoryService = {
     return store;
   },
 
+  deleteFrameMemory: async (
+    roomId: number,
+    roomItemId: number
+  ): Promise<MemoryStore> => {
+    const store = await memoryService.loadStore(roomId);
+
+    if (store[roomItemId]) {
+      // Xóa toàn bộ frame đó
+      delete store[roomItemId];
+    }
+
+    await memoryService.saveStore(roomId, store);
+    return store;
+  },
+
   // Xoá toàn bộ memories của 1 room
   clearStore: async (roomId: number) => {
     await AsyncStorage.removeItem(STORE_KEY(roomId));
+  },
+
+  updateStoreIds: async (
+    roomId: number,
+    idMap: Record<string | number, number>
+  ) => {
+    const store = await memoryService.loadStore(roomId);
+    if (!store) return;
+
+    const newStore: Record<number, any> = {};
+
+    for (const [oldItemId, slotMap] of Object.entries(store)) {
+      const newItemId = idMap[oldItemId];
+      if (newItemId) {
+        newStore[newItemId] = slotMap;
+      } else {
+        newStore[Number(oldItemId)] = slotMap;
+      }
+    }
+
+    await memoryService.saveStore(roomId, newStore);
+  },
+
+  updateMemoryIds: async (
+    roomId: number,
+    memoryIdMap: Record<string | number, number>
+  ) => {
+    const store = await memoryService.loadStore(roomId);
+    if (!store) return;
+
+    for (const [itemId, slotMap] of Object.entries(store)) {
+      const numericItemId = Number(itemId);
+
+      for (const [slotId, mem] of Object.entries(slotMap)) {
+        const numericSlotId = Number(slotId);
+        const newMemId = memoryIdMap[mem.id];
+
+        if (newMemId) {
+          store[numericItemId][numericSlotId] = { ...mem, id: newMemId };
+        }
+      }
+    }
+
+    await memoryService.saveStore(roomId, store);
+  },
+
+  resetMemoryIds: async (roomId: number) => {
+    const store = await memoryService.loadStore(roomId);
+    const newStore: MemoryStore = {};
+
+    Object.entries(store).forEach(([itemId, slotMap]) => {
+      const newSlotMap: Record<number, any> = {};
+      Object.entries(slotMap).forEach(([slotId, mem]) => {
+        newSlotMap[+slotId] = { ...mem, id: generateTempId() };
+      });
+      newStore[+itemId] = newSlotMap;
+    });
+
+    await memoryService.saveStore(roomId, newStore);
   },
 };
