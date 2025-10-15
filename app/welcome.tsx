@@ -35,10 +35,18 @@ const Welcome = () => {
     getUserFromStorage();
   }, []);
 
-  const handlePlay = () => {
-    requestAnimationFrame(() => {
+  const handlePlay = async () => {
+    try {
+      if (navigating) return;
+      setNavigating(true);
+
+      // Thêm delay nhỏ để tránh double tap
+      await new Promise((resolve) => setTimeout(resolve, 300));
       router.replace("/loading");
-    });
+    } catch (error) {
+      console.error("[Welcome] Navigation error:", error);
+      setNavigating(false);
+    }
   };
 
   const onLogout = async () => {

@@ -1,8 +1,7 @@
-import { useCategories } from "@src/hooks/useCategories";
-import { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
-import LoadingOverlay from "./LoadingOverlay";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useCategories } from "@src/hooks/useCategories";
+import { useEffect } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 type CategoryFilterBarType = {
   selectedCategory: number;
@@ -15,13 +14,16 @@ const CategoryFilterBar = ({
   const iconMap: Record<number, string> = {
     1: "filter-frames", // id=1 Khung
     2: "emoji-objects", // id=2 Vật trang trí
-    3: "collections", // id=3 Gói chủ đề
+    // 3: "collections", // id=3 Gói chủ đề?
   };
 
   const { categories, loading, error, fetchCategories, getCategoryName } =
     useCategories();
 
-  const extendedCategories = [{ id: 0, name: "Tất cả" }, ...categories];
+  const extendedCategories = [
+    { id: 0, name: "Tất cả" },
+    ...categories.filter((cat) => cat.id !== 3),
+  ];
 
   useEffect(() => {
     fetchCategories();
