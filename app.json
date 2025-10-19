@@ -2,6 +2,7 @@
   "expo": {
     "name": "Memora",
     "slug": "Memora",
+    "owner": "bready",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
