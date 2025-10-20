@@ -26,7 +26,8 @@ export const InventoryRepo = {
               h: it.dimension?.h,
             },
             slots: it.slots?.map((s: any) => ({
-              slotId: s.id,
+              id: s.id,
+              slotId: s.slot_id,
               x: s.x,
               y: s.y,
               w: s.w,

@@ -1,5 +1,15 @@
 import * as api from "@src/apis/roomApi";
 import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
+import {
+  getFromStorage,
+  removeFromStorage,
+  saveToStorage,
+} from "@src/utils/roomStorage";
+
+const DISCOVERED_ROOMS_KEY = "discovered_rooms";
+const PUBLIC_ROOMS_CACHE_KEY = "public_rooms_cache";
+const PUBLIC_ROOMS_FETCH_TIME_KEY = "public_rooms_last_fetch";
+const ONE_DAY = 24 * 60 * 60 * 1000;
 
 export const roomRepo = {
   async getRoom(roomId: number): Promise<RoomDetail> {
@@ -12,7 +22,78 @@ export const roomRepo = {
     return api.updateRoomTypeApi(roomId, type);
   },
 
-  async saveRoom(room: RoomDetail, draft: Draft) {
-    return api.saveRoomToSupabase(room, draft);
+  async saveRoom(room: RoomDetail, draft: Draft, initialType: RoomType) {
+    return api.saveRoomToSupabase(room, draft, initialType);
+  },
+
+  getPublicRooms: async (userId: string): Promise<Room[]> => {
+    const now = Date.now();
+    const lastFetch = await getFromStorage(PUBLIC_ROOMS_FETCH_TIME_KEY);
+    const cachedRooms = await getFromStorage(PUBLIC_ROOMS_CACHE_KEY);
+    const discovered = (await getFromStorage(DISCOVERED_ROOMS_KEY)) || [];
+
+    let rooms: Room[] = [];
+
+    const shouldRefetch =
+      !cachedRooms || !lastFetch || now - lastFetch > ONE_DAY;
+
+    if (shouldRefetch) {
+      // Fetch API mới
+      const fetchedRooms = await api.fetchPublicRooms(userId);
+      rooms = fetchedRooms.map(
+        (r: any): Room => ({
+          id: r.id,
+          themeId: r.user_themes?.theme_id ?? r.theme_id,
+          type: r.type,
+        })
+      );
+      await saveToStorage(PUBLIC_ROOMS_CACHE_KEY, rooms);
+      await saveToStorage(PUBLIC_ROOMS_FETCH_TIME_KEY, now);
+    } else {
+      rooms = cachedRooms;
+    }
+
+    // Loại bỏ phòng đã khám phá
+    const undiscoveredRooms = rooms.filter(
+      (room: Room) => !discovered.includes(room.id)
+    );
+
+    // Nếu đã khám phá hết → reset discovered + fetch lại
+    if (undiscoveredRooms.length === 0) {
+      await saveToStorage(DISCOVERED_ROOMS_KEY, []);
+      const fetchedRooms = await api.fetchPublicRooms(userId);
+      rooms = fetchedRooms.map(
+        (r: any): Room => ({
+          id: r.id,
+          themeId: r.user_themes?.theme_id,
+          type: r.type,
+        })
+      );
+      await saveToStorage(PUBLIC_ROOMS_CACHE_KEY, rooms);
+      await saveToStorage(PUBLIC_ROOMS_FETCH_TIME_KEY, now);
+      return rooms;
+    }
+
+    return undiscoveredRooms;
+  },
+
+  /** Lưu room đã khám phá */
+  markRoomAsDiscovered: async (roomId: number): Promise<void> => {
+    const discovered = (await getFromStorage(DISCOVERED_ROOMS_KEY)) || [];
+    if (!discovered.includes(roomId)) {
+      discovered.push(roomId);
+      await saveToStorage(DISCOVERED_ROOMS_KEY, discovered);
+    }
+  },
+
+  /** Reset danh sách khám phá */
+  resetDiscoveredRooms: async (): Promise<void> => {
+    await saveToStorage(DISCOVERED_ROOMS_KEY, []);
+  },
+
+  clearRoomStorage: async (): Promise<void> => {
+    await removeFromStorage(PUBLIC_ROOMS_CACHE_KEY);
+    await removeFromStorage(PUBLIC_ROOMS_FETCH_TIME_KEY);
+    await removeFromStorage(DISCOVERED_ROOMS_KEY);
   },
 };

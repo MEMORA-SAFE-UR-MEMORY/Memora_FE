@@ -1,4 +1,4 @@
-import LoadingScreen from "@src/components/LoadingScreen";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import RoomBg from "@src/components/RoomBg";
 import { RoomDraftProvider } from "@src/context/DraftContext";
 import { RoomProvider } from "@src/context/RoomContext";
@@ -29,7 +29,7 @@ export default function RootLayout() {
   const { roomDetail, loading, error } = useRoom(roomIdNum, themeIdNum, type);
 
   if (loading || !roomDetail)
-    return <LoadingScreen message="Đang tải dữ liệu..." />;
+    return <LoadingOverlay />;
 
   if (error) {
     return (

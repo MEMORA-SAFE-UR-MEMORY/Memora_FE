@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from "react";
 
 type RoomContextType = {
   roomId: number;
@@ -6,6 +6,9 @@ type RoomContextType = {
   type: "private" | "public";
   mode?: "view" | "edit";
   back: string;
+  setRoomContext: (
+    newValues: Partial<Omit<RoomContextType, "setRoomContext">>
+  ) => void;
 };
 
 const RoomContext = createContext<RoomContextType | null>(null);
@@ -15,11 +18,27 @@ export const RoomProvider = ({
   roomId,
   themeId,
   type,
-  mode,
+  mode = "edit",
   back,
-}: RoomContextType & { children: React.ReactNode }) => {
+}: Omit<RoomContextType, "setRoomContext"> & { children: React.ReactNode }) => {
+  const [contextValue, setContextValue] = useState<
+    Omit<RoomContextType, "setRoomContext">
+  >({
+    roomId,
+    themeId,
+    type,
+    mode,
+    back,
+  });
+
+  const setRoomContext = (
+    newValues: Partial<Omit<RoomContextType, "setRoomContext">>
+  ) => {
+    setContextValue((prev) => ({ ...prev, ...newValues }));
+  };
+
   return (
-    <RoomContext.Provider value={{ roomId, themeId, type, mode, back }}>
+    <RoomContext.Provider value={{ ...contextValue, setRoomContext }}>
       {children}
     </RoomContext.Provider>
   );
