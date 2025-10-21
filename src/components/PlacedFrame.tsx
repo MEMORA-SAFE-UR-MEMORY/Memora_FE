@@ -371,8 +371,6 @@ const PlacedFrame = ({
                   <FrameView
                     slot={slot}
                     memory={mem}
-                    frameWidth={item.item.dimension.w}
-                    frameHeight={item.item.dimension.h}
                   />
                 </Pressable>
               );
@@ -479,8 +477,6 @@ const PlacedFrame = ({
                     <FrameView
                       slot={slot}
                       memory={mem}
-                      frameWidth={item.item.dimension.w}
-                      frameHeight={item.item.dimension.h}
                     />
                   </Pressable>
                 );

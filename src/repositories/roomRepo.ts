@@ -26,7 +26,7 @@ export const roomRepo = {
     return api.saveRoomToSupabase(room, draft, initialType);
   },
 
-  getPublicRooms: async (userId: string): Promise<Room[]> => {
+  getPublicRooms: async (userId: string): Promise<Room[] | null> => {
     const now = Date.now();
     const lastFetch = await getFromStorage(PUBLIC_ROOMS_FETCH_TIME_KEY);
     const cachedRooms = await getFromStorage(PUBLIC_ROOMS_CACHE_KEY);
@@ -58,20 +58,8 @@ export const roomRepo = {
       (room: Room) => !discovered.includes(room.id)
     );
 
-    // Nếu đã khám phá hết → reset discovered + fetch lại
     if (undiscoveredRooms.length === 0) {
-      await saveToStorage(DISCOVERED_ROOMS_KEY, []);
-      const fetchedRooms = await api.fetchPublicRooms(userId);
-      rooms = fetchedRooms.map(
-        (r: any): Room => ({
-          id: r.id,
-          themeId: r.user_themes?.theme_id,
-          type: r.type,
-        })
-      );
-      await saveToStorage(PUBLIC_ROOMS_CACHE_KEY, rooms);
-      await saveToStorage(PUBLIC_ROOMS_FETCH_TIME_KEY, now);
-      return rooms;
+      return null;
     }
 
     return undiscoveredRooms;

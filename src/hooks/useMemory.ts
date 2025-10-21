@@ -278,15 +278,11 @@ export const useMemory = (
     setSelectedMemory(memory);
   };
 
-  const handleDeleteMemory = async () => {
+  const handleDeleteMemory = async (frameId: number, slotId: number) => {
     if (mode === "view") return;
-    if (activeFrameId !== null && activeSlotId !== null && selectedMemory) {
-      deleteItemMemory(activeFrameId, activeSlotId);
-      const updated = await memoryService.deleteMemory(
-        roomId,
-        activeFrameId,
-        activeSlotId
-      );
+    if (selectedMemory) {
+      deleteItemMemory(frameId, slotId);
+      const updated = await memoryService.deleteMemory(roomId, frameId, slotId);
       setMemoryStore(updated);
     }
     setTimeout(() => {
@@ -310,13 +306,6 @@ export const useMemory = (
     (frameId: number, slotId: number): Memory | null => {
       const localFrame = memoryStore?.[frameId];
       if (localFrame && localFrame[slotId]) {
-        console.log(
-          "Resolving from memoryStore (local)",
-          frameId,
-          slotId,
-          localFrame[slotId]
-        );
-        console.log("Full localFrame data", memoryStore);
         return localFrame[slotId];
       }
       return null;
@@ -370,13 +359,10 @@ export const useMemory = (
         const memoryId = placedItems.find((it) => it.id === frameId)
           ?.slotMemories?.[slotId];
         if (!memoryId) return null;
-        // console.log("MemoryId from placedItems", slotId, frameId);
-        // console.log("Resolving from roomDetail (public)", memoryId);
         return roomDetail.memories?.find((m) => m.id === memoryId) ?? null;
       }
 
       // 3) Nếu roomDetail không phải public (private room) -> memoryStore nên chứa data; fallback null
-      // console.log("No memory found", frameId, slotId);
       return null;
     },
     [roomDetail, memoryStore, placedItems]
