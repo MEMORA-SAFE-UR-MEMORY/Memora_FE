@@ -1,5 +1,8 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AddMemoryModal from "@src/components/AddMemoryModal";
+import { FrameView } from "@src/components/FrameView";
 import InfoMemory from "@src/components/InfoMemory";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalConfirm from "@src/components/ModalConfirm";
 import ModalMenu from "@src/components/ModalMenu";
 import UpdateMemory from "@src/components/UpdateMemory";
@@ -16,21 +19,20 @@ import {
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
   withSpring,
-  Easing,
+  withTiming,
 } from "react-native-reanimated";
-import { FrameView } from "@src/components/FrameView";
-import LoadingOverlay from "@src/components/LoadingOverlay";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   memory: Memory;
   onUpdate: (frameId: number, slotId: number, data: Memory) => void;
+  onSave: (frameId: number, slotId: number, data: Memory) => void;
   onDelete: (frameId: number, slotId: number) => void;
   frameItem: RoomItem | null;
   slotId: number | null;
@@ -44,6 +46,7 @@ const MemoryModal = ({
   onClose,
   memory,
   onUpdate,
+  onSave,
   onDelete,
   frameItem,
   slotId,
@@ -58,6 +61,13 @@ const MemoryModal = ({
   const [selected, setSelected] = useState<number>(1);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(slotId);
+  const selectedMemory =
+    selectedSlotId != null && frameItem
+      ? memoryResolver(frameItem.id, selectedSlotId)
+      : null;
+  const [isOpenAddModal, setIsOpenAddModal] = useState<boolean>(false);
+  const [activeSlotId, setActiveSlotId] = useState<number | null>(null);
 
   // --- Animation setup (fade only) ---
   const progress = useSharedValue(0);
@@ -137,6 +147,34 @@ const MemoryModal = ({
   }));
 
   // --- Handlers ---
+  const handleSlotPress = (slotId: number) => {
+    if (!frameItem) return;
+    const slotMemory = memoryResolver(frameItem.id, slotId);
+
+    if (slotMemory) {
+      // Slot đã có memory → mở MemoryModal
+      setSelectedSlotId(slotId);
+    } else {
+      // Slot chưa có memory → mở AddMemoryModal
+      openAddModal(slotId);
+    }
+  };
+
+  const openAddModal = (slotId: number) => {
+    setActiveSlotId(slotId);
+    setIsOpenAddModal(true);
+  };
+
+  const closeAddModal = () => {
+    setIsOpenAddModal(false);
+  };
+
+  const handleSave = (frameId: number, slotId: number, data: Memory) => {
+    onSave(frameId, slotId, data);
+    setIsOpenAddModal(false);
+    setSelectedSlotId(slotId);
+  };
+
   const handleClose = () => {
     progress.value = withTiming(0, { duration: 300 }, (finished) => {
       if (finished) runOnJS(onClose)();
@@ -144,9 +182,9 @@ const MemoryModal = ({
   };
 
   const handleDelete = () => {
-    if (frameItem && slotId != null) {
+    if (frameItem && selectedSlotId != null) {
       setShowConfirm(false);
-      onDelete(frameItem.id, slotId);
+      onDelete(frameItem.id, selectedSlotId);
       handleClose();
     }
   };
@@ -158,6 +196,12 @@ const MemoryModal = ({
   useEffect(() => {
     if (onFrameRemoved) handleClose();
   }, [onFrameRemoved]);
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedSlotId(slotId);
+    }
+  }, [visible, slotId]);
 
   if (!visible && progress.value === 0) return null;
 
@@ -188,20 +232,31 @@ const MemoryModal = ({
                   height: frameItem?.item.dimension.h ?? 0,
                 }}
               >
-                {frameItem?.item.slots?.map((slot) => (
-                  <Pressable key={slot.slotId} style={{ position: "absolute" }}>
-                    <FrameView
-                      slot={slot}
-                      memory={memoryResolver(frameItem.id, slot.slotId)}
-                      frameWidth={frameItem.item.dimension.w}
-                      frameHeight={frameItem.item.dimension.h}
-                    />
-                  </Pressable>
-                ))}
-                <Image
-                  source={{ uri: frameItem?.item.imageUrl }}
-                  style={styles.frameImage}
-                />
+                {frameItem?.item.slots?.map((slot) => {
+                  const slotMemory = memoryResolver(frameItem.id, slot.slotId);
+
+                  return (
+                    <Pressable
+                      key={slot.slotId}
+                      onPress={() => handleSlotPress(slot.slotId)}
+                      style={{
+                        position: "absolute",
+                      }}
+                    >
+                      <FrameView
+                        slot={slot}
+                        memory={slotMemory}
+                      />
+                    </Pressable>
+                  );
+                })}
+                <View style={styles.frameImage} pointerEvents="none">
+                  <Image
+                    source={{ uri: frameItem?.item.imageUrl }}
+                    style={styles.frameImage}
+                    resizeMode="contain"
+                  />
+                </View>
               </View>
             </Animated.View>
           </GestureDetector>
@@ -226,19 +281,26 @@ const MemoryModal = ({
 
           <View style={{ flex: 1 }}>
             {mode === "view" ? (
-              <InfoMemory memory={memory} />
+              selectedMemory && <InfoMemory memory={selectedMemory} />
             ) : (
               <>
-                {selected === 1 && <InfoMemory memory={memory} />}
-                {selected === 2 && frameItem && slotId != null && (
-                  <UpdateMemory
-                    memory={memory}
-                    frameItem={frameItem}
-                    slotId={slotId}
-                    onUpdate={(data) => onUpdate(frameItem.id, slotId, data)}
-                    onLoadingChange={setIsLoading}
-                  />
+                {selected === 1 && selectedMemory && (
+                  <InfoMemory memory={selectedMemory} />
                 )}
+                {selected === 2 &&
+                  frameItem &&
+                  selectedSlotId != null &&
+                  selectedMemory && (
+                    <UpdateMemory
+                      memory={selectedMemory}
+                      frameItem={frameItem}
+                      slotId={selectedSlotId}
+                      onUpdate={(data) =>
+                        onUpdate(frameItem.id, selectedSlotId, data)
+                      }
+                      onLoadingChange={setIsLoading}
+                    />
+                  )}
               </>
             )}
           </View>
@@ -259,6 +321,17 @@ const MemoryModal = ({
               confirmBtnColor="red"
               cancelBtnText="Hủy"
               cancelBtnColor="grey"
+            />
+          )}
+
+          {mode === "edit" && isOpenAddModal && frameItem && (
+            <AddMemoryModal
+              visible={isOpenAddModal}
+              onClose={closeAddModal}
+              onSave={handleSave}
+              frameId={frameItem.id}
+              frameItem={frameItem}
+              slotId={activeSlotId}
             />
           )}
         </View>

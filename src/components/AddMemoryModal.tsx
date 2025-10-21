@@ -529,6 +529,7 @@ const styles = StyleSheet.create({
   titleInput: {
     color: "#333",
     flex: 1,
+    fontFamily: "Baloo2_medium",
   },
   characterCount: {
     position: "absolute",

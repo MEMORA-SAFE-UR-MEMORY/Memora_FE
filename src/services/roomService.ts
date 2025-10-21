@@ -34,7 +34,11 @@ export async function toggleRoomType(roomId: number): Promise<Room> {
 }
 
 /** Save room + draft */
-export async function saveRoom(room: RoomDetail, draft: Draft, initialType: RoomType) {
+export async function saveRoom(
+  room: RoomDetail,
+  draft: Draft,
+  initialType: RoomType
+) {
   return roomRepo.saveRoom(room, draft, initialType);
 }
 
@@ -52,7 +56,7 @@ export async function initDiscoveredRooms(): Promise<void> {
 /** Lấy room công khai kế tiếp để khám phá */
 export async function getNextRoomToDiscover(
   userId: string,
-  currentRoomId?: number 
+  currentRoomId?: number
 ): Promise<Room | null> {
   // Nếu có room hiện tại → đánh dấu đã khám phá trước
   if (currentRoomId) {
@@ -61,10 +65,9 @@ export async function getNextRoomToDiscover(
 
   const availableRooms = await roomRepo.getPublicRooms(userId);
 
-  // Nếu đã khám phá hết, reset danh sách
-  if (availableRooms.length === 0) {
-    await roomRepo.resetDiscoveredRooms();
-    await saveToStorage(LAST_RESET_KEY, Date.now());
+  // Nếu đã khám phá hết, trả null
+  if (!availableRooms || availableRooms.length === 0) {
+    return null;
   }
 
   const randomIndex = Math.floor(Math.random() * availableRooms.length);
