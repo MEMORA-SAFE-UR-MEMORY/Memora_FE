@@ -8,8 +8,8 @@ export default function HomeLayout() {
   const [loading, setLoading] = useState(true);
 
   const BG = require("../../assets/images/loginScreen/nen_troi.png");
-  const HOUSE = require("../../assets/images/loginScreen/nhà.png");
-  const CLOUD = require("../../assets/images/loginScreen/mây 2.png");
+  const HOUSE = require("../../assets/images/loginScreen/home.png");
+  const CLOUD = require("../../assets/images/loginScreen/cloud.png");
 
   const IMG_AR = 1365 / 768;
   const TARGET_OVERFLOW = 1;

@@ -533,7 +533,7 @@ export default function HallScreen() {
                 }}
               >
                 <Image
-                  source={require("../../assets/icons/Game shop red.png")}
+                  source={require("../../assets/icons/Gameshopred.png")}
                   style={{ width: 26, height: 26 }}
                   resizeMode="contain"
                 />

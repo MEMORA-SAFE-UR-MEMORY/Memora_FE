@@ -2,6 +2,7 @@
   "expo": {
     "name": "Memora",
     "slug": "Memora",
+    "owner": "bready",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
@@ -50,7 +51,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "51e23bdc-533c-4ab1-bdc9-43ac5ff0d77e"
+        "projectId": "2b49aadc-db3d-457b-a809-87229425c0ac"
       }
     }
   }
