@@ -55,7 +55,7 @@ const Welcome = () => {
 
       // Thêm delay nhỏ để tránh double tap
       await new Promise((resolve) => setTimeout(resolve, 300));
-      router.replace("/loading");
+      router.replace("/home");
     } catch (error) {
       console.error("[Welcome] Navigation error:", error);
       setNavigating(false);

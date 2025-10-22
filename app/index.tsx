@@ -79,14 +79,13 @@ export default function Home() {
       const userUsername = supabaseUser.username.split("@")[0];
 
       // Lưu target navigation
-      await AsyncStorage.setItem(
-        "navigationTarget",
-        userUsername === emailUsername ? "/username" : "/home"
-      );
+      
+      const navigate = userUsername === emailUsername ? "/username" : "/home"
+      
 
       // Chuyển sang loading screen
       setModalVisible(false);
-      router.replace("/loading");
+      router.replace(navigate);
     } catch (error) {
       console.error("[Login] Error:", error);
       showCustomAlert("Đã có lỗi xảy ra");
