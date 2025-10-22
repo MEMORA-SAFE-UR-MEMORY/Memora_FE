@@ -23,6 +23,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -93,7 +94,7 @@ const MemoryModal = ({
   }, [visible]);
 
   // --- Zoom / Pan gesture ---
-  const initialZoom = 1.8;
+  const initialZoom = 1.1;
   const scale = useSharedValue(initialZoom);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -139,6 +140,13 @@ const MemoryModal = ({
   }));
 
   const previewAnim = useAnimatedStyle(() => ({
+    opacity: withDelay(
+      10,
+      withTiming(progress.value, {
+        duration: 300,
+        easing: Easing.out(Easing.exp),
+      })
+    ),
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
@@ -215,51 +223,50 @@ const MemoryModal = ({
 
         {/* LEFT: Frame Preview */}
         <View style={[styles.leftPane, { width: leftWidth }]}>
-          <GestureDetector gesture={composedGesture}>
-            <Animated.View
-              style={[
-                styles.previewContainer,
-                previewAnim,
-                {
-                  width: frameItem?.item.dimension.w ?? 0,
-                  height: frameItem?.item.dimension.h ?? 0,
-                },
-              ]}
-            >
-              <View
-                style={{
-                  width: frameItem?.item.dimension.w ?? 0,
-                  height: frameItem?.item.dimension.h ?? 0,
-                }}
+          {frameItem?.item && frameItem?.item.dimension && (
+            <GestureDetector gesture={composedGesture}>
+              <Animated.View
+                style={[
+                  styles.previewContainer,
+                  previewAnim,
+                  {
+                    width: frameItem?.item.dimension.w ?? 0,
+                    height: frameItem?.item.dimension.h ?? 0,
+                  },
+                ]}
               >
-                {frameItem?.item.slots?.map((slot) => {
-                  const slotMemory = memoryResolver(frameItem.id, slot.slotId);
-
-                  return (
-                    <Pressable
-                      key={slot.slotId}
-                      onPress={() => handleSlotPress(slot.slotId)}
-                      style={{
-                        position: "absolute",
-                      }}
-                    >
-                      <FrameView
-                        slot={slot}
-                        memory={slotMemory}
-                      />
-                    </Pressable>
-                  );
-                })}
-                <View style={styles.frameImage} pointerEvents="none">
-                  <Image
-                    source={{ uri: frameItem?.item.imageUrl }}
-                    style={styles.frameImage}
-                    resizeMode="contain"
-                  />
+                <View
+                  style={{
+                    width: frameItem?.item.dimension.w ?? 0,
+                    height: frameItem?.item.dimension.h ?? 0,
+                  }}
+                >
+                  {frameItem?.item.slots
+                    ?.slice()
+                    .sort((a, b) => a.slotId - b.slotId)
+                    .map((slot) => (
+                      <Pressable
+                        key={slot.slotId}
+                        style={{ position: "absolute" }}
+                        onPress={() => handleSlotPress(slot.slotId)}
+                      >
+                        <FrameView
+                          slot={slot}
+                          memory={memoryResolver(frameItem.id, slot.slotId)}
+                        />
+                      </Pressable>
+                    ))}
+                  <View style={styles.frameImage} pointerEvents="none">
+                    <Image
+                      source={{ uri: frameItem?.item.imageUrl }}
+                      style={styles.frameImage}
+                      resizeMode="contain"
+                    />
+                  </View>
                 </View>
-              </View>
-            </Animated.View>
-          </GestureDetector>
+              </Animated.View>
+            </GestureDetector>
+          )}
         </View>
 
         {/* RIGHT: Memory Info */}
@@ -292,6 +299,7 @@ const MemoryModal = ({
                   selectedSlotId != null &&
                   selectedMemory && (
                     <UpdateMemory
+                      key={`${frameItem.id}-${selectedSlotId}`}
                       memory={selectedMemory}
                       frameItem={frameItem}
                       slotId={selectedSlotId}
@@ -367,6 +375,7 @@ const styles = StyleSheet.create({
     height: "100%",
     position: "absolute",
     resizeMode: "contain",
+    backgroundColor: "transparent",
   },
   rightPane: {
     backgroundColor: "#fff",

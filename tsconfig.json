@@ -23,8 +23,9 @@
       ],
       "@utils/*": [
         "src/utils/*"
-      ]
+      ],
     },
+    "typeRoots": ["./src/types", "./node_modules/@types"],
     "strict": true,
     "noImplicitAny": true
   },

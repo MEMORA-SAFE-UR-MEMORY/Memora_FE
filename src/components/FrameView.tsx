@@ -16,10 +16,7 @@ type FrameViewProps = {
   memory?: Memory | null;
 };
 
-export function FrameView({
-  slot,
-  memory,
-}: FrameViewProps) {
+export function FrameView({ slot, memory }: FrameViewProps) {
   const clipId = `clip-${slot.slotId}`;
 
   // Tính tỷ lệ (scale) dựa trên kích thước khung
@@ -43,6 +40,7 @@ export function FrameView({
         width: slot.w,
         height: slot.h,
         transform: [{ rotate: `${rotation}deg` }],
+        zIndex: slot.slotId,
       }}
     >
       <Svg width="100%" height="100%">
@@ -67,15 +65,15 @@ export function FrameView({
               fill="#666"
               scale={scaleFactor * 1.2}
               x={centerX - 10}
-              y={centerY - (showText ? 15 : 8)}
+              y={centerY - (showText ? 19 : 8)}
             />
 
             {showText && (
               <Text
                 fill="#666"
-                fontSize={10 * scaleFactor}
+                fontSize="10"
                 x={centerX}
-                y={centerY + 15}
+                y={centerY + 18}
                 fontFamily="Baloo2_medium"
                 textAnchor="middle"
               >

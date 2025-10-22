@@ -16,6 +16,7 @@ import Animated, {
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withTiming,
 } from "react-native-reanimated";
 
@@ -86,12 +87,18 @@ const PlacedFrame = ({
   const trashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTrashDisabled = useRef(false);
 
+  const fade = useSharedValue(0);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translationX.value },
       { translateY: translationY.value },
       { rotate: `${rotation.value}rad` },
     ],
+  }));
+
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(fade.value, { duration: 300 }),
   }));
 
   const borderHighlight = useAnimatedStyle(() => {
@@ -338,6 +345,15 @@ const PlacedFrame = ({
     rotation.value = item.rotation ?? 0;
   }, [item.x, item.y, item.rotation]);
 
+  useEffect(() => {
+    if (item.item.categoryId === 1) {
+      fade.value = 0;
+      fade.value = withDelay(100, withTiming(1, { duration: 400 }));
+    } else {
+      fade.value = 1; 
+    }
+  }, [item.item.categoryId]);
+
   if (mode === "view") {
     return (
       <Animated.View
@@ -360,21 +376,22 @@ const PlacedFrame = ({
             />
           </Pressable>
         ) : (
-          <View style={styles.contentArea}>
-            {item.item.slots?.map((slot) => {
-              const mem = memoryResolver(item.id, slot.slotId);
-              return (
+          <Animated.View style={[styles.contentArea, fadeStyle]}>
+            {item.item.slots
+              ?.slice()
+              .sort((a, b) => a.slotId - b.slotId)
+              .map((slot) => (
                 <Pressable
                   key={slot.slotId}
+                  style={{ position: "absolute" }}
                   onPress={() => onPress(item.id, slot.slotId, item)}
                 >
                   <FrameView
                     slot={slot}
-                    memory={mem}
+                    memory={memoryResolver(item.id, slot.slotId)}
                   />
                 </Pressable>
-              );
-            })}
+              ))}
             <View style={styles.frameImage} pointerEvents="none">
               <Image
                 source={{ uri: item.item.imageUrl }}
@@ -382,7 +399,7 @@ const PlacedFrame = ({
                 resizeMode="contain"
               />
             </View>
-          </View>
+          </Animated.View>
         )}
       </Animated.View>
     );
@@ -441,7 +458,7 @@ const PlacedFrame = ({
             </Pressable>
           </>
         ) : (
-          <>
+          <Animated.View style={[styles.contentArea, fadeStyle]}>
             <Pressable
               onLongPress={handleLongPress}
               delayLongPress={300}
@@ -464,23 +481,23 @@ const PlacedFrame = ({
                   pointerEvents="none"
                 />
               )}
-              {item.item.slots?.map((slot) => {
-                const mem = memoryResolver(item.id, slot.slotId);
-                return (
+              {item.item.slots
+                ?.slice()
+                .sort((a, b) => a.slotId - b.slotId)
+                .map((slot) => (
                   <Pressable
                     key={slot.slotId}
+                    style={{ position: "absolute" }}
                     onPress={() => onPress(item.id, slot.slotId, item)}
                     onLongPress={enterEditMode}
                     delayLongPress={300}
-                    style={{ position: "absolute" }}
                   >
                     <FrameView
                       slot={slot}
-                      memory={mem}
+                      memory={memoryResolver(item.id, slot.slotId)}
                     />
                   </Pressable>
-                );
-              })}
+                ))}
               <View style={styles.frameImage} pointerEvents="none">
                 <Image
                   source={{ uri: item.item.imageUrl }}
@@ -489,7 +506,7 @@ const PlacedFrame = ({
                 />
               </View>
             </Pressable>
-          </>
+          </Animated.View>
         )}
       </Animated.View>
     </GestureDetector>
@@ -504,11 +521,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     position: "absolute",
+    backgroundColor: "transparent",
   },
   frameImage: {
     width: "100%",
     height: "100%",
     position: "absolute",
+    backgroundColor: "transparent",
   },
   rotateIcon: {
     position: "absolute",
@@ -533,6 +552,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    overflow: "visible",
   },
 });
 
