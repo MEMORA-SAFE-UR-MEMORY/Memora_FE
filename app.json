@@ -1,15 +1,19 @@
 {
   "expo": {
     "name": "Memora",
-    "slug": "Memora",
-    "owner": "bready",
+    "slug": "memora",
+    "owner": "memora-appstore",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "memora",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.memoraco.memora",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -51,7 +55,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "2b49aadc-db3d-457b-a809-87229425c0ac"
+        "projectId": "3a42b0df-db99-4691-a07a-0229126d17e3"
       }
     }
   }
