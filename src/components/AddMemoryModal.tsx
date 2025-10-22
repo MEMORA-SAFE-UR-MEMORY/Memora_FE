@@ -1,9 +1,12 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import BtnBorder from "@src/components/BtnBorder";
+import ImageCropModal from "@src/components/ImageCropModal";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalCalendar from "@src/components/ModalCalendar";
-import ScrollingText from "@src/components/ScrollingText";
+import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
+import { generateTempId } from "@src/utils/idGenerator";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useState } from "react";
 import {
@@ -20,10 +23,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import ImageCropModal from "@src/components/ImageCropModal";
-import { RoomItem } from "@src/types/item";
-import { generateTempId } from "@src/utils/idGenerator";
-import LoadingOverlay from "@src/components/LoadingOverlay";
 
 type Props = {
   visible: boolean;
@@ -188,6 +187,7 @@ const AddMemoryModal: React.FC<Props> = ({
       supportedOrientations={["portrait", "landscape"]}
     >
       {isLoading && <LoadingOverlay />}
+      <View style={styles.overlay}></View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -198,7 +198,9 @@ const AddMemoryModal: React.FC<Props> = ({
             if (isCalendarOpen) handleCalendarClose();
           }}
         >
-          <View style={styles.overlay}>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
             <View
               style={[
                 styles.content,
@@ -229,7 +231,64 @@ const AddMemoryModal: React.FC<Props> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Row 1: Tiêu đề + Ngày */}
+              {/* Tiêu đề */}
+              <View style={styles.inputRow}>
+                <Text style={[styles.label, { fontSize: scale(14) }]}>
+                  Tựa đề
+                </Text>
+                <View
+                  style={[
+                    styles.titleInputContainer,
+                    { height: scale(40), borderRadius: scale(20) },
+                  ]}
+                >
+                  {isEditing && !isCalendarOpen ? (
+                    <TextInput
+                      value={title}
+                      onChangeText={setTitle}
+                      style={[
+                        styles.titleInput,
+                        { fontSize: scale(13), paddingHorizontal: scale(10) },
+                      ]}
+                      maxLength={60}
+                      numberOfLines={1}
+                      placeholder="Nhập tựa đề..."
+                      placeholderTextColor="#999"
+                      onBlur={() => setIsEditing(false)}
+                      autoFocus
+                    />
+                  ) : (
+                    <TouchableOpacity
+                      style={{ flex: 1 }}
+                      onPress={() => {
+                        if (!isCalendarOpen) setIsEditing(true);
+                      }}
+                      disabled={isCalendarOpen}
+                    >
+                      <Text
+                        style={[
+                          styles.titleInput,
+                          { fontSize: scale(13), paddingHorizontal: 10 },
+                        ]}
+                      >
+                        {title}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {title.length > 0 && (
+                    <Text
+                      style={[
+                        styles.characterCount,
+                        { fontSize: scale(11), top: scale(17) },
+                      ]}
+                    >
+                      {title.length}/60
+                    </Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Row 1: Ảnh + Ngày */}
               <View
                 style={[
                   styles.row1,
@@ -238,65 +297,54 @@ const AddMemoryModal: React.FC<Props> = ({
                   },
                 ]}
               >
-                {/* Tiêu đề */}
-                <View style={styles.inputRow}>
+                {/* Ảnh */}
+                <View style={styles.fileRow}>
                   <Text style={[styles.label, { fontSize: scale(14) }]}>
-                    Tựa đề
+                    Nhập tập tin:
                   </Text>
-                  <View
-                    style={[
-                      styles.titleInputContainer,
-                      { height: scale(40), borderRadius: scale(20) },
-                    ]}
-                  >
-                    {isEditing && !isCalendarOpen ? (
-                      <TextInput
-                        value={title}
-                        onChangeText={setTitle}
+                  {selectedImage ? (
+                    <TouchableOpacity
+                      onPress={pickImage}
+                      disabled={isCalendarOpen || keyboardVisible}
+                    >
+                      <Image
+                        source={{ uri: selectedImage }}
                         style={[
-                          styles.titleInput,
-                          { fontSize: scale(13), paddingHorizontal: scale(10) },
+                          styles.thumbnailImage,
+                          {
+                            width: scale(45),
+                            height: scale(45),
+                            borderRadius: scale(8),
+                          },
                         ]}
-                        maxLength={50}
-                        numberOfLines={1}
-                        placeholder="Nhập tựa đề..."
-                        placeholderTextColor="#999"
-                        onBlur={() => setIsEditing(false)}
-                        autoFocus
                       />
-                    ) : (
-                      <TouchableOpacity
-                        style={{ flex: 1 }}
-                        onPress={() => {
-                          if (!isCalendarOpen) setIsEditing(true);
-                        }}
-                        disabled={isCalendarOpen}
-                      >
-                        {title.length > 23 ? (
-                          <ScrollingText text={title} />
-                        ) : (
-                          <Text
-                            style={[
-                              styles.titleInput,
-                              { fontSize: scale(13), paddingHorizontal: 10 },
-                            ]}
-                          >
-                            {title}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    )}
-                    {title.length > 0 && (
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.fileButton,
+                        {
+                          height: scale(40),
+                          borderRadius: scale(20),
+                          paddingVertical: scale(6),
+                          paddingHorizontal: scale(12),
+                        },
+                      ]}
+                      onPress={pickImage}
+                      disabled={isCalendarOpen || keyboardVisible}
+                    >
                       <Text
-                        style={[
-                          styles.characterCount,
-                          { fontSize: scale(11), top: scale(17) },
-                        ]}
+                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
                       >
-                        {title.length}/50
+                        Nhập ở đây
                       </Text>
-                    )}
-                  </View>
+                      <Text
+                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
+                      >
+                        ▼
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Ngày */}
@@ -328,7 +376,8 @@ const AddMemoryModal: React.FC<Props> = ({
                           {
                             height: scale(40),
                             borderRadius: scale(20),
-                            paddingHorizontal: scale(10),
+                            paddingVertical: scale(6),
+                            paddingHorizontal: scale(12),
                           },
                         ]}
                         onPress={handleCalendarOpen}
@@ -383,50 +432,6 @@ const AddMemoryModal: React.FC<Props> = ({
                 />
               </View>
 
-              {/* Ảnh */}
-              <View style={styles.fileRow}>
-                <Text style={[styles.label, { fontSize: scale(14) }]}>
-                  Nhập tập tin:
-                </Text>
-                {selectedImage ? (
-                  <TouchableOpacity
-                    onPress={pickImage}
-                    disabled={isCalendarOpen || keyboardVisible}
-                  >
-                    <Image
-                      source={{ uri: selectedImage }}
-                      style={[
-                        styles.thumbnailImage,
-                        {
-                          width: scale(45),
-                          height: scale(45),
-                          borderRadius: scale(8),
-                        },
-                      ]}
-                    />
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.fileButton,
-                      {
-                        borderRadius: scale(20),
-                        paddingVertical: scale(6),
-                        paddingHorizontal: scale(12),
-                      },
-                    ]}
-                    onPress={pickImage}
-                    disabled={isCalendarOpen || keyboardVisible}
-                  >
-                    <Text
-                      style={[styles.fileButtonText, { fontSize: scale(13) }]}
-                    >
-                      Nhập ở đây ▼
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
               {/* Nút thêm */}
               <View style={styles.addButton}>
                 <BtnBorder
@@ -479,8 +484,11 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   content: {
     backgroundColor: "white",
@@ -505,13 +513,12 @@ const styles = StyleSheet.create({
   row1: {
     justifyContent: "space-between",
     flexDirection: "row",
-    gap: 10,
+    marginVertical: 10,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flex: 1,
   },
   label: {
     fontFamily: "Baloo2_medium",
@@ -530,6 +537,7 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
     fontFamily: "Baloo2_medium",
+    marginTop: 7,
   },
   characterCount: {
     position: "absolute",
@@ -560,12 +568,12 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     position: "absolute",
-    top: -45,
-    left: -5,
+    top: -95,
+    left: 0,
     zIndex: 1000,
   },
   descriptionRow: {
-    marginVertical: 10,
+    marginBottom: 10,
     flexDirection: "row",
     gap: 10,
   },
@@ -580,11 +588,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
-    marginBottom: 15,
+    width: 260,
   },
   fileButton: {
     backgroundColor: "#B1E1FF",
+    justifyContent: "space-between",
     alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
   },
   fileButtonText: {
     color: "#333333",

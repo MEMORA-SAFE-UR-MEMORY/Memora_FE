@@ -1,16 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
+import ImageCropModal from "@src/components/ImageCropModal";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  findNodeHandle,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
@@ -19,7 +20,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import ImageCropModal from "@src/components/ImageCropModal";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 type Props = {
   memory: Memory;
@@ -45,6 +46,8 @@ const UpdateMemory = ({
   );
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
+  const scrollRef = useRef<KeyboardAwareScrollView>(null);
+  const textInputRef = useRef<TextInput>(null);
 
   // === Crop State ===
   const [tempImage, setTempImage] = useState<string | null>(null);
@@ -185,180 +188,190 @@ const UpdateMemory = ({
   const canUpdate = isFormValid() && isChanged();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <TouchableWithoutFeedback
-        onPress={() => {
-          Keyboard.dismiss();
-          if (isCalendarOpen) handleCalendarClose();
-        }}
+    <View style={{ flex: 1 }}>
+      <Text style={styles.titleText}>Cập nhật</Text>
+
+      <KeyboardAwareScrollView
+        ref={scrollRef}
+        enableOnAndroid
+        extraScrollHeight={Platform.OS === "ios" ? 20 : 120}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View>
-          <Text style={styles.titleText}>Cập nhật</Text>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+            if (isCalendarOpen) handleCalendarClose();
+          }}
+        >
+          <View>
+            <View style={styles.inputRow}>
+              <Text style={styles.label}>Tựa đề</Text>
+              <View style={styles.titleInputContainer}>
+                {isEditing && !isCalendarOpen ? (
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    style={styles.titleInput}
+                    maxLength={50}
+                    numberOfLines={1}
+                    placeholder="Nhập tựa đề..."
+                    placeholderTextColor="#999"
+                    onBlur={() => setIsEditing(false)}
+                    autoFocus
+                  />
+                ) : (
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => {
+                      if (!isCalendarOpen) setIsEditing(true);
+                    }}
+                    disabled={isCalendarOpen}
+                  >
+                    {title.length > 30 ? (
+                      <ScrollingText text={title} threshold={30} />
+                    ) : (
+                      <Text
+                        style={[
+                          styles.titleInput,
+                          title.length === 0 && { color: "#999" },
+                        ]}
+                      >
+                        {title.length === 0 ? "Không có tựa đề" : title}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                {title.length > 0 && (
+                  <Text style={styles.characterCount}>{title.length}/50</Text>
+                )}
+              </View>
+            </View>
 
-          <View style={styles.inputRow}>
-            <Text style={styles.label}>Tựa đề</Text>
-            <View style={styles.titleInputContainer}>
-              {isEditing && !isCalendarOpen ? (
-                <TextInput
-                  value={title}
-                  onChangeText={setTitle}
-                  style={styles.titleInput}
-                  maxLength={50}
-                  numberOfLines={1}
-                  placeholder="Nhập tựa đề..."
-                  placeholderTextColor="#999"
-                  onBlur={() => setIsEditing(false)}
-                  autoFocus
-                />
+            <View style={styles.fileRow}>
+              <Text style={styles.label}>Nhập tập tin: </Text>
+              {selectedImage ? (
+                <TouchableOpacity
+                  onPress={pickImage}
+                  style={styles.imageContainer}
+                  disabled={isCalendarOpen || keyboardVisible}
+                >
+                  <Image
+                    source={{ uri: selectedImage }}
+                    style={styles.thumbnailImage}
+                  />
+                  <Ionicons
+                    name="camera"
+                    size={18}
+                    color="#fff"
+                    style={styles.cameraIcon}
+                  />
+                </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => {
-                    if (!isCalendarOpen) setIsEditing(true);
-                  }}
-                  disabled={isCalendarOpen}
+                  style={styles.fileButton}
+                  onPress={pickImage}
+                  disabled={isCalendarOpen || keyboardVisible}
                 >
-                  {title.length > 30 ? (
-                    <ScrollingText text={title} threshold={30} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.titleInput,
-                        title.length === 0 && { color: "#999" },
-                      ]}
-                    >
-                      {title.length === 0 ? "Không có tựa đề" : title}
+                  <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.dateRow}>
+              <Text style={styles.label}>Ngày:</Text>
+              <View style={styles.dateInputs}>
+                {isCalendarOpen ? (
+                  <View style={styles.calendarContainer}>
+                    <ModalCalendar
+                      onSelectDate={handleDateSelect}
+                      onClose={handleCalendarClose}
+                      initialDate={selectedDate}
+                    />
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.dateButton}
+                    onPress={handleCalendarOpen}
+                  >
+                    <Text style={styles.dateButtonText}>
+                      {selectedDate ? formatDate(selectedDate) : "Chọn ngày"}
                     </Text>
-                  )}
-                </TouchableOpacity>
-              )}
-              {title.length > 0 && (
-                <Text style={styles.characterCount}>{title.length}/50</Text>
-              )}
+                    <Text style={styles.dateButtonText}>▼</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.descriptionRow}>
+              <Text style={styles.label}>Miêu tả</Text>
+              <TextInput
+                ref={textInputRef}
+                value={description}
+                onChangeText={setDescription}
+                style={[
+                  styles.descriptionInput,
+                  description.trim() === "" && styles.placeholderText,
+                ]}
+                multiline={true}
+                numberOfLines={4}
+                textAlignVertical="top"
+                placeholder="Không có miêu tả"
+                placeholderTextColor="#999"
+                editable={!isCalendarOpen}
+                onFocus={() => {
+                  if (isCalendarOpen) {
+                    Keyboard.dismiss();
+                  } else {
+                    const node = findNodeHandle(textInputRef.current);
+                    node && scrollRef.current?.scrollToFocusedInput(node);
+                  }
+                }}
+              />
+            </View>
+            <View style={styles.updateBtn}>
+              <BtnBorder
+                text="Cập nhật"
+                fontSize={14}
+                width={110}
+                colorType={canUpdate ? "pink" : "grey"}
+                onPress={handleUpdate}
+                disabled={!canUpdate}
+              />
             </View>
           </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAwareScrollView>
 
-          <View style={styles.dateRow}>
-            <Text style={styles.label}>Ngày:</Text>
-            <View style={styles.dateInputs}>
-              {isCalendarOpen ? (
-                <View style={styles.calendarContainer}>
-                  <ModalCalendar
-                    onSelectDate={handleDateSelect}
-                    onClose={handleCalendarClose}
-                    initialDate={selectedDate}
-                  />
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={handleCalendarOpen}
-                >
-                  <Text style={styles.dateButtonText}>
-                    {selectedDate ? formatDate(selectedDate) : "Chọn ngày"}
-                  </Text>
-                  <Text style={styles.dateButtonText}>▼</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
+      {/* === Modal Crop === */}
+      {tempImage &&
+        isCropOpen &&
+        frameItem?.item?.slots &&
+        slotId !== null &&
+        (() => {
+          const slots = Array.isArray(frameItem.item.slots[0])
+            ? frameItem.item.slots.flat()
+            : frameItem.item.slots;
 
-          <View style={styles.descriptionRow}>
-            <Text style={styles.label}>Miêu tả</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              style={[
-                styles.descriptionInput,
-                description.trim() === "" && styles.placeholderText,
-              ]}
-              multiline={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-              placeholder="Không có miêu tả"
-              placeholderTextColor="#999"
-              editable={!isCalendarOpen}
-              onFocus={() => {
-                if (isCalendarOpen) Keyboard.dismiss();
-              }}
+          const slot = slots.find((s) => s.slotId === slotId);
+
+          if (!slot) {
+            console.warn("Không tìm thấy slot với id:", slotId);
+            return null;
+          }
+
+          return (
+            <ImageCropModal
+              key={slotId}
+              visible={isCropOpen}
+              imageUri={tempImage}
+              slot={slot}
+              onConfirm={handleCropConfirm}
+              onCancel={handleCropCancel}
             />
-          </View>
-
-          <View style={styles.fileRow}>
-            <Text style={styles.label}>Nhập tập tin: </Text>
-            {selectedImage ? (
-              <TouchableOpacity
-                onPress={pickImage}
-                style={styles.imageContainer}
-                disabled={isCalendarOpen || keyboardVisible}
-              >
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={styles.thumbnailImage}
-                />
-                <Ionicons
-                  name="camera"
-                  size={18}
-                  color="#fff"
-                  style={styles.cameraIcon}
-                />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.fileButton}
-                onPress={pickImage}
-                disabled={isCalendarOpen || keyboardVisible}
-              >
-                <Text style={styles.fileButtonText}>Nhập ở đây ▼</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.updateBtn}>
-            <BtnBorder
-              text="Cập nhật"
-              fontSize={14}
-              width={110}
-              colorType={canUpdate ? "pink" : "grey"}
-              onPress={handleUpdate}
-              disabled={!canUpdate}
-            />
-
-            {/* === Modal Crop === */}
-            {tempImage &&
-              isCropOpen &&
-              frameItem?.item?.slots &&
-              slotId !== null &&
-              (() => {
-                const slots = Array.isArray(frameItem.item.slots[0])
-                  ? frameItem.item.slots.flat()
-                  : frameItem.item.slots;
-
-                const slot = slots.find((s) => s.slotId === slotId);
-
-                if (!slot) {
-                  console.warn("Không tìm thấy slot với id:", slotId);
-                  return null;
-                }
-
-                return (
-                  <ImageCropModal
-                    key={slotId}
-                    visible={isCropOpen}
-                    imageUri={tempImage}
-                    slot={slot}
-                    onConfirm={handleCropConfirm}
-                    onCancel={handleCropCancel}
-                  />
-                );
-              })()}
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          );
+        })()}
+    </View>
   );
 };
 
@@ -428,17 +441,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     flex: 1,
+    height: 40,
   },
   dateButton: {
     backgroundColor: "#B1E1FF",
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 20,
-    flex: 1,
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
-    height: 40,
+    width: 150,
   },
   dateButtonText: {
     color: "#333333",
@@ -449,8 +462,8 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     position: "absolute",
-    top: -50,
-    right: -90,
+    top: -125,
+    right: -75,
     zIndex: 1000,
     width: 350,
     height: 280,
@@ -479,6 +492,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
+    marginBottom: 10,
   },
   fileButton: {
     backgroundColor: "#B1E1FF",
