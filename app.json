@@ -24,6 +24,8 @@
       "jsEngine": "hermes",
       "permissions": [
         "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.anhtdse184525.Memora"
@@ -57,6 +59,10 @@
       "eas": {
         "projectId": "3a42b0df-db99-4691-a07a-0229126d17e3"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/3a42b0df-db99-4691-a07a-0229126d17e3"
     }
   }
 }
