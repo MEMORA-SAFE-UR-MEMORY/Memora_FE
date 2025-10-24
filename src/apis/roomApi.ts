@@ -506,3 +506,21 @@ export const fetchPublicRooms = async (userId: string) => {
 
   return data;
 };
+
+export const suggestDescription = async (formData: FormData) => {
+  const res = await fetch(
+    `${process.env.EXPO_PUBLIC_API_URL}/api/Memory/suggest-description`,
+    {
+      method: "POST",
+      body: formData,
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Lỗi server (${res.status}): ${text}`);
+  }
+
+  return res.json();
+};
