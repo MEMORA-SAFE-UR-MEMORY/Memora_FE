@@ -1,10 +1,11 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
 import ImageCropModal from "@src/components/ImageCropModal";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
+import * as roomService from "@src/services/roomService";
 import { RoomItem } from "@src/types/item";
-import { Memory } from "@src/types/memory";
+import { Memory, SuggestReq } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
@@ -48,6 +49,7 @@ const UpdateMemory = ({
   const [selectedDate, setSelectedDate] = useState<string>(memory.date);
   const scrollRef = useRef<KeyboardAwareScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
+  const [aiError, setAiError] = useState(false);
 
   // === Crop State ===
   const [tempImage, setTempImage] = useState<string | null>(null);
@@ -152,6 +154,37 @@ const UpdateMemory = ({
   const handleCropCancel = () => {
     setIsCropOpen(false);
     setTempImage(null);
+  };
+
+  const handleSuggest = async () => {
+    try {
+      onLoadingChange?.(true);
+
+      if (!selectedImage) {
+        setAiError(true);
+        onLoadingChange?.(false);
+        return;
+      }
+
+      const formData: SuggestReq = {
+        title: title,
+        date: selectedDate,
+        image: selectedImage,
+      };
+
+      const desc = await roomService.suggestDescription(formData);
+
+      if (!desc || desc.length === 0) {
+        setDescription("Rất tiếc AI hiện đang bị lỗi!");
+        return;
+      }
+
+      setDescription(desc);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      onLoadingChange?.(false);
+    }
   };
 
   // Modal
@@ -304,7 +337,17 @@ const UpdateMemory = ({
             </View>
 
             <View style={styles.descriptionRow}>
-              <Text style={styles.label}>Miêu tả</Text>
+              <View>
+                <Text style={[styles.label]}>Miêu tả</Text>
+
+                <TouchableOpacity
+                  style={[styles.aiContanier, isFormValid() && styles.aiActive]}
+                  onPress={handleSuggest}
+                  disabled={!isFormValid()}
+                >
+                  <FontAwesome5 name="robot" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
               <TextInput
                 ref={textInputRef}
                 value={description}
@@ -316,8 +359,9 @@ const UpdateMemory = ({
                 multiline={true}
                 numberOfLines={4}
                 textAlignVertical="top"
-                placeholder="Không có miêu tả"
+                placeholder="Nếu bạn chưa biết ghi gì, có thể nhờ AI hỗ trợ nha!"
                 placeholderTextColor="#999"
+                textBreakStrategy="simple"
                 editable={!isCalendarOpen}
                 onFocus={() => {
                   if (isCalendarOpen) {
@@ -477,7 +521,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 25,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
     height: 100,
     textAlignVertical: "top",
     fontFamily: "Baloo2_medium",
@@ -523,6 +567,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 2,
   },
+  aiContanier: {
+    paddingVertical: 14,
+    borderRadius: 200,
+    backgroundColor: "#D3D3D3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiActive: { backgroundColor: "#FFBCDD" },
   updateBtn: {
     alignSelf: "flex-end",
     marginRight: 10,

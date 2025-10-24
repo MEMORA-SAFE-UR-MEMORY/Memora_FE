@@ -1,4 +1,5 @@
 import * as api from "@src/apis/roomApi";
+import { SuggestReq, SuggestRes } from "@src/types/memory";
 import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
 import {
   getFromStorage,
@@ -83,5 +84,39 @@ export const roomRepo = {
     await removeFromStorage(PUBLIC_ROOMS_CACHE_KEY);
     await removeFromStorage(PUBLIC_ROOMS_FETCH_TIME_KEY);
     await removeFromStorage(DISCOVERED_ROOMS_KEY);
+  },
+
+  suggestDescription: async (payload: SuggestReq): Promise<SuggestRes> => {
+    const formData = new FormData();
+
+    formData.append("Title", payload.title);
+    formData.append("Date", payload.date);
+
+    let uri = "";
+    let type = "";
+    let name = "upload.jpg";
+
+    if (typeof payload.image === "string") {
+      uri = payload.image;
+      const ext = uri.split(".").pop()?.toLowerCase();
+      if (ext === "png" || ext === "jpg" || ext === "jpeg") {
+        type = ext === "png" ? "image/png" : "image/jpeg";
+        name = `upload.${ext}`;
+      } else {
+        throw new Error("Chỉ chấp nhận ảnh PNG hoặc JPEG");
+      }
+    } else if (payload.image?.uri) {
+      uri = payload.image.uri;
+      type = payload.image.type || "image/jpeg";
+      name = payload.image.fileName || "upload.jpg";
+    }
+
+    formData.append("Image", { uri, type, name } as any);
+
+    const res = await api.suggestDescription(formData);
+    return {
+      suggestedDescription:
+        res.suggestedDescription || res.SuggestedDescription || "",
+    };
   },
 };

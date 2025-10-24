@@ -1,5 +1,6 @@
 import { roomRepo } from "@src/repositories/roomRepo";
 import { DraftManager } from "@src/services/draftService";
+import { SuggestReq } from "@src/types/memory";
 import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
 import { getFromStorage, saveToStorage } from "@src/utils/roomStorage";
 
@@ -85,4 +86,13 @@ export async function markRoomDiscovered(roomId: number): Promise<void> {
 export async function resetDiscoveredRooms(): Promise<void> {
   await roomRepo.resetDiscoveredRooms();
   await saveToStorage(LAST_RESET_KEY, Date.now());
+}
+
+export async function suggestDescription(payload: SuggestReq): Promise<string> {
+  if (!payload.title || !payload.date) {
+    throw new Error("Thiếu tiêu đề hoặc ngày");
+  }
+
+  const res = await roomRepo.suggestDescription(payload);
+  return res.suggestedDescription;
 }
