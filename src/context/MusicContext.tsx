@@ -24,7 +24,7 @@ export const MusicProvider: React.FC<{ children: React.ReactNode }> = ({
     (async () => {
       await setAudioModeAsync({
         playsInSilentMode: true,
-        shouldPlayInBackground: true,
+        shouldPlayInBackground: false,
         interruptionModeAndroid: "duckOthers",
         interruptionMode: "mixWithOthers",
       });
