@@ -268,7 +268,7 @@ export async function uploadSlotPhotoViaApi(params: {
 }): Promise<void> {
   const { slotId, file } = params;
   const base = process.env.EXPO_PUBLIC_API_URL;
-  const endpoint = `${base}/api/Album/upload-1-photo?Id=${encodeURIComponent(
+  const endpoint = `${base}/api/AlbumPageSlot/upload-1-photo?Id=${encodeURIComponent(
     String(slotId)
   )}`;
 

@@ -107,16 +107,16 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 20,
-    width: "50%",
+    borderRadius: 12,
+    width: "45%",
+    borderWidth: 6,
     borderColor: "#E9D8FF",
-    borderWidth: 10,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 8,
   },
   title: {
     fontSize: 20,
@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontFamily: "Baloo2_bold",
-    fontSize: 15,
+    fontFamily: "Baloo2_semiBold",
+    fontSize: 18,
     color: "#333",
   },
   opsContainer: {
@@ -162,8 +162,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFBCDD",
   },
   text: {
-    fontFamily: "Baloo2_medium",
-    fontSize: 15,
+    fontFamily: "Baloo2_semiBold",
+    fontSize: 16,
     color: "#333",
   },
   addButton: {
