@@ -1,14 +1,17 @@
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import BtnBorder from "@src/components/BtnBorder";
 import ImageCropModal from "@src/components/ImageCropModal";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalCalendar from "@src/components/ModalCalendar";
+import ModalConfirm from "@src/components/ModalConfirm";
+import * as roomService from "@src/services/roomService";
 import { RoomItem } from "@src/types/item";
-import { Memory } from "@src/types/memory";
+import { Memory, SuggestReq } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
 import { generateTempId } from "@src/utils/idGenerator";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -43,13 +46,13 @@ const AddMemoryModal: React.FC<Props> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
 
   const { width, height } = useWindowDimensions();
   const isSmallDevice = width <= 700;
@@ -95,7 +98,6 @@ const AddMemoryModal: React.FC<Props> = ({
   useEffect(() => {
     if (isCalendarOpen) {
       Keyboard.dismiss();
-      setIsEditing(false);
     }
   }, [isCalendarOpen]);
 
@@ -157,6 +159,37 @@ const AddMemoryModal: React.FC<Props> = ({
     setTempImage(null);
   };
 
+  const handleSuggest = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!selectedImage) {
+        setAiError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const formData: SuggestReq = {
+        title: title,
+        date: selectedDate,
+        image: selectedImage,
+      };
+
+      const desc = await roomService.suggestDescription(formData);
+
+      if (!desc || desc.length === 0) {
+        setDescription("Rất tiếc AI hiện đang bị lỗi!");
+        return;
+      }
+
+      setDescription(desc);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSave = () => {
     if (frameId == null || slotId == null) return;
     onSave(frameId, slotId, {
@@ -174,8 +207,11 @@ const AddMemoryModal: React.FC<Props> = ({
     onClose();
   };
 
-  const isFormValid = () =>
-    selectedImage !== null && title.trim().length > 0 && selectedDate !== "";
+  const isFormValid = useCallback(() => {
+    return (
+      selectedImage !== null && title.trim().length > 0 && selectedDate !== ""
+    );
+  }, [selectedImage, title, selectedDate]);
 
   return (
     <Modal
@@ -242,39 +278,20 @@ const AddMemoryModal: React.FC<Props> = ({
                     { height: scale(40), borderRadius: scale(20) },
                   ]}
                 >
-                  {isEditing && !isCalendarOpen ? (
-                    <TextInput
-                      value={title}
-                      onChangeText={setTitle}
-                      style={[
-                        styles.titleInput,
-                        { fontSize: scale(13), paddingHorizontal: scale(10) },
-                      ]}
-                      maxLength={60}
-                      numberOfLines={1}
-                      placeholder="Nhập tựa đề..."
-                      placeholderTextColor="#999"
-                      onBlur={() => setIsEditing(false)}
-                      autoFocus
-                    />
-                  ) : (
-                    <TouchableOpacity
-                      style={{ flex: 1 }}
-                      onPress={() => {
-                        if (!isCalendarOpen) setIsEditing(true);
-                      }}
-                      disabled={isCalendarOpen}
-                    >
-                      <Text
-                        style={[
-                          styles.titleInput,
-                          { fontSize: scale(13), paddingHorizontal: 10 },
-                        ]}
-                      >
-                        {title}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    style={[
+                      styles.titleInput,
+                      { fontSize: scale(13), paddingHorizontal: scale(10) },
+                    ]}
+                    maxLength={60}
+                    numberOfLines={1}
+                    placeholder="Nhập tựa đề..."
+                    placeholderTextColor="#999"
+                    editable={!isCalendarOpen}
+                  />
+
                   {title.length > 0 && (
                     <Text
                       style={[
@@ -408,9 +425,23 @@ const AddMemoryModal: React.FC<Props> = ({
 
               {/* Miêu tả */}
               <View style={styles.descriptionRow}>
-                <Text style={[styles.label, { fontSize: scale(14) }]}>
-                  Miêu tả
-                </Text>
+                <View>
+                  <Text style={[styles.label, { fontSize: scale(14) }]}>
+                    Miêu tả
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.aiContanier,
+                      isFormValid() && styles.aiActive,
+                    ]}
+                    onPress={handleSuggest}
+                    disabled={!isFormValid()}
+                  >
+                    <FontAwesome5 name="robot" size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
+
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
@@ -425,6 +456,8 @@ const AddMemoryModal: React.FC<Props> = ({
                   multiline={true}
                   numberOfLines={4}
                   textAlignVertical="top"
+                  placeholder="Nếu bạn chưa biết ghi gì, có thể nhờ AI hỗ trợ nha!"
+                  placeholderTextColor="#999"
                   editable={!isCalendarOpen}
                   onFocus={() => {
                     if (isCalendarOpen) Keyboard.dismiss();
@@ -476,6 +509,22 @@ const AddMemoryModal: React.FC<Props> = ({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      {aiError && (
+        <ModalConfirm
+          visible={aiError}
+          mode="noti"
+          titleText="Thông báo"
+          contentText="Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!"
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#FBBF24"
+          confirmBtnText="Đóng"
+          confirmBtnColor="grey"
+          onClose={() => setAiError(false)}
+          onConfirm={() => setAiError(false)}
+          width={460}
+        />
+      )}
     </Modal>
   );
 };
@@ -537,7 +586,7 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
     fontFamily: "Baloo2_medium",
-    marginTop: 7,
+    marginTop: 5,
   },
   characterCount: {
     position: "absolute",
@@ -605,6 +654,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
+  aiContanier: {
+    paddingVertical: 14,
+    borderRadius: 200,
+    backgroundColor: "#D3D3D3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiActive: { backgroundColor: "#FFBCDD" },
   addButton: {
     alignSelf: "flex-end",
   },
