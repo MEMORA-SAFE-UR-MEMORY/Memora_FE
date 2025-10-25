@@ -54,7 +54,7 @@ const CategoryFilterBar = ({
                   style={{
                     width: 90,
                     height: 24,
-                    borderRadius: 99,
+                    borderRadius: 9999,
                     backgroundColor: "white",
                     position: "absolute",
                     top: -5,

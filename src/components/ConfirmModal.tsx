@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type ConfirmBuyModalProps = {
   visible: boolean;
@@ -26,18 +26,11 @@ const ConfirmBuyModal = ({
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <View
-            style={{
-              width: "99%",
-              backgroundColor: "white",
-              padding: 20,
-              borderRadius: 10,
-            }}
-          >
+          <View>
             <Text style={styles.title}>Xác nhận mua hàng</Text>
             <Text style={styles.message}>
-              Bạn có chắc muốn mua
-              <Text style={styles.highlight}>{itemName}</Text> với giá
+              Bạn có chắc muốn mua{" "}
+              <Text style={styles.highlight}>{itemName}</Text> với giá{" "}
               <Text style={styles.highlight}>{price} puzzles</Text>?
             </Text>
 
@@ -70,8 +63,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    width: "50%",
-    backgroundColor: "#E9D8FF",
+    width: "40%",
+    borderWidth: 6,
+    borderColor: "#E9D8FF",
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 20,
     elevation: 5,
@@ -79,23 +74,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
+    fontSize: 20,
+    color: "#111827",
+    marginBottom: 6,
     textAlign: "center",
-    fontFamily: "Baloo2-Bold",
+    fontFamily: "Baloo2_semiBold",
   },
   message: {
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 20,
     textAlign: "center",
     color: "#333",
-    fontFamily: "Baloo2-SemiBold",
+    fontFamily: "Baloo2_medium",
   },
   highlight: {
-    fontWeight: "700",
     color: "#FFBCDD",
-    fontFamily: "Baloo2-Bold",
+    fontFamily: "Baloo2_semiBold",
   },
   buttonRow: {
     flexDirection: "row",
@@ -103,24 +97,30 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: 15,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 2,
+    marginHorizontal: 10,
     alignItems: "center",
-    marginHorizontal: 5,
   },
   cancelButton: {
-    backgroundColor: "#D9D9D9",
+    borderColor: "#e5e7eb",
+    backgroundColor: "white",
   },
   confirmButton: {
     backgroundColor: "#FFBCDD",
+    borderColor: "#efa3c9ff",
   },
   cancelText: {
     color: "#333",
-    fontFamily: "Baloo2-SemiBold",
+    fontSize: 16,
+    fontFamily: "Baloo2_semiBold",
   },
   confirmText: {
     color: "#fff",
-    fontFamily: "Baloo2-SemiBold",
+    fontSize: 16,
+    fontFamily: "Baloo2_semiBold",
   },
 });
 
