@@ -1,6 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import ImagePreloader from "./ImagePreloader";
 
 type ItemDetailType = {
   selectedItem: any;
@@ -57,7 +55,8 @@ const ItemDetail = ({ selectedItem, setShowConfirm }: ItemDetailType) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 30,
+    paddingVertical: 30,
+    paddingHorizontal: 40,
     alignItems: "center",
   },
   image: {
@@ -65,16 +64,15 @@ const styles = StyleSheet.create({
     height: 200,
   },
   name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    fontFamily: "Baloo2-Bold",
+    fontSize: 18,
+    fontFamily: "Baloo2_semiBold",
   },
   desc: {
     fontSize: 12,
     textAlign: "center",
-    color: "#666",
-    padding: 10,
-    fontFamily: "Baloo2-Regular",
+    color: "#504f4fff",
+
+    fontFamily: "Baloo2_semiBold",
   },
   priceRow: {
     width: 100,
@@ -88,9 +86,8 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 18,
-    fontWeight: "600",
     marginLeft: 8,
-    fontFamily: "Baloo2-Bold",
+    fontFamily: "Baloo2_semiBold",
   },
   buyBtn: {
     backgroundColor: "#E9D8FF",
@@ -101,7 +98,7 @@ const styles = StyleSheet.create({
   buyText: {
     color: "#fff",
     fontSize: 16,
-    fontFamily: "Baloo2-Bold",
+    fontFamily: "Baloo2_semiBold",
   },
   emptyState: {
     justifyContent: "center",
@@ -110,7 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     textAlign: "center",
-    fontFamily: "Baloo2-Regular",
+    fontFamily: "Baloo2_semiBold",
   },
 });
 

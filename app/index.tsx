@@ -79,9 +79,8 @@ export default function Home() {
       const userUsername = supabaseUser.username.split("@")[0];
 
       // Lưu target navigation
-      
-      const navigate = userUsername === emailUsername ? "/username" : "/home"
-      
+
+      const navigate = userUsername === emailUsername ? "/username" : "/home";
 
       // Chuyển sang loading screen
       setModalVisible(false);
@@ -115,7 +114,7 @@ export default function Home() {
             alignItems: "flex-end",
           }}
         >
-          <TouchableOpacity onPress={handlePopUp}>
+          {/* <TouchableOpacity onPress={handlePopUp}>
             <BlurBox
               h={43}
               w={259}
@@ -124,7 +123,7 @@ export default function Home() {
               imageSize={24}
               textSize={16}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity onPress={() => setModalVisible(true)}>
             <BlurBox h={43} w={259} title="Chơi ngay" textSize={16} />
           </TouchableOpacity>

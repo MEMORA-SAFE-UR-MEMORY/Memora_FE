@@ -119,7 +119,7 @@ const Shop = () => {
               style={{
                 fontSize: 16,
                 color: "#663530",
-                fontFamily: "Baloo2-Regular",
+                fontFamily: "Baloo2_semiBold",
               }}
             >
               {wallet?.puzzles}
