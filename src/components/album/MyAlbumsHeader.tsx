@@ -38,7 +38,9 @@ export default function MyAlbumsHeader({
         }}
       >
         <Pressable
-          onPress={onBack ?? (() => router.push((backTo ?? "/album") as any))}
+          onPress={
+            onBack ?? (() => router.replace((backTo ?? "/album") as any))
+          }
           style={{ position: "absolute", left: 24, padding: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Quay lại"
@@ -84,7 +86,7 @@ export default function MyAlbumsHeader({
           </Pressable>
         ) : showOrdersButton ? (
           <Pressable
-            onPress={() => router.push("/orders" as any)}
+            onPress={() => router.replace("/orders" as any)}
             style={{
               position: "absolute",
               right: 24,

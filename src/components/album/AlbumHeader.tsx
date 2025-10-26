@@ -52,7 +52,7 @@ export default function AlbumHeader({
           {title}
         </Text>
         <Pressable
-          onPress={() => router.push("/my-albums" as any)}
+          onPress={() => router.replace("/my-albums" as any)}
           style={{
             position: "absolute",
             right: 24,
