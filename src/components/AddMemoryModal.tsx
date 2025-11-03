@@ -16,7 +16,6 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -26,6 +25,13 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 type Props = {
   visible: boolean;
@@ -50,6 +56,10 @@ const AddMemoryModal: React.FC<Props> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [tempImage, setTempImage] = useState<string | null>(null);
+  const [imgSize, setImgSize] = useState<any>({
+    imgW: 0,
+    imgH: 0,
+  });
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
@@ -110,6 +120,9 @@ const AddMemoryModal: React.FC<Props> = ({
     });
 
     if (!result.canceled) {
+      const { width: imgW, height: imgH } = result.assets[0];
+      setImgSize({ imgW, imgH });
+
       handleOpenCropModal(result.assets[0].uri);
     }
   };
@@ -204,7 +217,13 @@ const AddMemoryModal: React.FC<Props> = ({
     setDescription("");
     setSelectedImage(null);
     setSelectedDate("");
-    onClose();
+    handleClose();
+  };
+
+  const handleClose = () => {
+    opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+      if (finished) runOnJS(onClose)();
+    });
   };
 
   const isFormValid = useCallback(() => {
@@ -213,20 +232,46 @@ const AddMemoryModal: React.FC<Props> = ({
     );
   }, [selectedImage, title, selectedDate]);
 
+  // Animated
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      // Fade in
+      opacity.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.inOut(Easing.ease),
+      });
+    } else {
+      // Fade out
+      opacity.value = withTiming(
+        0,
+        {
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(onClose)();
+          }
+        }
+      );
+    }
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    pointerEvents: visible ? "auto" : "none", // tránh bấm khi ẩn
+  }));
+
+  if (!visible && opacity.value === 0) return null;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
-      statusBarTranslucent
-      supportedOrientations={["portrait", "landscape"]}
-    >
+    <Animated.View style={[styles.overlay, animatedStyle]}>
       {isLoading && <LoadingOverlay />}
-      <View style={styles.overlay}></View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+        style={{ flex: 1, width, height }}
       >
         <TouchableWithoutFeedback
           onPress={() => {
@@ -258,7 +303,10 @@ const AddMemoryModal: React.FC<Props> = ({
                 >
                   Thêm kỷ niệm
                 </Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.closeButton}
+                >
                   <Ionicons
                     name="close-circle"
                     size={scale(28)}
@@ -476,39 +524,40 @@ const AddMemoryModal: React.FC<Props> = ({
                 />
               </View>
             </View>
-
-            {/* Modal Crop */}
-            {tempImage &&
-              isCropOpen &&
-              frameItem?.item?.slots &&
-              slotId !== null &&
-              (() => {
-                // Dàn phẳng mảng slot
-                const slots = Array.isArray(frameItem.item.slots[0])
-                  ? frameItem.item.slots.flat()
-                  : frameItem.item.slots;
-
-                const slot = slots.find((s) => s.slotId === slotId);
-
-                if (!slot) {
-                  console.warn("Không tìm thấy slot với id:", slotId);
-                  return null;
-                }
-
-                return (
-                  <ImageCropModal
-                    key={slotId}
-                    visible={isCropOpen}
-                    imageUri={tempImage}
-                    slot={slot}
-                    onConfirm={handleCropConfirm}
-                    onCancel={handleCropCancel}
-                  />
-                );
-              })()}
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      {/* Modal Crop */}
+      {tempImage &&
+        isCropOpen &&
+        frameItem?.item?.slots &&
+        slotId !== null &&
+        (() => {
+          // Dàn phẳng mảng slot
+          const slots = Array.isArray(frameItem.item.slots[0])
+            ? frameItem.item.slots.flat()
+            : frameItem.item.slots;
+
+          const slot = slots.find((s) => s.slotId === slotId);
+
+          if (!slot) {
+            console.warn("Không tìm thấy slot với id:", slotId);
+            return null;
+          }
+
+          return (
+            <ImageCropModal
+              key={slotId}
+              visible={isCropOpen}
+              imageUri={tempImage}
+              slot={slot}
+              imgSize={imgSize}
+              onConfirm={handleCropConfirm}
+              onCancel={handleCropCancel}
+            />
+          );
+        })()}
 
       {aiError && (
         <ModalConfirm
@@ -525,7 +574,7 @@ const AddMemoryModal: React.FC<Props> = ({
           width={460}
         />
       )}
-    </Modal>
+    </Animated.View>
   );
 };
 
@@ -533,6 +582,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
     position: "absolute",
     top: 0,
     bottom: 0,
@@ -586,7 +637,7 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
     fontFamily: "Baloo2_medium",
-    marginTop: 5,
+    paddingTop: 5,
   },
   characterCount: {
     position: "absolute",

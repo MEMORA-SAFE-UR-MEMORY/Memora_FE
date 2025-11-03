@@ -524,3 +524,28 @@ export const suggestDescription = async (formData: FormData) => {
 
   return res.json();
 };
+
+export const deleteMemory = async (memoryId: number) => {
+  try {
+    // 1. Xóa liên kết trong bảng slot_memories
+    const { error: slotError } = await supabase
+      .from("slot_memories")
+      .delete()
+      .eq("memory_id", memoryId);
+
+    if (slotError) throw slotError;
+
+    // 2. Xóa bản ghi trong bảng memories
+    const { error: memoryError } = await supabase
+      .from("memories")
+      .delete()
+      .eq("id", memoryId);
+
+    if (memoryError) throw memoryError;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting memory:", error.message);
+    return { success: false, error: error.message };
+  }
+};
