@@ -1,6 +1,5 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
-import ImageCropModal from "@src/components/ImageCropModal";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ScrollingText from "@src/components/ScrollingText";
 import * as roomService from "@src/services/roomService";
@@ -29,6 +28,12 @@ type Props = {
   slotId: number | null;
   onUpdate: (data: Memory) => void;
   onLoadingChange?: (loading: boolean) => void;
+  onRequestCrop?: (
+    imageUri: string,
+    slot: any,
+    imgSize: { imgW: number; imgH: number },
+    onConfirm?: (croppedUri: string) => void
+  ) => void;
 };
 
 const UpdateMemory = ({
@@ -37,6 +42,7 @@ const UpdateMemory = ({
   slotId,
   onUpdate,
   onLoadingChange,
+  onRequestCrop,
 }: Props) => {
   const id = memory.id;
   const [title, setTitle] = useState(memory.title);
@@ -50,10 +56,6 @@ const UpdateMemory = ({
   const scrollRef = useRef<KeyboardAwareScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
   const [aiError, setAiError] = useState(false);
-
-  // === Crop State ===
-  const [tempImage, setTempImage] = useState<string | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
 
   // Calendar
 
@@ -107,17 +109,13 @@ const UpdateMemory = ({
     });
 
     if (!result.canceled) {
-      handleOpenCropModal(result.assets[0].uri);
-    }
-  };
+      // Lấy ảnh và kích thước gốc
+      const imageUri = result.assets[0].uri;
+      const { width: imgW, height: imgH } = result.assets[0];
 
-  const handleOpenCropModal = async (imageUri: string) => {
-    try {
-      onLoadingChange?.(true);
-
+      // Lấy slot tương ứng từ frameItem
       if (!frameItem?.item?.slots || slotId == null) {
         console.warn("Không có slot hợp lệ để crop ảnh");
-        onLoadingChange?.(false);
         return;
       }
 
@@ -128,32 +126,16 @@ const UpdateMemory = ({
       const slot = slots.find((s) => s.slotId === slotId);
       if (!slot) {
         console.warn("Không tìm thấy slot với id:", slotId);
-        onLoadingChange?.(false);
         return;
       }
 
-      // Set ảnh tạm để modal crop sử dụng
-      setTempImage(imageUri);
-
-      // Mở modal sau 1 nhịp để đảm bảo render overlay trước
-      setTimeout(() => {
-        setIsCropOpen(true);
-        onLoadingChange?.(false);
-      }, 300);
-    } catch (err) {
-      console.error("Lỗi khi mở crop modal:", err);
-      onLoadingChange?.(false);
+      // Gọi callback sang MemoryModal
+      onRequestCrop?.(imageUri, slot, { imgW, imgH }, handleCropConfirm);
     }
   };
 
   const handleCropConfirm = (croppedUri: string) => {
     setSelectedImage(croppedUri);
-    setIsCropOpen(false);
-  };
-
-  const handleCropCancel = () => {
-    setIsCropOpen(false);
-    setTempImage(null);
   };
 
   const handleSuggest = async () => {
@@ -386,35 +368,6 @@ const UpdateMemory = ({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAwareScrollView>
-
-      {/* === Modal Crop === */}
-      {tempImage &&
-        isCropOpen &&
-        frameItem?.item?.slots &&
-        slotId !== null &&
-        (() => {
-          const slots = Array.isArray(frameItem.item.slots[0])
-            ? frameItem.item.slots.flat()
-            : frameItem.item.slots;
-
-          const slot = slots.find((s) => s.slotId === slotId);
-
-          if (!slot) {
-            console.warn("Không tìm thấy slot với id:", slotId);
-            return null;
-          }
-
-          return (
-            <ImageCropModal
-              key={slotId}
-              visible={isCropOpen}
-              imageUri={tempImage}
-              slot={slot}
-              onConfirm={handleCropConfirm}
-              onCancel={handleCropCancel}
-            />
-          );
-        })()}
     </View>
   );
 };

@@ -96,3 +96,8 @@ export async function suggestDescription(payload: SuggestReq): Promise<string> {
   const res = await roomRepo.suggestDescription(payload);
   return res.suggestedDescription;
 }
+
+export async function deleteMemory(memoryId: number) {
+  const res = await roomRepo.deleteMemory(memoryId);
+  return res;
+}

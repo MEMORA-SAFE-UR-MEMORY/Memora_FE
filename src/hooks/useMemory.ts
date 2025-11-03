@@ -1,6 +1,7 @@
 import { useInventory } from "@src/context/InventoryContext";
 import { useRoomDecoration } from "@src/hooks/useRoomDecoration";
 import { memoryService, MemoryStore } from "@src/services/memoryService";
+import * as roomService from "@src/services/roomService";
 import { InventoryItem, RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import { RoomDetail } from "@src/types/room";
@@ -14,7 +15,9 @@ export const useMemory = (
   roomId: number,
   scrollX: SharedValue<number>,
   roomDetail: RoomDetail | null,
-  mode: "view" | "edit" = "edit"
+  mode: "view" | "edit" = "edit",
+  type: "public" | "private",
+  onMemoryDeleted?: () => void
 ) => {
   const { decreaseQuantity, increaseQuantity } = useInventory();
 
@@ -278,9 +281,19 @@ export const useMemory = (
     setSelectedMemory(memory);
   };
 
-  const handleDeleteMemory = async (frameId: number, slotId: number) => {
+  const handleDeleteMemory = async (
+    frameId: number,
+    slotId: number,
+    memoryId: number
+  ) => {
     if (mode === "view") return;
     if (selectedMemory) {
+      if (type === "public") {
+        await roomService.deleteMemory(memoryId);
+        if (onMemoryDeleted) {
+          await onMemoryDeleted();
+        }
+      }
       deleteItemMemory(frameId, slotId);
       const updated = await memoryService.deleteMemory(roomId, frameId, slotId);
       setMemoryStore(updated);
