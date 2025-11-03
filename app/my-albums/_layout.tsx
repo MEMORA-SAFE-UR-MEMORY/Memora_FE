@@ -15,6 +15,7 @@ export default function MyAlbumLayout() {
               header: () => <MyAlbumsHeader />,
               contentStyle: { backgroundColor: "transparent" },
               animation: "fade",
+              gestureEnabled: false,
             }}
           >
             <Stack.Screen
@@ -23,6 +24,7 @@ export default function MyAlbumLayout() {
                 header: () => (
                   <MyAlbumsHeader title="Kho album" showOrdersButton />
                 ),
+                gestureEnabled: false,
               }}
             />
             <Stack.Screen
@@ -35,6 +37,7 @@ export default function MyAlbumLayout() {
                     showInfoButton
                   />
                 ),
+                gestureEnabled: false,
               }}
             />
           </Stack>

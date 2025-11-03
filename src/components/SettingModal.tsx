@@ -222,6 +222,11 @@ const SettingModal = ({ visible, onClose, onOpenDeleteAccount }: Props) => {
                         borderTopWidth: 0.5,
                         borderTopColor: "#e0e0e0",
                       }}
+                      onPress={() =>
+                        Linking.openURL(
+                          "https://memora-official.com/privacy-policy"
+                        )
+                      }
                     >
                       <Text
                         style={{
@@ -245,6 +250,11 @@ const SettingModal = ({ visible, onClose, onOpenDeleteAccount }: Props) => {
                         borderTopWidth: 0.5,
                         borderTopColor: "#e0e0e0",
                       }}
+                      onPress={() =>
+                        Linking.openURL(
+                          "https://memora-official.com/privacy-policy"
+                        )
+                      }
                     >
                       <Text
                         style={{
@@ -278,7 +288,6 @@ const SettingModal = ({ visible, onClose, onOpenDeleteAccount }: Props) => {
                       >
                         Phiên bản 1.0.0
                       </Text>
-                      <ChevronRight size={18} color="black" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -491,7 +500,8 @@ const SettingModal = ({ visible, onClose, onOpenDeleteAccount }: Props) => {
                           }}
                           onPress={() =>
                             Linking.openURL(
-                              "mailto:support@memora.app?subject=Ho%20tro"
+                              "mailto:memora940@gmail.com?subject=" +
+                                encodeURIComponent("Hỗ trợ")
                             )
                           }
                         >
