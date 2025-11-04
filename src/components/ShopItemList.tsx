@@ -88,6 +88,7 @@ const ShopItemList = ({ category, onSelectItem }: ShopItemListType) => {
       >
         <Image source={{ uri: item.item_image_path }} style={styles.image} />
         <Text style={styles.name} numberOfLines={2}>
+        <Text style={styles.name} numberOfLines={2}>
           {item.name}
         </Text>
         <CustomAlert
@@ -132,6 +133,7 @@ const styles = StyleSheet.create({
     padding: 8,
     alignItems: "center",
     justifyContent: "center",
+    justifyContent: "center",
   },
   image: {
     width: 60,
@@ -143,6 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     color: "#444",
+    fontFamily: "Baloo2_semiBold",
     fontFamily: "Baloo2_semiBold",
   },
   themeImage: {

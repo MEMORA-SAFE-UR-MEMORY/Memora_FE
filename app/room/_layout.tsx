@@ -7,7 +7,6 @@ import { RoomType } from "@src/types/room";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
@@ -47,30 +46,28 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <RoomProvider
-          roomId={roomIdNum}
-          themeId={themeIdNum}
-          type={type}
-          mode={mode}
-          back={back}
-        >
-          <RoomDraftProvider roomId={roomIdNum}>
-            <RoomBg
-              wallUrl={roomDetail.theme.wallUrl}
-              floorUrl={roomDetail.theme.floorUrl}
-            >
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: "transparent" },
-                  animation: "fade",
-                }}
-              />
-            </RoomBg>
-          </RoomDraftProvider>
-        </RoomProvider>
-      </SafeAreaProvider>
+      <RoomProvider
+        roomId={roomIdNum}
+        themeId={themeIdNum}
+        type={type}
+        mode={mode}
+        back={back}
+      >
+        <RoomDraftProvider roomId={roomIdNum}>
+          <RoomBg
+            wallUrl={roomDetail.theme.wallUrl}
+            floorUrl={roomDetail.theme.floorUrl}
+          >
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "transparent" },
+                animation: "fade",
+              }}
+            />
+          </RoomBg>
+        </RoomDraftProvider>
+      </RoomProvider>
     </GestureHandlerRootView>
   );
 }

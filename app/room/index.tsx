@@ -87,6 +87,7 @@ const Room = () => {
     closeSetting,
     handleSaveSetting,
     loading,
+    fetchAndSetRoom,
   } = useRoom(roomId, themeId, type, effectiveRoom, draft, back);
 
   const openStore = () => {
@@ -147,7 +148,7 @@ const Room = () => {
     onUserInteractionEnd,
     onUserInteractionStart,
     activeFrameItem,
-  } = useMemory(roomId, scrollX, effectiveRoom, mode);
+  } = useMemory(roomId, scrollX, effectiveRoom, mode, type, fetchAndSetRoom);
 
   // Khi memory và items đã render xong
   useEffect(() => {

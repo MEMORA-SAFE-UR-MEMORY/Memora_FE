@@ -2,6 +2,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { FrameView } from "@src/components/FrameView";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
+import { getRenderPosition, getRenderSize } from "@src/utils/renderScale";
 import React, { useEffect, useRef } from "react";
 import {
   Image,
@@ -30,8 +31,8 @@ type PlacedFrameProps = {
   trashLayout?: { x: number; y: number; w: number; h: number } | null;
   setTrashActive: (active: boolean) => void;
   setShowTrash: (show: boolean) => void;
-  roomWidth?: number;
-  roomHeight?: number;
+  roomWidth: number;
+  roomHeight: number;
   memoryResolver: (frameId: number, slotId: number) => Memory | null;
   scrollX: SharedValue<number>;
   mode: "view" | "edit";
@@ -70,8 +71,23 @@ const PlacedFrame = ({
   const maxWidth = roomWidth || screenWidth;
   const maxHeight = roomHeight || screenHeight;
 
-  const translationX = useSharedValue(item.x ?? 0);
-  const translationY = useSharedValue(item.y ?? 0);
+  // Tính toán kích thước, vị trí để render
+  const { x, y } = getRenderPosition({
+    xRatio: item.x, // item.x và item.y bây giờ là giá trị tỉ lệ (0–1)
+    yRatio: item.y,
+    wRatio: item.item.dimension.w / roomWidth, // hoặc tỉ lệ đã lưu sẵn
+    hRatio: item.item.dimension.h / roomHeight,
+  });
+
+  const { width, height } = getRenderSize({
+    xRatio: item.x,
+    yRatio: item.y,
+    wRatio: item.item.dimension.w / roomWidth,
+    hRatio: item.item.dimension.h / roomHeight,
+  });
+
+  const translationX = useSharedValue(x ?? 0);
+  const translationY = useSharedValue(y ?? 0);
   const rotation = useSharedValue(item.rotation ?? 0);
 
   const prevTranslationX = useSharedValue(0);
@@ -361,8 +377,8 @@ const PlacedFrame = ({
           styles.container,
           animatedStyle,
           {
-            width: item.item.dimension.w,
-            height: item.item.dimension.h,
+            width: width,
+            height: height,
             zIndex: item.zIndex,
           },
         ]}
@@ -383,12 +399,13 @@ const PlacedFrame = ({
               .map((slot) => (
                 <Pressable
                   key={slot.slotId}
-                  style={{ position: "absolute" }}
+                  style={{ position: "absolute", top: slot.y, left: slot.x }}
                   onPress={() => onPress(item.id, slot.slotId, item)}
                 >
                   <FrameView
                     slot={slot}
                     memory={memoryResolver(item.id, slot.slotId)}
+                    mode={mode}
                   />
                 </Pressable>
               ))}
@@ -412,8 +429,8 @@ const PlacedFrame = ({
           styles.container,
           animatedStyle,
           {
-            width: item.item.dimension.w,
-            height: item.item.dimension.h,
+            width: width,
+            height: height,
             zIndex: item.zIndex,
           },
         ]}
@@ -458,11 +475,14 @@ const PlacedFrame = ({
             </Pressable>
           </>
         ) : (
-          <Animated.View style={[styles.contentArea, fadeStyle]}>
-            <Pressable
-              onLongPress={handleLongPress}
-              delayLongPress={300}
+          <Animated.View
+            style={[styles.contentArea, fadeStyle]}
+            pointerEvents="box-none"
+          >
+            <View
+              onTouchStart={undefined}
               style={styles.contentArea}
+              pointerEvents="box-none"
             >
               {isEditing && (
                 <View
@@ -476,18 +496,28 @@ const PlacedFrame = ({
                     borderColor: "#E9D8FF",
                     backgroundColor: "rgba(159,122,234,0.1)",
                     borderRadius: 8,
-                    zIndex: 1,
                   }}
                   pointerEvents="none"
                 />
               )}
-              {item.item.slots
-                ?.slice()
-                .sort((a, b) => a.slotId - b.slotId)
-                .map((slot) => (
+
+              {item.item.slots?.map((slot) => {
+                const { x, y } = getRenderPosition({
+                  xRatio: slot.x / roomWidth,
+                  yRatio: slot.y / roomHeight,
+                  wRatio: slot.w / roomWidth,
+                  hRatio: slot.h / roomHeight,
+                });
+                return (
                   <Pressable
                     key={slot.slotId}
-                    style={{ position: "absolute" }}
+                    style={{
+                      position: "absolute",
+                      top: y,
+                      left: x,
+                      zIndex: 10,
+                      elevation: 5,
+                    }}
                     onPress={() => onPress(item.id, slot.slotId, item)}
                     onLongPress={enterEditMode}
                     delayLongPress={300}
@@ -495,17 +525,30 @@ const PlacedFrame = ({
                     <FrameView
                       slot={slot}
                       memory={memoryResolver(item.id, slot.slotId)}
+                      mode={mode}
                     />
                   </Pressable>
-                ))}
-              <View style={styles.frameImage} pointerEvents="none">
+                );
+              })}
+
+              {/* Ảnh nền khung */}
+              <View
+                style={[
+                  styles.frameImage,
+                  {
+                    zIndex: 20,
+                    elevation: 10,
+                  },
+                ]}
+                pointerEvents="none"
+              >
                 <Image
                   source={{ uri: item.item.imageUrl }}
                   style={styles.frameImage}
                   resizeMode="contain"
                 />
               </View>
-            </Pressable>
+            </View>
           </Animated.View>
         )}
       </Animated.View>
