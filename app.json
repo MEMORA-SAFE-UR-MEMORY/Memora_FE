@@ -7,12 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "memora",
     "userInterfaceStyle": "automatic",
-
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/images/icon.png"
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
@@ -29,19 +27,16 @@
       "package": "com.anhtdse184525.Memora",
       "versionCode": 18
     },
-
     "androidStatusBar": {
       "translucent": true,
       "backgroundColor": "#ffffff",
       "barStyle": "light-content"
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/icon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -77,13 +72,12 @@
           "barStyle": "light",
           "backgroundColor": "#00000000"
         }
-      ]
+      ],
+      "expo-asset"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
-
     "extra": {
       "router": {},
       "eas": {
