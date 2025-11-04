@@ -213,7 +213,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#2a2e35",
   },
-  btnText: { color: "#e6e8eb", fontWeight: "600" },
+  btnText: { color: "#e6e8eb", fontFamily: "Baloo2_medium" },
 
   slide: { alignItems: "center" },
   navRow: {
@@ -221,7 +221,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 10,
-    paddingHorizontal: 115,
+    paddingHorizontal: 120,
   },
   navBtn: {
     paddingHorizontal: 14,
@@ -230,10 +230,10 @@ const s = StyleSheet.create({
     backgroundColor: "#212429",
   },
   navBtnDisabled: { opacity: 0.4 },
-  navText: { color: "#e6e8eb", fontWeight: "600", fontFamily: "Baloo2-medium" },
+  navText: { color: "#e6e8eb", fontFamily: "Baloo2_medium" },
   pageIndicator: {
     color: "#9aa0a6",
     fontSize: 14,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
 });

@@ -108,9 +108,8 @@ export default function OrderInfoModal({
           <Text
             style={{
               fontSize: 18,
-              fontWeight: "600",
               marginBottom: 12,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_semiBold",
               textAlign: "center",
             }}
           >
@@ -126,8 +125,7 @@ export default function OrderInfoModal({
               <View style={{ flex: 1, gap: 8 }}>
                 <Text
                   style={{
-                    fontWeight: "600",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_semiBold",
                     color: "#7c3aed",
                   }}
                 >
@@ -146,14 +144,13 @@ export default function OrderInfoModal({
                     paddingHorizontal: 12,
                     paddingVertical: 10,
                     color: "#111827",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_medium",
                   }}
                 />
 
                 <Text
                   style={{
-                    fontWeight: "600",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_semiBold",
                     color: "#7c3aed",
                   }}
                 >
@@ -173,7 +170,7 @@ export default function OrderInfoModal({
                     paddingHorizontal: 12,
                     paddingVertical: 10,
                     color: "#111827",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_medium",
                   }}
                 />
               </View>
@@ -182,8 +179,7 @@ export default function OrderInfoModal({
               <View style={{ flex: 1, gap: 8 }}>
                 <Text
                   style={{
-                    fontWeight: "600",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_semiBold",
                     color: "#7c3aed",
                   }}
                 >
@@ -204,7 +200,7 @@ export default function OrderInfoModal({
                     color: "#111827",
                     minHeight: 80,
                     textAlignVertical: "top",
-                    fontFamily: "Baloo2-medium",
+                    fontFamily: "Baloo2_medium",
                   }}
                   multiline
                 />
@@ -215,9 +211,8 @@ export default function OrderInfoModal({
             <View>
               <Text
                 style={{
-                  fontWeight: "600",
                   marginBottom: 8,
-                  fontFamily: "Baloo2-medium",
+                  fontFamily: "Baloo2_semiBold",
                   color: "#7c3aed",
                 }}
               >
@@ -260,7 +255,7 @@ export default function OrderInfoModal({
                       )}
                     </View>
                     <Text
-                      style={{ flex: 1, fontFamily: "Baloo2-medium" }}
+                      style={{ flex: 1, fontFamily: "Baloo2_medium" }}
                       numberOfLines={1}
                     >
                       {a.name}
@@ -299,7 +294,7 @@ export default function OrderInfoModal({
                         style={{
                           minWidth: 20,
                           textAlign: "center",
-                          fontFamily: "Baloo2-medium",
+                          fontFamily: "Baloo2_medium",
                         }}
                       >
                         {quantities[a.id] ?? 1}
@@ -342,7 +337,7 @@ export default function OrderInfoModal({
                 borderColor: "#F59E0B",
               }}
             >
-              <Text style={{ color: "#92400E", fontFamily: "Baloo2-medium" }}>
+              <Text style={{ color: "#92400E", fontFamily: "Baloo2_medium" }}>
                 Lưu ý: Đặt hàng là không thể hủy. Vui lòng kiểm tra kỹ thông tin
                 trước khi xác nhận.
               </Text>
@@ -355,14 +350,14 @@ export default function OrderInfoModal({
                 justifyContent: "space-between",
               }}
             >
-              <Text style={{ color: "#6b7280", fontFamily: "Baloo2-medium" }}>
+              <Text style={{ color: "#6b7280", fontFamily: "Baloo2_medium" }}>
                 Đơn giá: {formatVnd(PRICE_PER_ALBUM)}/album
               </Text>
               <Text
                 style={{
                   fontWeight: "700",
                   fontSize: 18,
-                  fontFamily: "Baloo2-medium",
+                  fontFamily: "Baloo2_medium",
                 }}
               >
                 Tổng: {formatVnd(totalPrice)}
@@ -389,7 +384,7 @@ export default function OrderInfoModal({
                 style={{
                   color: "#111827",
                   fontWeight: "600",
-                  fontFamily: "Baloo2-medium",
+                  fontFamily: "Baloo2_medium",
                   fontSize: 16,
                 }}
               >
@@ -449,8 +444,8 @@ export default function OrderInfoModal({
               <Text
                 style={{
                   color: submitting || !canSubmit ? "#9ca3af" : "#fff",
-                  fontWeight: "600",
-                  fontFamily: "Baloo2-medium",
+
+                  fontFamily: "Baloo2_semiBold",
                   fontSize: 16,
                 }}
               >

@@ -89,14 +89,14 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 2,
     textAlign: "center",
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
   message: {
     fontSize: 15,
     color: "#374151",
     marginBottom: 14,
     textAlign: "center",
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
   row: {
     flexDirection: "row",
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
   },
-  btnText: { fontSize: 15, fontWeight: "600", fontFamily: "Baloo2-medium" },
+  btnText: { fontSize: 15, fontFamily: "Baloo2_medium" },
   cancel: { borderColor: "#e5e7eb", backgroundColor: "white" },
   cancelText: { color: "black" },
   danger: {

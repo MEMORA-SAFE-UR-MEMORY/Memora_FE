@@ -86,9 +86,8 @@ export default function OrdersScreen() {
         <View style={{ flex: 1 }}>
           <Text
             style={{
-              fontWeight: "600",
               fontSize: 18,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_medium",
             }}
           >
             {item.name}
@@ -98,7 +97,7 @@ export default function OrdersScreen() {
               color: "#6b7280",
               marginTop: 2,
               fontSize: 14,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_medium",
             }}
           >
             Đã đủ ảnh: {item.filled_slots}/{item.total_slots}
@@ -151,7 +150,7 @@ export default function OrdersScreen() {
   if (data.length === 0)
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text className="fontFamily: Baloo2-medium">
+        <Text className="fontFamily: Baloo2_medium">
           Chưa có album nào đủ ảnh để đặt.
         </Text>
       </View>
@@ -190,9 +189,9 @@ export default function OrdersScreen() {
           <Text
             style={{
               color: canProceed ? "#fff" : "#9ca3af",
-              fontWeight: "600",
+
               fontSize: 16,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_medium",
             }}
           >
             {canProceed
@@ -253,7 +252,7 @@ export default function OrdersScreen() {
             }}
           >
             <ActivityIndicator color="#fff" size="large" />
-            <Text style={{ color: "#fff", fontWeight: "600" }}>
+            <Text style={{ color: "#fff", fontFamily: "Baloo2_medium" }}>
               Đang xử lý đơn hàng…
             </Text>
           </View>

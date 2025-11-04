@@ -180,7 +180,6 @@ export default function HomeScreen() {
             image={require("../../assets/images/AvatarImage.png")}
             imageSize={40}
             textSize={16}
-            fontFamily="Baloo2_semiBold"
           />
         </TouchableOpacity>
         <View
@@ -361,7 +360,7 @@ export default function HomeScreen() {
                     position: "absolute",
                     right: -16,
                     top: -6,
-                    minWidth: 18,
+                    minWidth: 22,
                     height: 18,
                     paddingHorizontal: 4,
                     borderRadius: 9,
@@ -373,7 +372,12 @@ export default function HomeScreen() {
                   }}
                 >
                   <Text
-                    style={{ color: "white", fontSize: 10, fontWeight: "700" }}
+                    style={{
+                      color: "white",
+                      fontSize: 10,
+                      fontFamily: "Baloo2_semiBold",
+                      textAlign: "center",
+                    }}
                   >
                     +100
                   </Text>
@@ -436,7 +440,7 @@ export default function HomeScreen() {
               }}
             >
               <Image
-                source={require("../../assets/icons/Game shop red.png")}
+                source={require("../../assets/icons/Gameshopred.png")}
                 style={{ width: 26, height: 26 }}
                 resizeMode="contain"
               />

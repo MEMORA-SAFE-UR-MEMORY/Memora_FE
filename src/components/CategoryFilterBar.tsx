@@ -68,7 +68,7 @@ const CategoryFilterBar = ({
                       color: "#D6B7FF",
                       marginTop: 0,
                       fontSize: 14,
-                      fontFamily: "Baloo2-SemiBold",
+                      fontFamily: "Baloo2_semiBold",
                     }}
                   >
                     {cat.name}
@@ -81,7 +81,7 @@ const CategoryFilterBar = ({
                   alignItems: "center",
                   width: 56,
                   height: 56,
-                  borderRadius: 50,
+                  borderRadius: 9999,
                   backgroundColor: isSelected ? "#D6B7FF" : "transparent",
                 }}
               >

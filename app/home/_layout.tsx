@@ -148,6 +148,7 @@ export default function HomeLayout() {
               options={{
                 headerShown: false,
                 gestureEnabled: false,
+                animation: "fade",
               }}
             />
           </Stack>

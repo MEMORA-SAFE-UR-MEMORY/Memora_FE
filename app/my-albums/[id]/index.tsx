@@ -233,10 +233,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   rightTitle: {
-    fontWeight: "600",
     marginBottom: 12,
     fontSize: 18,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
     textAlign: "center",
   },
   navBtn: {
@@ -258,7 +257,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
-  indTxt: { color: "#fff", fontWeight: "600", fontFamily: "Baloo2-medium" },
+  indTxt: { color: "#fff", fontFamily: "Baloo2_medium" },
   slotRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -268,7 +267,7 @@ const styles = StyleSheet.create({
   slotLabel: {
     width: 70,
     color: "#374151",
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
     fontSize: 16,
   },
   slotThumbBox: {
@@ -300,7 +299,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginLeft: 8,
   },
-  uploadTxt: { color: "#fff", fontWeight: "600", fontFamily: "Baloo2-medium" },
+  uploadTxt: { color: "#fff", fontFamily: "Baloo2_medium" },
   lockBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -316,6 +315,6 @@ const styles = StyleSheet.create({
   lockBannerTxt: {
     color: "#374151",
     fontSize: 14,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
 });

@@ -1,24 +1,24 @@
-import React, { useRef, useEffect, useState } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import BtnBorder from "@src/components/BtnBorder";
+import { FrameSlot } from "@src/types/frame";
+import { getCropShape } from "@src/utils/cropShape";
+import * as ImageManipulator from "expo-image-manipulator";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  Modal,
-  View,
-  StyleSheet,
   Image,
-  useWindowDimensions,
+  Modal,
+  StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  runOnJS,
 } from "react-native-reanimated";
-import Svg, { Circle, Rect, Defs, Mask } from "react-native-svg";
-import * as ImageManipulator from "expo-image-manipulator";
-import { MaterialIcons } from "@expo/vector-icons";
-import { FrameSlot } from "@src/types/frame";
-import { getCropShape } from "@src/utils/cropShape";
-import BtnBorder from "@src/components/BtnBorder";
+import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
 
 type Props = {
   visible: boolean;

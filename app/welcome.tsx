@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"; // Add thi
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useLogin } from "@src/hooks/useLogin";
+import { initDiscoveredRooms } from "@src/services/roomService";
 import { router } from "expo-router";
 import { useEffect, useState } from "react"; // Add useEffect
 import {
@@ -35,6 +36,18 @@ const Welcome = () => {
     getUserFromStorage();
   }, []);
 
+  useEffect(() => {
+    const initializeRooms = async () => {
+      try {
+        await initDiscoveredRooms();
+      } catch (error) {
+        console.error("Error initializing discovered rooms:", error);
+      }
+    };
+
+    initializeRooms();
+  }, []);
+
   const handlePlay = async () => {
     try {
       if (navigating) return;
@@ -42,7 +55,7 @@ const Welcome = () => {
 
       // Thêm delay nhỏ để tránh double tap
       await new Promise((resolve) => setTimeout(resolve, 300));
-      router.replace("/loading");
+      router.replace("/home");
     } catch (error) {
       console.error("[Welcome] Navigation error:", error);
       setNavigating(false);

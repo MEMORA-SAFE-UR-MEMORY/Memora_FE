@@ -69,7 +69,9 @@ export default function AlbumTemplateCard({
           />
         ) : (
           <View style={[s.coverFallback]}>
-            <Text style={{ color: "#9aa0a6" }}>No cover</Text>
+            <Text style={{ color: "#9aa0a6", fontFamily: "Baloo2_medium" }}>
+              Không có ảnh bìa
+            </Text>
           </View>
         )}
       </View>
@@ -138,9 +140,8 @@ const s = StyleSheet.create({
   title: {
     color: "#000",
     fontSize: 20,
-    fontWeight: "600",
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
-  desc: { color: "#797979ff", fontSize: 14, fontFamily: "Baloo2-medium" },
+  desc: { color: "#797979ff", fontSize: 12, fontFamily: "Baloo2_medium" },
   previewWrap: { position: "absolute", right: 12, top: 12 },
 });

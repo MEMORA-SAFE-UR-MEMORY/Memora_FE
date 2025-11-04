@@ -8,6 +8,7 @@ type Props = {
   mode: "confirm" | "noti";
   onClose: () => void;
   onConfirm: () => void;
+  onCancel?: () => void;
   titleText: string;
   contentText: string;
   icon?: ReactNode; // icon truyền từ ngoài vào
@@ -30,6 +31,7 @@ const ModalConfirm = ({
   mode,
   onClose,
   onConfirm,
+  onCancel,
   titleText,
   contentText,
   icon,
@@ -77,7 +79,7 @@ const ModalConfirm = ({
                 <BtnBorder
                   text={cancelBtnText}
                   colorType={cancelBtnColor}
-                  onPress={onClose}
+                  onPress={onCancel ?? onClose}
                 />
                 <BtnBorder
                   text={confirmBtnText}
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   iconContainer: {
-    width: 50, 
+    width: 50,
     height: 50,
     borderRadius: 50,
     alignItems: "center",

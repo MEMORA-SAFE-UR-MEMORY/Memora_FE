@@ -28,8 +28,7 @@ export default function RootLayout() {
 
   const { roomDetail, loading, error } = useRoom(roomIdNum, themeIdNum, type);
 
-  if (loading || !roomDetail)
-    return <LoadingOverlay />;
+  if (loading || !roomDetail) return <LoadingOverlay />;
 
   if (error) {
     return (

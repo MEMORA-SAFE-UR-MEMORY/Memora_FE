@@ -4,6 +4,7 @@ import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
+
 import ModalConfirm from "@src/components/ModalConfirm";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
@@ -14,7 +15,10 @@ import { useRoomContext } from "@src/context/RoomContext";
 import useCustomFonts from "@src/hooks/useCustomFonts";
 import { useMemory } from "@src/hooks/useMemory";
 import { useRoom } from "@src/hooks/useRoom";
-import { getNextRoomToDiscover } from "@src/services/roomService";
+import {
+  getNextRoomToDiscover,
+  resetDiscoveredRooms,
+} from "@src/services/roomService";
 import { RoomDetail } from "@src/types/room";
 import { isDraftChanged } from "@src/utils/draftUtils";
 import { router } from "expo-router";
@@ -51,6 +55,7 @@ const Room = () => {
       scrollX.value = event.contentOffset.x;
     },
   });
+  const [isNullRoom, setIsNullRoom] = useState<boolean>(false);
 
   useAnimatedReaction(
     () => scrollX.value,
@@ -160,7 +165,10 @@ const Room = () => {
       setIsLoading(true);
 
       const nextRoom = await getNextRoomToDiscover(user.id, roomId);
-      if (!nextRoom) return;
+      if (!nextRoom) {
+        setIsNullRoom(true);
+        return;
+      }
 
       const newRoomId = nextRoom.id;
       const newThemeId = nextRoom.themeId;
@@ -189,6 +197,58 @@ const Room = () => {
       console.error("Error fetching next room:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const onConfirmDiscovery = async () => {
+    try {
+      setIsNullRoom(false);
+      if (!user?.id) return;
+      setIsLoading(true);
+
+      await resetDiscoveredRooms();
+      const nextRoom = await getNextRoomToDiscover(user.id);
+      if (!nextRoom) {
+        setIsNullRoom(true);
+        return;
+      }
+
+      const newRoomId = nextRoom.id;
+      const newThemeId = nextRoom.themeId;
+      const newType = nextRoom.type ?? "public";
+      const newBack = back === "/hall" ? "/hall" : "/home";
+
+      setRoomContext({
+        roomId: newRoomId,
+        themeId: newThemeId,
+        type: newType,
+        mode: "view",
+        back: newBack,
+      });
+
+      router.replace({
+        pathname: "/room",
+        params: {
+          roomId: newRoomId,
+          themeId: newThemeId,
+          type: newType,
+          mode: "view",
+          back: newBack,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching next room:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onCancelDiscovery = () => {
+    setIsNullRoom(false);
+    if (back) {
+      router.replace(back as any);
+    } else {
+      router.replace("/hall");
     }
   };
 
@@ -345,6 +405,7 @@ const Room = () => {
           onClose={closeModal}
           memory={selectedMemory}
           onUpdate={handleUpdateMemory}
+          onSave={handleSaveMemory}
           onDelete={handleDeleteMemory}
           onFrameRemoved={activeFrameId === null}
           frameItem={activeFrameItem}
@@ -397,6 +458,25 @@ const Room = () => {
           confirmBtnText="Đóng"
           confirmBtnColor="red"
           width={340}
+        />
+      )}
+
+      {isNullRoom && (
+        <ModalConfirm
+          visible={true}
+          mode="confirm"
+          titleText="Hết phòng để khám phá"
+          contentText="Bạn đã khám phá hết các phòng hiện có. Bạn muốn quay về để trang trí phòng của mình, hay tiếp tục khám phá lại?"
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#FBBF24"
+          confirmBtnText="Khám phá lại"
+          confirmBtnColor="green"
+          cancelBtnText="Quay về"
+          cancelBtnColor="grey"
+          onClose={() => setIsNullRoom(false)}
+          onConfirm={onConfirmDiscovery}
+          onCancel={onCancelDiscovery}
+          width={460}
         />
       )}
     </View>

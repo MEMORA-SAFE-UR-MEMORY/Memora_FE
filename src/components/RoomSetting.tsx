@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 20,
-    width: "50%",
+    borderRadius: 12,
+    width: "60%",
+    borderWidth: 6,
     borderColor: "#E9D8FF",
-    borderWidth: 10,
   },
   header: {
     flexDirection: "row",

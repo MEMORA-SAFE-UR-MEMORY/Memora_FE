@@ -193,5 +193,5 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
-  indTxt: { color: "#fff", fontWeight: "600", fontFamily: "Baloo2-medium" },
+  indTxt: { color: "#fff", fontFamily: "Baloo2_medium" },
 });

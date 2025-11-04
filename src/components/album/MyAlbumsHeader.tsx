@@ -28,17 +28,17 @@ export default function MyAlbumsHeader({
     <SafeAreaView edges={["top"]}>
       <View
         style={{
-          height: 50,
+          height: 45,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 12,
-          borderBottomWidth: 0.5,
-          borderBottomColor: "#fdfefeff",
         }}
       >
         <Pressable
-          onPress={onBack ?? (() => router.push((backTo ?? "/album") as any))}
+          onPress={
+            onBack ?? (() => router.replace((backTo ?? "/album") as any))
+          }
           style={{ position: "absolute", left: 24, padding: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Quay lại"
@@ -53,9 +53,8 @@ export default function MyAlbumsHeader({
           numberOfLines={1}
           style={{
             color: "#000000",
-            fontSize: 20,
-            fontWeight: "600",
-            fontFamily: "Baloo2-medium",
+            fontSize: 18,
+            fontFamily: "Baloo2_medium",
           }}
         >
           {title}
@@ -84,7 +83,7 @@ export default function MyAlbumsHeader({
           </Pressable>
         ) : showOrdersButton ? (
           <Pressable
-            onPress={() => router.push("/orders" as any)}
+            onPress={() => router.replace("/orders" as any)}
             style={{
               position: "absolute",
               right: 24,
