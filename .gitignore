@@ -39,7 +39,6 @@ yarn-error.*
 
 app-example
 
-/android
 /ios
 
 service-account.json
