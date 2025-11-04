@@ -29,7 +29,7 @@ export default function AlbumInfoModal({ visible, onClose }: Props) {
             backgroundColor: "#fff",
             borderRadius: 12,
             padding: 16,
-            maxHeight: "60%",
+            maxHeight: "70%",
             maxWidth: 515,
             borderWidth: 6,
             borderColor: "#E9D8FF",
@@ -40,8 +40,7 @@ export default function AlbumInfoModal({ visible, onClose }: Props) {
               style={{
                 flex: 1,
                 fontSize: 20,
-                fontWeight: "600",
-                fontFamily: "Baloo2-medium",
+                fontFamily: "Baloo2_semiBold",
                 textAlign: "center",
               }}
             >
@@ -61,26 +60,26 @@ export default function AlbumInfoModal({ visible, onClose }: Props) {
           </View>
 
           <ScrollView style={{ marginTop: 8 }}>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Chọn ô ảnh cần thay → bấm “Tải ảnh/Thay ảnh”.
             </Text>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Chọn hình từ thư viện hoặc chụp mới. Đợi thanh trạng thái tải
               xong.
             </Text>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Ảnh sẽ hiển thị ngay khi tải thành công. Có thể thay lại bất cứ
               lúc nào.
             </Text>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Định dạng hỗ trợ: JPG, PNG, HEIC. Nên dùng ảnh ≥ 1500px cho chất
               lượng in.
             </Text>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Kiểm tra kết nối mạng ổn định để quá trình tải ảnh không bị gián
               đoạn.
             </Text>
-            <Text style={{ marginBottom: 8, fontFamily: "Baloo2-medium" }}>
+            <Text style={{ marginBottom: 8, fontFamily: "Baloo2_semiBold" }}>
               - Sau khi hoàn tất, trở về “Kho album” để xem lại hoặc đặt in.
             </Text>
           </ScrollView>

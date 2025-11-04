@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 interface ButtonProps {
   h: number;
@@ -35,15 +35,15 @@ const Button: React.FC<ButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     borderWidth: 1,
-    borderColor: "black",
+    borderColor: "#bea8e5ff",
     borderRadius: 9999,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: "semibold",
-    fontFamily: "Baloo2-SemiBold",
+    color: "white",
+    fontFamily: "Baloo2_semiBold",
   },
   disabled: {
     backgroundColor: "#d3d3d3",

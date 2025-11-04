@@ -1,6 +1,6 @@
 // src/hooks/useInventoryItems.ts
 import { useState } from "react";
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 
 export const useInventoryItems = () => {
   const [loading, setLoading] = useState(false);

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Modal from "react-native-modal";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Props = {
   visible: boolean;
@@ -89,17 +90,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: "600",
     color: "#111827",
     marginBottom: 6,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
   desc: {
     color: "#6b7280",
     textAlign: "center",
     marginBottom: 16,
     fontSize: 15,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
   actions: { flexDirection: "row", gap: 10, marginTop: 4 },
   btn: {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
   },
-  btnTxt: { fontWeight: "600", fontFamily: "Baloo2-medium", fontSize: 16 },
+  btnTxt: { fontWeight: "600", fontFamily: "Baloo2_medium", fontSize: 16 },
   btnGhost: { borderColor: "#e5e7eb", backgroundColor: "white" },
   btnGhostTxt: { color: "black" },
   btnPrimary: { borderColor: "#bea8e5ff", backgroundColor: "#7c3aed" },

@@ -1,22 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
+import LoadingOverlay from "@src/components/LoadingOverlay";
+import useCustomFonts from "@src/hooks/useCustomFonts";
+import { useLogin } from "@src/hooks/useLogin";
 import { useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
 } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import Button from "./Button";
-import { router } from "expo-router";
-import LoadingOverlay from "@src/components/LoadingOverlay";
-import { useLogin } from "@src/hooks/useLogin";
 import CustomAlert from "./CustomAlert";
-import useCustomFonts from "@src/hooks/useCustomFonts";
 
 interface LoginModalProps {
   visible: boolean;
@@ -88,181 +88,191 @@ const LoginModal: React.FC<LoginModalProps> = ({
     return <LoadingOverlay />;
   }
 
+  const Container = Platform.OS === "ios" ? KeyboardAvoidingView : View;
+  const containerProps =
+    Platform.OS === "ios"
+      ? ({ behavior: "padding", style: { flex: 1 } } as const)
+      : ({ style: { flex: 1 } } as const);
+
   return (
-    <SafeAreaProvider>
-      <SafeAreaView>
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={visible}
-          onRequestClose={handleClose}
-          supportedOrientations={["portrait", "landscape"]}
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={visible}
+      onRequestClose={handleClose}
+      supportedOrientations={["portrait", "landscape"]}
+      statusBarTranslucent
+      presentationStyle="overFullScreen"
+    >
+      {loading && <LoadingOverlay />}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View
+          style={{
+            backgroundColor: "white",
+            width: "65%",
+            height: "93%",
+            marginTop: 10,
+            alignSelf: "center",
+            borderRadius: 32,
+            alignItems: "center",
+            overflow: "hidden",
+          }}
         >
-          {loading && <LoadingOverlay />}
-
-          <View
-            style={{
-              backgroundColor: "white",
-              width: "70%",
-              height: "93%",
-              marginTop: 10,
-              alignSelf: "center",
-              borderRadius: 32,
-              alignItems: "center",
-            }}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={{ flex: 1 }}
+          <Container {...containerProps}>
+            <ScrollView
+              contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                paddingBottom: 10,
+              }}
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
+              contentInsetAdjustmentBehavior="never"
+              showsVerticalScrollIndicator={false}
+              // Android đôi khi cần tắt clipping để tránh nhấp nháy
+              removeClippedSubviews={
+                Platform.OS === "android" ? false : undefined
+              }
             >
-              <ScrollView
-                contentContainerStyle={{
-                  flexGrow: 1,
-                  justifyContent: "center",
-                  alignItems: "center",
-                  paddingBottom: 10,
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: 20,
+                  padding: 8,
+                  zIndex: 1,
                 }}
-                showsVerticalScrollIndicator={false}
+                onPress={handleClose}
               >
-                <TouchableOpacity
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: 20,
-                    padding: 8,
-                    zIndex: 1,
-                  }}
-                  onPress={handleClose}
-                >
-                  <Ionicons name="close" size={24} color="black" />
-                </TouchableOpacity>
+                <Ionicons name="close" size={24} color="black" />
+              </TouchableOpacity>
 
+              <Text
+                style={{
+                  marginTop: 16,
+                  fontSize: 24,
+                  fontFamily: "Baloo2_semiBold",
+                }}
+              >
+                Chào mừng quay trở lại!
+              </Text>
+              <View style={{ marginTop: 8 }}>
                 <Text
                   style={{
-                    marginTop: 16,
-                    fontSize: 30,
-                    fontFamily: "Baloo2-ExtraBold",
+                    fontSize: 16,
+                    fontFamily: "Baloo2_medium",
+                    color: "#7c3aed",
                   }}
                 >
-                  Chào mừng quay trở lại!
+                  Email
                 </Text>
-                <View style={{ marginTop: 18 }}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "500",
-                      fontFamily: "Baloo2-Bold",
-                    }}
-                  >
-                    Email
-                  </Text>
-                  <TextInput
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="Nhập email của bạn"
-                    keyboardType="default"
-                    style={{
-                      height: 46,
-                      width: 493,
-                      borderWidth: 1,
-                      paddingHorizontal: 20,
-                      marginTop: 6,
-                      borderRadius: 20,
-                      fontFamily: "Baloo2-Regular",
-                    }}
-                  />
-                </View>
-                <View style={{ marginTop: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "500",
-                      fontFamily: "Baloo2-Bold",
-                    }}
-                  >
-                    Mật khẩu
-                  </Text>
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Nhập mật khẩu của bạn"
-                    keyboardType="default"
-                    secureTextEntry={!showPassword}
-                    style={{
-                      height: 46,
-                      width: 493,
-                      borderWidth: 1,
-                      paddingHorizontal: 20,
-                      marginTop: 6,
-                      borderRadius: 20,
-                      fontFamily: "Baloo2-Regular",
-                    }}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute",
-                      right: 20,
-                      top: 42,
-                    }}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={24}
-                      color="gray"
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Nhập email của bạn"
+                  keyboardType="default"
                   style={{
-                    marginTop: 12,
-                    flexDirection: "row",
-                    marginLeft: 250,
-                    gap: 10,
+                    height: 46,
+                    width: 493,
+                    borderWidth: 1,
+                    paddingHorizontal: 20,
+                    marginTop: 6,
+                    borderRadius: 20,
+                    fontFamily: "Baloo2_medium",
+                  }}
+                />
+              </View>
+              <View style={{ marginTop: 12 }}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: "Baloo2_medium",
+                    color: "#7c3aed",
                   }}
                 >
-                  <TouchableOpacity onPress={handleRegisterPress}>
-                    <Text
-                      style={{
-                        textDecorationLine: "underline",
-                        fontFamily: "Baloo2-Regular",
-                      }}
-                    >
-                      Chưa có tài khoản?
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={onForgotPasswordPress}>
-                    <Text
-                      style={{
-                        textDecorationLine: "underline",
-                        fontFamily: "Baloo2-Regular",
-                      }}
-                    >
-                      Quên mật khẩu?
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={{ marginTop: 12 }}>
-                  <Button
-                    h={44}
-                    w={493}
-                    title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
-                    color="A6E3FF"
-                    onPress={handleSubmit}
-                    disabled={loading}
-                  />
-                </View>
-                <CustomAlert
-                  visible={showAlert}
-                  onClose={() => setShowAlert(false)}
-                  message={alertMessage}
+                  Mật khẩu
+                </Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Nhập mật khẩu của bạn"
+                  keyboardType="default"
+                  secureTextEntry={!showPassword}
+                  style={{
+                    height: 46,
+                    width: 493,
+                    borderWidth: 1,
+                    paddingHorizontal: 20,
+                    marginTop: 6,
+                    borderRadius: 20,
+                    fontFamily: "Baloo2_medium",
+                  }}
                 />
-              </ScrollView>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
-      </SafeAreaView>
-    </SafeAreaProvider>
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: 20,
+                    top: 42,
+                  }}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye" : "eye-off"}
+                    size={24}
+                    color="gray"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{
+                  marginTop: 12,
+                  flexDirection: "row",
+                  marginLeft: 250,
+                  gap: 10,
+                }}
+              >
+                <TouchableOpacity onPress={handleRegisterPress}>
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      fontFamily: "Baloo2_semiBold",
+                    }}
+                  >
+                    Chưa có tài khoản?
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onForgotPasswordPress}>
+                  <Text
+                    style={{
+                      textDecorationLine: "underline",
+                      fontFamily: "Baloo2_semiBold",
+                    }}
+                  >
+                    Quên mật khẩu?
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View style={{ marginTop: 12 }}>
+                <Button
+                  h={44}
+                  w={493}
+                  title={loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                  color="7c3aed"
+                  onPress={handleSubmit}
+                  disabled={loading}
+                />
+              </View>
+              <CustomAlert
+                visible={showAlert}
+                onClose={() => setShowAlert(false)}
+                message={alertMessage}
+              />
+            </ScrollView>
+          </Container>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
 };
 

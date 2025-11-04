@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 import { useCallback, useEffect, useState } from "react";
 
 export const useWallet = () => {

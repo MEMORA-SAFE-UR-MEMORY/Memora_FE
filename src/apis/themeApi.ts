@@ -1,4 +1,4 @@
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 import { Theme } from "@src/types/theme";
 
 export async function fetchAllThemes(): Promise<Theme[]> {
