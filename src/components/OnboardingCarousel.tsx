@@ -135,9 +135,9 @@ export default function OnboardingCarousel({
 
   return (
     <Modal
-      visible={visible}
       animationType="fade"
-      transparent
+      transparent={true}
+      visible={visible}
       supportedOrientations={["portrait", "landscape"]}
     >
       {loading && <LoadingOverlay />}

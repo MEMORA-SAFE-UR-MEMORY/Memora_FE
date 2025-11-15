@@ -1,4 +1,4 @@
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 
 export const InventoryApi = {
   async fetchByUser(userId: string) {

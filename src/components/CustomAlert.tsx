@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, View, Text, TouchableOpacity } from "react-native";
+import { Modal, Text, TouchableOpacity, View } from "react-native";
 
 export default function CustomAlert({
   visible,
@@ -34,6 +34,8 @@ export default function CustomAlert({
             width: 320,
             padding: 24,
             backgroundColor: "white",
+            borderWidth: 6,
+            borderColor: "#E9D8FF",
             borderRadius: 16,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 4 },
@@ -46,7 +48,7 @@ export default function CustomAlert({
           <Text
             style={{
               fontSize: 18,
-              fontFamily: "Baloo2-Bold",
+              fontFamily: "Baloo2_semiBold",
               marginBottom: 12,
               color: "#333",
             }}
@@ -58,7 +60,7 @@ export default function CustomAlert({
           <Text
             style={{
               fontSize: 15,
-              fontFamily: "Baloo2-Regular",
+              fontFamily: "Baloo2_medium",
               marginBottom: 20,
               color: "#555",
               lineHeight: 20,
@@ -81,8 +83,8 @@ export default function CustomAlert({
             <Text
               style={{
                 color: "white",
-                fontFamily: "Baloo2-SemiBold",
-                fontSize: 15,
+                fontFamily: "Baloo2_semiBold",
+                fontSize: 14,
               }}
             >
               {buttonText}

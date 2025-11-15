@@ -277,6 +277,7 @@ const AddMemoryModal: React.FC<Props> = ({
   return (
     <Animated.View style={[styles.overlay, animatedStyle]}>
       {isLoading && <LoadingOverlay />}
+      <View style={styles.overlay}></View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1, width, height }}

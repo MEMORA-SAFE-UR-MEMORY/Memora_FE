@@ -61,5 +61,5 @@ const styles = StyleSheet.create({
 
     elevation: 4,
   },
-  txt: { color: "#fff", fontWeight: "700" },
+  txt: { color: "#fff", fontFamily: "Baloo2_semiBold" },
 });

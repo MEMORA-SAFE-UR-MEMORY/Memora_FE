@@ -1,21 +1,19 @@
+import CustomAlert from "@src/components/CustomAlert";
 import { useItems } from "@src/hooks/useItems";
+import { useThemes } from "@src/hooks/useThemes";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { ArrowLeft, Gift, ShoppingCart } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
+  Dimensions,
   FlatList,
   Image,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
-  SafeAreaView,
-  ScrollView,
-  Alert,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { ShoppingCart, Gift, Star, ArrowLeft } from "lucide-react-native";
-import { useThemes } from "@src/hooks/useThemes";
-import { router } from "expo-router";
-import CustomAlert from "@src/components/CustomAlert";
 
 // Update dimensions constants
 const { width, height } = Dimensions.get("window");
@@ -164,7 +162,7 @@ const Christmas = () => {
 
   if (christmasItems.length === 0) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF8F0" }}>
+      <View style={{ flex: 1, backgroundColor: "#FFF8F0" }}>
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
@@ -172,7 +170,7 @@ const Christmas = () => {
             Loading Christmas items...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 

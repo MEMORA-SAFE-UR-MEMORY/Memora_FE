@@ -12,8 +12,9 @@ import React, { useState } from "react";
 import { router } from "expo-router";
 import InputBox from "@src/components/InputBox";
 import Button from "@src/components/Button";
-import { supabase } from "@src/lib/supabase";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "@src/utils/supabase";
 
 const Username = () => {
   const [username, setUsername] = useState("");

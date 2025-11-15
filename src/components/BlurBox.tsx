@@ -58,8 +58,7 @@ const BlurBox: React.FC<BlurBoxProps> = ({
         style={[
           {
             fontSize: textSize,
-            fontWeight: 500,
-            fontFamily: "Baloo2-Bold",
+            fontFamily: "Baloo2_semiBold",
           },
           titleStyle,
         ]}

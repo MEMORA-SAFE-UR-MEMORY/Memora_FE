@@ -1,4 +1,4 @@
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 import { themeRepo } from "@src/repositories/themeRepo";
 import * as themeService from "@src/services/themeService";
 import { Theme } from "@src/types/theme";

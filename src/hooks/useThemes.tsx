@@ -1,6 +1,6 @@
 // src/hooks/useThemes.ts
 import { useState, useCallback } from "react";
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 
 export type Theme = {
   id: number;

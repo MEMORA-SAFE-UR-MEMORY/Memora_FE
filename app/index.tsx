@@ -9,13 +9,7 @@ import { useAuth } from "@src/hooks/useAuth";
 import { useUser } from "@src/hooks/useUser";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
@@ -98,7 +92,7 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View style={styles.container}>
         {/* <View>
         <Image source={require("../assets/images/Logo.png")} />
@@ -136,8 +130,14 @@ export default function Home() {
             marginTop: 5,
           }}
         >
-          <AntDesign name="copyright" size={20} color="black" />
-          <Text style={{ fontFamily: "Baloo2-Regular" }}>
+          <AntDesign name="copyright" size={16} color="black" />
+          <Text
+            style={{
+              fontFamily: "Baloo2_medium",
+              fontSize: 12,
+              marginBottom: 24,
+            }}
+          >
             2025. Memora Corp. All Rights Reserved
           </Text>
         </View>
@@ -159,14 +159,16 @@ export default function Home() {
           message={alertMessage}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingBottom: 15,
+    paddingBottom: 20,
+    gap: 4,
+    justifyContent: "center",
   },
   centered: {
     justifyContent: "center",

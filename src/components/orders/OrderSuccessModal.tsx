@@ -57,9 +57,8 @@ export default function OrderSuccessModal({
           <Text
             style={{
               fontSize: 20,
-              fontWeight: "600",
               marginBottom: 2,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_semiBold",
             }}
           >
             Đặt hàng thành công
@@ -69,7 +68,7 @@ export default function OrderSuccessModal({
               color: "#6b7280",
               textAlign: "center",
               marginBottom: 14,
-              fontFamily: "Baloo2-medium",
+              fontFamily: "Baloo2_medium",
               fontSize: 16,
             }}
           >
@@ -92,7 +91,7 @@ export default function OrderSuccessModal({
               <Text
                 style={{
                   color: "#111827",
-                  fontWeight: "600",
+                  fontFamily: "Baloo2_medium",
                   fontSize: 16,
                 }}
               >
@@ -114,8 +113,7 @@ export default function OrderSuccessModal({
               <Text
                 style={{
                   color: "#fff",
-                  fontWeight: "600",
-                  fontFamily: "Baloo2-medium",
+                  fontFamily: "Baloo2_medium",
                   fontSize: 16,
                 }}
               >
