@@ -1,7 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FrameSlot } from "@src/types/frame";
 import { Memory } from "@src/types/memory";
-import { getRenderSize } from "@src/utils/renderScale";
 import { renderShape } from "@src/utils/renderShape";
 import { useEffect, useState } from "react";
 import { Image, useWindowDimensions, View } from "react-native";
@@ -23,19 +22,11 @@ export function FrameView({ slot, memory, mode }: FrameViewProps) {
   const roomWidth = screenWidth * 3;
   const roomHeight = screenHeight;
 
-  // Tính kích thước và vị trí
-  const { width, height } = getRenderSize({
-    xRatio: slot.x / roomWidth,
-    yRatio: slot.y / roomHeight,
-    wRatio: slot.w / roomWidth,
-    hRatio: slot.h / roomHeight,
-  });
-
   // Tính vị trí trung tâm của slot
-  const centerX = width / 2;
-  const centerY = height / 2;
+  const centerX = slot.w / 2;
+  const centerY = slot.h / 2;
 
-  const showText = width > 60 && height > 60;
+  const showText = slot.w > 60 && slot.h > 60;
 
   const rotation = slot.rotation ?? 0;
 
@@ -51,8 +42,8 @@ export function FrameView({ slot, memory, mode }: FrameViewProps) {
   return (
     <View
       style={{
-        width,
-        height,
+        width: slot.w,
+        height: slot.h,
         transform: [{ rotate: `${rotation}deg` }],
         zIndex: slot.slotId,
       }}

@@ -1,8 +1,10 @@
 import Cloud from "@src/components/login/Cloud";
+import OnboardingCarousel from "@src/components/OnboardingCarousel";
 import { AuthProvider } from "@src/context/AuthContext";
 import { InventoryProvider } from "@src/context/InventoryContext";
 import { MusicProvider } from "@src/context/MusicContext";
 import { ThemeProvider } from "@src/context/ThemeContext";
+import { getHasSeenOnboarding, setHasSeenOnboarding } from "@src/utils/storage";
 import * as NavigationBar from "expo-navigation-bar";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -27,6 +29,23 @@ export default function HomeLayout() {
   const houseScaleX = TARGET_OVERFLOW;
 
   const DROP_RATIO = 0.3;
+
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+
+  useEffect(() => {
+    (async () => {
+      const seen = await getHasSeenOnboarding();
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const finishOnboarding = async () => {
+    await setHasSeenOnboarding();
+    setShowOnboarding(false);
+  };
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -165,6 +184,21 @@ export default function HomeLayout() {
                 </View>
 
                 <View style={{ flex: 1, zIndex: 30 }}>
+                  {/* Onboarding */}
+                  <OnboardingCarousel
+                    visible={showOnboarding}
+                    onFinish={finishOnboarding}
+                    onSkip={() => {
+                      finishOnboarding();
+                    }}
+                  />
+                  {/* <Button
+                          title="Hiển thị lại Onboarding (debug)"
+                          onPress={async () => {
+                            await resetOnboardingFlag();
+                            setShowOnboarding(true);
+                          }}
+                        /> */}
                   <Stack
                     screenOptions={{
                       headerShown: false,
