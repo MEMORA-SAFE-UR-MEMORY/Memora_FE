@@ -424,17 +424,17 @@ const Room = () => {
           titleText="Thông báo"
           contentText={
             decorCount === MAX_DECOR && frameCount === MAX_FRAME
-              ? "Bạn đã đạt giới hạn số lượng item."
+              ? "Bạn đã đạt giới hạn 25 item trong phòng."
               : decorCount === MAX_DECOR
-                ? "Bạn đã đạt giới hạn số lượng item trang trí."
+                ? "Bạn đã đạt giới hạn 10 item trang trí."
                 : frameCount === MAX_FRAME
-                  ? "Bạn đã đạt giới hạn số lượng item khung."
+                  ? "Bạn đã đạt giới hạn 15 item khung."
                   : ""
           }
           icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
           iconBgColor="#F75270"
           confirmBtnText="Đóng"
-          confirmBtnColor="red"
+          confirmBtnColor="grey"
           width={340}
         />
       )}
@@ -456,7 +456,7 @@ const Room = () => {
           icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
           iconBgColor="#F75270"
           confirmBtnText="Đóng"
-          confirmBtnColor="red"
+          confirmBtnColor="grey"
           width={340}
         />
       )}

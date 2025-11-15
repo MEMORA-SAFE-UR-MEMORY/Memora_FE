@@ -2,7 +2,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { FrameView } from "@src/components/FrameView";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
-import { getRenderPosition, getRenderSize } from "@src/utils/renderScale";
+import { getRenderPosition } from "@src/utils/renderScale";
 import React, { useEffect, useRef } from "react";
 import {
   Image,
@@ -71,23 +71,8 @@ const PlacedFrame = ({
   const maxWidth = roomWidth || screenWidth;
   const maxHeight = roomHeight || screenHeight;
 
-  // Tính toán kích thước, vị trí để render
-  const { x, y } = getRenderPosition({
-    xRatio: item.x, // item.x và item.y bây giờ là giá trị tỉ lệ (0–1)
-    yRatio: item.y,
-    wRatio: item.item.dimension.w / roomWidth, // hoặc tỉ lệ đã lưu sẵn
-    hRatio: item.item.dimension.h / roomHeight,
-  });
-
-  const { width, height } = getRenderSize({
-    xRatio: item.x,
-    yRatio: item.y,
-    wRatio: item.item.dimension.w / roomWidth,
-    hRatio: item.item.dimension.h / roomHeight,
-  });
-
-  const translationX = useSharedValue(x ?? 0);
-  const translationY = useSharedValue(y ?? 0);
+  const translationX = useSharedValue(item.x ?? 0);
+  const translationY = useSharedValue(item.y ?? 0);
   const rotation = useSharedValue(item.rotation ?? 0);
 
   const prevTranslationX = useSharedValue(0);
@@ -377,8 +362,8 @@ const PlacedFrame = ({
           styles.container,
           animatedStyle,
           {
-            width: width,
-            height: height,
+            width: item.item.dimension.w,
+            height: item.item.dimension.h,
             zIndex: item.zIndex,
           },
         ]}
@@ -429,8 +414,8 @@ const PlacedFrame = ({
           styles.container,
           animatedStyle,
           {
-            width: width,
-            height: height,
+            width: item.item.dimension.w,
+            height: item.item.dimension.h,
             zIndex: item.zIndex,
           },
         ]}

@@ -518,8 +518,8 @@ export const suggestDescription = async (formData: FormData) => {
   );
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Lỗi server (${res.status}): ${text}`);
+    const message = await res.text();
+    throw new Error(message);
   }
 
   return res.json();

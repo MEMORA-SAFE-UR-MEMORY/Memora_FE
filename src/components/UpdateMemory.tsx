@@ -1,7 +1,9 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
 import ModalCalendar from "@src/components/ModalCalendar";
+import ModalConfirm from "@src/components/ModalConfirm";
 import ScrollingText from "@src/components/ScrollingText";
+import { useAiCooldown } from "@src/hooks/useAiCooldown";
 import * as roomService from "@src/services/roomService";
 import { RoomItem } from "@src/types/item";
 import { Memory, SuggestReq } from "@src/types/memory";
@@ -56,6 +58,10 @@ const UpdateMemory = ({
   const scrollRef = useRef<KeyboardAwareScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
   const [aiError, setAiError] = useState(false);
+  const [aiErrorMsg, setAiErrorMsg] = useState<string>("");
+
+  // Hook
+  const { aiDisabled, aiCountdown, startCooldown } = useAiCooldown(300);
 
   // Calendar
 
@@ -143,6 +149,7 @@ const UpdateMemory = ({
       onLoadingChange?.(true);
 
       if (!selectedImage) {
+        setAiErrorMsg("Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!");
         setAiError(true);
         onLoadingChange?.(false);
         return;
@@ -163,7 +170,9 @@ const UpdateMemory = ({
 
       setDescription(desc);
     } catch (error) {
-      console.error(error);
+      setAiErrorMsg("Hiện AI đang bị quá tải. Vui lòng thử lại sau 5'!");
+      setAiError(true);
+      startCooldown();
     } finally {
       onLoadingChange?.(false);
     }
@@ -323,12 +332,30 @@ const UpdateMemory = ({
                 <Text style={[styles.label]}>Miêu tả</Text>
 
                 <TouchableOpacity
-                  style={[styles.aiContanier, isFormValid() && styles.aiActive]}
+                  style={[
+                    styles.aiContanier,
+                    isFormValid() && !aiDisabled && styles.aiActive,
+                  ]}
                   onPress={handleSuggest}
-                  disabled={!isFormValid()}
+                  disabled={!isFormValid() || aiDisabled}
                 >
                   <FontAwesome5 name="robot" size={20} color="white" />
                 </TouchableOpacity>
+                {aiDisabled && (
+                  <Text
+                    style={{
+                      color: "#666",
+                      marginTop: 2,
+                      fontSize: 10,
+                      marginHorizontal: "auto",
+                      textAlign: "center",
+                      fontFamily: "Baloo2_medium",
+                    }}
+                  >
+                    {Math.floor(aiCountdown / 60)}:
+                    {(aiCountdown % 60).toString().padStart(2, "0")}
+                  </Text>
+                )}
               </View>
               <TextInput
                 ref={textInputRef}
@@ -368,6 +395,29 @@ const UpdateMemory = ({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAwareScrollView>
+
+      {/* Error Modal */}
+      {aiError && (
+        <ModalConfirm
+          visible={aiError}
+          mode="noti"
+          titleText="Thông báo"
+          contentText={aiErrorMsg}
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#FBBF24"
+          confirmBtnText="Đóng"
+          confirmBtnColor="grey"
+          onClose={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
+          onConfirm={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
+          width={460}
+        />
+      )}
     </View>
   );
 };
