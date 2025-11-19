@@ -1,14 +1,18 @@
 {
   "expo": {
     "name": "Memora",
-    "slug": "Memora",
-    "owner": "bready",
+    "slug": "memora",
+    "owner": "memora-appstore",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "memora",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.memoraco.memora",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
       "supportsTablet": false
     },
     "android": {
@@ -19,6 +23,8 @@
       "edgeToEdgeEnabled": true,
       "jsEngine": "hermes",
       "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
@@ -51,8 +57,12 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "2b49aadc-db3d-457b-a809-87229425c0ac"
+        "projectId": "3a42b0df-db99-4691-a07a-0229126d17e3"
       }
+    },
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/3a42b0df-db99-4691-a07a-0229126d17e3"
     }
   }
 }

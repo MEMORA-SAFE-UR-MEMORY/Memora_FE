@@ -1,11 +1,17 @@
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import BtnBorder from "@src/components/BtnBorder";
+import ImageCropModal from "@src/components/ImageCropModal";
+import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalCalendar from "@src/components/ModalCalendar";
-import ScrollingText from "@src/components/ScrollingText";
-import { Memory } from "@src/types/memory";
+import ModalConfirm from "@src/components/ModalConfirm";
+import * as roomService from "@src/services/roomService";
+import { RoomItem } from "@src/types/item";
+import { Memory, SuggestReq } from "@src/types/memory";
 import { formatDate } from "@src/utils/format";
+import { generateTempId } from "@src/utils/idGenerator";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Keyboard,
@@ -20,10 +26,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import ImageCropModal from "@src/components/ImageCropModal";
-import { RoomItem } from "@src/types/item";
-import { generateTempId } from "@src/utils/idGenerator";
-import LoadingOverlay from "@src/components/LoadingOverlay";
 
 type Props = {
   visible: boolean;
@@ -44,13 +46,13 @@ const AddMemoryModal: React.FC<Props> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
 
   const { width, height } = useWindowDimensions();
   const isSmallDevice = width <= 700;
@@ -96,7 +98,6 @@ const AddMemoryModal: React.FC<Props> = ({
   useEffect(() => {
     if (isCalendarOpen) {
       Keyboard.dismiss();
-      setIsEditing(false);
     }
   }, [isCalendarOpen]);
 
@@ -158,6 +159,37 @@ const AddMemoryModal: React.FC<Props> = ({
     setTempImage(null);
   };
 
+  const handleSuggest = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!selectedImage) {
+        setAiError(true);
+        setIsLoading(false);
+        return;
+      }
+
+      const formData: SuggestReq = {
+        title: title,
+        date: selectedDate,
+        image: selectedImage,
+      };
+
+      const desc = await roomService.suggestDescription(formData);
+
+      if (!desc || desc.length === 0) {
+        setDescription("Rất tiếc AI hiện đang bị lỗi!");
+        return;
+      }
+
+      setDescription(desc);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSave = () => {
     if (frameId == null || slotId == null) return;
     onSave(frameId, slotId, {
@@ -175,8 +207,11 @@ const AddMemoryModal: React.FC<Props> = ({
     onClose();
   };
 
-  const isFormValid = () =>
-    selectedImage !== null && title.trim().length > 0 && selectedDate !== "";
+  const isFormValid = useCallback(() => {
+    return (
+      selectedImage !== null && title.trim().length > 0 && selectedDate !== ""
+    );
+  }, [selectedImage, title, selectedDate]);
 
   return (
     <Modal
@@ -188,6 +223,7 @@ const AddMemoryModal: React.FC<Props> = ({
       supportedOrientations={["portrait", "landscape"]}
     >
       {isLoading && <LoadingOverlay />}
+      <View style={styles.overlay}></View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -198,7 +234,9 @@ const AddMemoryModal: React.FC<Props> = ({
             if (isCalendarOpen) handleCalendarClose();
           }}
         >
-          <View style={styles.overlay}>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
             <View
               style={[
                 styles.content,
@@ -229,7 +267,45 @@ const AddMemoryModal: React.FC<Props> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Row 1: Tiêu đề + Ngày */}
+              {/* Tiêu đề */}
+              <View style={styles.inputRow}>
+                <Text style={[styles.label, { fontSize: scale(14) }]}>
+                  Tựa đề
+                </Text>
+                <View
+                  style={[
+                    styles.titleInputContainer,
+                    { height: scale(40), borderRadius: scale(20) },
+                  ]}
+                >
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    style={[
+                      styles.titleInput,
+                      { fontSize: scale(13), paddingHorizontal: scale(10) },
+                    ]}
+                    maxLength={60}
+                    numberOfLines={1}
+                    placeholder="Nhập tựa đề..."
+                    placeholderTextColor="#999"
+                    editable={!isCalendarOpen}
+                  />
+
+                  {title.length > 0 && (
+                    <Text
+                      style={[
+                        styles.characterCount,
+                        { fontSize: scale(11), top: scale(17) },
+                      ]}
+                    >
+                      {title.length}/60
+                    </Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Row 1: Ảnh + Ngày */}
               <View
                 style={[
                   styles.row1,
@@ -238,65 +314,54 @@ const AddMemoryModal: React.FC<Props> = ({
                   },
                 ]}
               >
-                {/* Tiêu đề */}
-                <View style={styles.inputRow}>
+                {/* Ảnh */}
+                <View style={styles.fileRow}>
                   <Text style={[styles.label, { fontSize: scale(14) }]}>
-                    Tựa đề
+                    Nhập tập tin:
                   </Text>
-                  <View
-                    style={[
-                      styles.titleInputContainer,
-                      { height: scale(40), borderRadius: scale(20) },
-                    ]}
-                  >
-                    {isEditing && !isCalendarOpen ? (
-                      <TextInput
-                        value={title}
-                        onChangeText={setTitle}
+                  {selectedImage ? (
+                    <TouchableOpacity
+                      onPress={pickImage}
+                      disabled={isCalendarOpen || keyboardVisible}
+                    >
+                      <Image
+                        source={{ uri: selectedImage }}
                         style={[
-                          styles.titleInput,
-                          { fontSize: scale(13), paddingHorizontal: scale(10) },
+                          styles.thumbnailImage,
+                          {
+                            width: scale(45),
+                            height: scale(45),
+                            borderRadius: scale(8),
+                          },
                         ]}
-                        maxLength={50}
-                        numberOfLines={1}
-                        placeholder="Nhập tựa đề..."
-                        placeholderTextColor="#999"
-                        onBlur={() => setIsEditing(false)}
-                        autoFocus
                       />
-                    ) : (
-                      <TouchableOpacity
-                        style={{ flex: 1 }}
-                        onPress={() => {
-                          if (!isCalendarOpen) setIsEditing(true);
-                        }}
-                        disabled={isCalendarOpen}
-                      >
-                        {title.length > 23 ? (
-                          <ScrollingText text={title} />
-                        ) : (
-                          <Text
-                            style={[
-                              styles.titleInput,
-                              { fontSize: scale(13), paddingHorizontal: 10 },
-                            ]}
-                          >
-                            {title}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    )}
-                    {title.length > 0 && (
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[
+                        styles.fileButton,
+                        {
+                          height: scale(40),
+                          borderRadius: scale(20),
+                          paddingVertical: scale(6),
+                          paddingHorizontal: scale(12),
+                        },
+                      ]}
+                      onPress={pickImage}
+                      disabled={isCalendarOpen || keyboardVisible}
+                    >
                       <Text
-                        style={[
-                          styles.characterCount,
-                          { fontSize: scale(11), top: scale(17) },
-                        ]}
+                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
                       >
-                        {title.length}/50
+                        Nhập ở đây
                       </Text>
-                    )}
-                  </View>
+                      <Text
+                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
+                      >
+                        ▼
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Ngày */}
@@ -328,7 +393,8 @@ const AddMemoryModal: React.FC<Props> = ({
                           {
                             height: scale(40),
                             borderRadius: scale(20),
-                            paddingHorizontal: scale(10),
+                            paddingVertical: scale(6),
+                            paddingHorizontal: scale(12),
                           },
                         ]}
                         onPress={handleCalendarOpen}
@@ -359,9 +425,23 @@ const AddMemoryModal: React.FC<Props> = ({
 
               {/* Miêu tả */}
               <View style={styles.descriptionRow}>
-                <Text style={[styles.label, { fontSize: scale(14) }]}>
-                  Miêu tả
-                </Text>
+                <View>
+                  <Text style={[styles.label, { fontSize: scale(14) }]}>
+                    Miêu tả
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.aiContanier,
+                      isFormValid() && styles.aiActive,
+                    ]}
+                    onPress={handleSuggest}
+                    disabled={!isFormValid()}
+                  >
+                    <FontAwesome5 name="robot" size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
+
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
@@ -376,55 +456,13 @@ const AddMemoryModal: React.FC<Props> = ({
                   multiline={true}
                   numberOfLines={4}
                   textAlignVertical="top"
+                  placeholder="Nếu bạn chưa biết ghi gì, có thể nhờ AI hỗ trợ nha!"
+                  placeholderTextColor="#999"
                   editable={!isCalendarOpen}
                   onFocus={() => {
                     if (isCalendarOpen) Keyboard.dismiss();
                   }}
                 />
-              </View>
-
-              {/* Ảnh */}
-              <View style={styles.fileRow}>
-                <Text style={[styles.label, { fontSize: scale(14) }]}>
-                  Nhập tập tin:
-                </Text>
-                {selectedImage ? (
-                  <TouchableOpacity
-                    onPress={pickImage}
-                    disabled={isCalendarOpen || keyboardVisible}
-                  >
-                    <Image
-                      source={{ uri: selectedImage }}
-                      style={[
-                        styles.thumbnailImage,
-                        {
-                          width: scale(45),
-                          height: scale(45),
-                          borderRadius: scale(8),
-                        },
-                      ]}
-                    />
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.fileButton,
-                      {
-                        borderRadius: scale(20),
-                        paddingVertical: scale(6),
-                        paddingHorizontal: scale(12),
-                      },
-                    ]}
-                    onPress={pickImage}
-                    disabled={isCalendarOpen || keyboardVisible}
-                  >
-                    <Text
-                      style={[styles.fileButtonText, { fontSize: scale(13) }]}
-                    >
-                      Nhập ở đây ▼
-                    </Text>
-                  </TouchableOpacity>
-                )}
               </View>
 
               {/* Nút thêm */}
@@ -471,6 +509,22 @@ const AddMemoryModal: React.FC<Props> = ({
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      {aiError && (
+        <ModalConfirm
+          visible={aiError}
+          mode="noti"
+          titleText="Thông báo"
+          contentText="Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!"
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#FBBF24"
+          confirmBtnText="Đóng"
+          confirmBtnColor="grey"
+          onClose={() => setAiError(false)}
+          onConfirm={() => setAiError(false)}
+          width={460}
+        />
+      )}
     </Modal>
   );
 };
@@ -479,8 +533,11 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   content: {
     backgroundColor: "white",
@@ -505,13 +562,12 @@ const styles = StyleSheet.create({
   row1: {
     justifyContent: "space-between",
     flexDirection: "row",
-    gap: 10,
+    marginVertical: 10,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flex: 1,
   },
   label: {
     fontFamily: "Baloo2_medium",
@@ -529,6 +585,8 @@ const styles = StyleSheet.create({
   titleInput: {
     color: "#333",
     flex: 1,
+    fontFamily: "Baloo2_medium",
+    marginTop: 5,
   },
   characterCount: {
     position: "absolute",
@@ -559,12 +617,12 @@ const styles = StyleSheet.create({
   },
   calendarContainer: {
     position: "absolute",
-    top: -45,
-    left: -5,
+    top: -95,
+    left: 0,
     zIndex: 1000,
   },
   descriptionRow: {
-    marginVertical: 10,
+    marginBottom: 10,
     flexDirection: "row",
     gap: 10,
   },
@@ -579,11 +637,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     alignItems: "center",
-    marginBottom: 15,
+    width: 260,
   },
   fileButton: {
     backgroundColor: "#B1E1FF",
+    justifyContent: "space-between",
     alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
   },
   fileButtonText: {
     color: "#333333",
@@ -593,6 +654,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
+  aiContanier: {
+    paddingVertical: 14,
+    borderRadius: 200,
+    backgroundColor: "#D3D3D3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiActive: { backgroundColor: "#FFBCDD" },
   addButton: {
     alignSelf: "flex-end",
   },
