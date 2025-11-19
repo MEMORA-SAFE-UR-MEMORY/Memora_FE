@@ -7,8 +7,11 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
+import { TextInput } from "react-native-gesture-handler";
+import RoomSettingMenu from "./RoomSettingMenu";
 
 type Props = {
   visible: boolean;
@@ -28,6 +31,11 @@ const RoomSetting: React.FC<Props> = ({
   onSave,
   currentType,
 }) => {
+  // Width, Height
+  const { width, height } = useWindowDimensions();
+  const modalWidth = 0.5 * width;
+
+  // Mock
   const ops: Option[] = [
     {
       label: "Riêng tư",
@@ -39,8 +47,15 @@ const RoomSetting: React.FC<Props> = ({
     },
   ];
 
+  // State
   const [selected, setSelected] = useState<"private" | "public">(currentType);
+  const [selectedMenu, setSelectedMenu] = useState<number>(1);
 
+  // Check
+  const isInvitedUser = selectedMenu === 2;
+  const isPublic = currentType === "public";
+
+  // Use Effect
   useEffect(() => {
     setSelected(currentType);
   }, [currentType]);
@@ -55,51 +70,88 @@ const RoomSetting: React.FC<Props> = ({
       supportedOrientations={["portrait", "landscape"]}
     >
       <View style={styles.overlay}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Cài đặt phòng</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close-circle" size={30} color="#B0B0B0" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Quyền truy cập:</Text>
-            <View style={styles.opsContainer}>
-              {ops.map((op) => {
-                const isSelected = selected === op.value;
-                return (
-                  <View key={op.value} style={styles.opsRow}>
-                    <Pressable
-                      style={[
-                        styles.opsUnselected,
-                        isSelected && styles.opsSelected,
-                      ]}
-                      onPress={() => setSelected(op.value)}
-                    ></Pressable>
-                    <Text style={styles.text}>{op.label}</Text>
-                  </View>
-                );
-              })}
+        <View style={[styles.container, { width: modalWidth }]}>
+          <RoomSettingMenu
+            modalWidth={modalWidth}
+            selected={selectedMenu}
+            setSelected={(id) => {
+              setSelectedMenu(id);
+            }}
+          />
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>
+                {isInvitedUser ? "Mời tham quan" : "Cài đặt phòng"}
+              </Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Ionicons name="close-circle" size={30} color="#B0B0B0" />
+              </TouchableOpacity>
             </View>
-          </View>
 
-          <View style={styles.noteRow}>
-            <Text style={styles.noteLabel}>Lưu ý: </Text>
-            <Text style={styles.noteValue}>
-              Ở chế độ Riêng tư, ảnh được lưu trong thiết bị của bạn. Nếu bạn
-              xóa ảnh hoặc dữ liệu ứng dụng trên máy, những nội dung này sẽ bị
-              mất vĩnh viễn.
-            </Text>
-          </View>
-
-          <View style={styles.addButton}>
-            <BtnBorder
-              text="Lưu"
-              fontSize={15}
-              colorType={"pink"}
-              onPress={() => onSave(selected)}
-            />
+            {!isInvitedUser ? (
+              <>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Quyền truy cập:</Text>
+                  <View style={styles.opsContainer}>
+                    {ops.map((op) => {
+                      const isSelected = selected === op.value;
+                      return (
+                        <View key={op.value} style={styles.opsRow}>
+                          <Pressable
+                            style={[
+                              styles.opsUnselected,
+                              isSelected && styles.opsSelected,
+                            ]}
+                            onPress={() => setSelected(op.value)}
+                          ></Pressable>
+                          <Text style={styles.text}>{op.label}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+                <View style={styles.noteRow}>
+                  <Text style={styles.noteLabel}>Lưu ý: </Text>
+                  <Text style={styles.noteValue}>
+                    Ở chế độ Riêng tư, ảnh được lưu trong thiết bị của bạn. Nếu
+                    bạn xóa ảnh hoặc dữ liệu ứng dụng trên máy, những nội dung
+                    này sẽ bị mất vĩnh viễn.
+                  </Text>
+                </View>
+                <View style={styles.addButton}>
+                  <BtnBorder
+                    text="Lưu"
+                    fontSize={15}
+                    colorType={"pink"}
+                    onPress={() => onSave(selected)}
+                  />
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.inputRow}>
+                  <Text style={styles.label}>Tên tài khoản</Text>
+                  <View style={styles.inputContainer}>
+                    <TextInput style={styles.inputText} editable={isPublic} />
+                  </View>
+                </View>
+                <View style={[styles.noteRow]}>
+                  <Text style={styles.noteLabel}>Lưu ý: </Text>
+                  <Text style={styles.noteValue}>
+                    Chức năng này chỉ có ở chế độ Công khai!
+                  </Text>
+                </View>
+                <View style={styles.addButton}>
+                  <BtnBorder
+                    text="Mời"
+                    fontSize={15}
+                    colorType={!isPublic ? "grey" : "pink"}
+                    disabled={!isPublic}
+                    onPress={() => onSave(selected)}
+                  />
+                </View>
+              </>
+            )}
           </View>
         </View>
       </View>
@@ -112,14 +164,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  container: {
+    width: "50%",
   },
   content: {
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
-    width: "50%",
     borderWidth: 6,
     borderColor: "#E9D8FF",
+    zIndex: 10,
   },
   header: {
     flexDirection: "row",
@@ -193,6 +249,25 @@ const styles = StyleSheet.create({
     fontFamily: "Baloo2_medium",
     flex: 1,
     fontSize: 14,
+  },
+  inputRow: {
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  inputContainer: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 20,
+  },
+  inputText: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontFamily: "Baloo2_medium",
+    fontSize: 14,
+    color: "#333",
   },
   addButton: {
     alignSelf: "center",
