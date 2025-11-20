@@ -2,6 +2,7 @@ import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
+import ListRoomModal from "@src/components/ListRoomModal";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
 
@@ -40,7 +41,7 @@ import Animated, {
 
 const Room = () => {
   const { user } = useAuthContext();
-  const { roomId, themeId, type, mode, back, setRoomContext } =
+  const { roomId, themeId, type, mode, viewType, back, setRoomContext } =
     useRoomContext();
   const fontsLoaded = useCustomFonts();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -56,6 +57,7 @@ const Room = () => {
     },
   });
   const [isNullRoom, setIsNullRoom] = useState<boolean>(false);
+  const [showList, setShowList] = useState<boolean>(false);
 
   useAnimatedReaction(
     () => scrollX.value,
@@ -160,7 +162,7 @@ const Room = () => {
     }
   }, [roomDetail, effectiveRoom, fontsLoaded]);
 
-  const onNext = async () => {
+  const handleDiscoveryRandom = async () => {
     try {
       if (!user?.id) return;
       setIsLoading(true);
@@ -181,6 +183,7 @@ const Room = () => {
         themeId: newThemeId,
         type: newType,
         mode: "view",
+        viewType: "random",
         back: newBack,
       });
 
@@ -191,6 +194,7 @@ const Room = () => {
           themeId: newThemeId,
           type: newType,
           mode: "view",
+          viewType: "random",
           back: newBack,
         },
       });
@@ -198,6 +202,22 @@ const Room = () => {
       console.error("Error fetching next room:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDiscoveryList = () => {
+    setShowList(true);
+  };
+
+  const handleCloseList = () => {
+    setShowList(false);
+  };
+
+  const onNext = async (viewType: string) => {
+    if (viewType === "random") {
+      handleDiscoveryRandom();
+    } else {
+      handleDiscoveryList();
     }
   };
 
@@ -224,6 +244,7 @@ const Room = () => {
         themeId: newThemeId,
         type: newType,
         mode: "view",
+        viewType: "random",
         back: newBack,
       });
 
@@ -234,6 +255,7 @@ const Room = () => {
           themeId: newThemeId,
           type: newType,
           mode: "view",
+          viewType: "random",
           back: newBack,
         },
       });
@@ -331,6 +353,7 @@ const Room = () => {
 
           <RoomMenu
             mode={mode}
+            viewType={viewType}
             onOpenInventory={openInventory}
             onOpenSetting={openSetting}
             isInventoryDisabled={isInventoryDisabled}
@@ -383,6 +406,8 @@ const Room = () => {
       {isSettingOpen && (
         <RoomSetting
           visible={true}
+          roomId={roomId}
+          myUserId={user.id}
           onClose={closeSetting}
           onSave={handleSaveSetting}
           currentType={roomDetail.type}
@@ -413,6 +438,14 @@ const Room = () => {
           slotId={activeSlotId}
           mode={mode ?? "edit"}
           memoryResolver={resolveMemory}
+        />
+      )}
+
+      {showList && (
+        <ListRoomModal
+          visible={showList}
+          onClose={handleCloseList}
+          back={back}
         />
       )}
 

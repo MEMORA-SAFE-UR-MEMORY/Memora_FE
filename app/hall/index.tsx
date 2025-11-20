@@ -227,6 +227,7 @@ export default function HallScreen() {
         themeId: String(r.themeId),
         type: r.type ?? "public",
         mode: "view" as const,
+        viewType: "random",
         back: "/hall",
       };
       router.replace({ pathname: "/room", params });
@@ -598,6 +599,7 @@ export default function HallScreen() {
         visible={exploreIntroVisible}
         onClose={() => setExploreIntroVisible(false)}
         onConfirm={onConfirmExploreIntro}
+        back="/hall"
       />
     </View>
   );

@@ -142,6 +142,7 @@ export default function HomeScreen() {
         themeId: String(r.themeId),
         type: r.type ?? "public",
         mode: "view",
+        viewType: "random",
         back: "/home",
       };
       router.replace({ pathname: "/room", params });
@@ -496,6 +497,7 @@ export default function HomeScreen() {
         visible={exploreIntroVisible}
         onClose={() => setExploreIntroVisible(false)}
         onConfirm={onConfirmExploreIntro}
+        back="/home"
       />
     </View>
   );

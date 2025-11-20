@@ -549,3 +549,71 @@ export const deleteMemory = async (memoryId: number) => {
     return { success: false, error: error.message };
   }
 };
+
+// Share link
+export const roomShareApi = {
+  findUserByUsername: async (username: string) =>
+    supabase
+      .from("users")
+      .select("id, username")
+      .eq("username", username)
+      .single(),
+
+  checkExistingInvite: async (roomId: number, userId: string) =>
+    supabase
+      .from("room_share")
+      .select("id")
+      .eq("room_id", roomId)
+      .eq("invited_user_id", userId)
+      .maybeSingle(),
+
+  insertInvite: async (
+    roomId: number,
+    invitedUserId: string,
+    invitedBy: string
+  ) =>
+    supabase.from("room_share").insert({
+      room_id: roomId,
+      invited_user_id: invitedUserId,
+      invited_by: invitedBy,
+    }),
+
+  getSharedRoomsByUser: async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("room_share")
+        .select(
+          `
+          id,
+          room_id,
+          invited_user_id,
+          invited_by,
+          created_at,
+          rooms (
+            id,
+            room_name,
+            user_id,
+             user_theme:user_themes!rooms_theme_id_fkey (
+        id, theme_id,
+        theme:themes (
+          id, theme_name, door_id,
+          door:doors ( id, img_url, created_at, color_hex )
+        )
+      )
+          ),
+          users:invited_by (
+            id,
+            username
+          )
+        `
+        )
+        .eq("invited_user_id", userId);
+
+      if (error) return { error };
+
+      return { data };
+    } catch (err) {
+      return { error: err };
+    }
+  },
+};
