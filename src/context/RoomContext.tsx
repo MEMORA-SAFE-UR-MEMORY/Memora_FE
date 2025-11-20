@@ -5,6 +5,7 @@ type RoomContextType = {
   themeId: number;
   type: "private" | "public";
   mode?: "view" | "edit";
+  viewType?: "random" | "list";
   back: string;
   setRoomContext: (
     newValues: Partial<Omit<RoomContextType, "setRoomContext">>
@@ -19,6 +20,7 @@ export const RoomProvider = ({
   themeId,
   type,
   mode = "edit",
+  viewType,
   back,
 }: Omit<RoomContextType, "setRoomContext"> & { children: React.ReactNode }) => {
   const [contextValue, setContextValue] = useState<
@@ -28,6 +30,7 @@ export const RoomProvider = ({
     themeId,
     type,
     mode,
+    viewType,
     back,
   });
 

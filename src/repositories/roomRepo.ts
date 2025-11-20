@@ -1,6 +1,6 @@
 import * as api from "@src/apis/roomApi";
 import { SuggestReq, SuggestRes } from "@src/types/memory";
-import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
+import { Draft, Room, RoomDetail, RoomType, SharedRoom } from "@src/types/room";
 import {
   getFromStorage,
   removeFromStorage,
@@ -124,5 +124,49 @@ export const roomRepo = {
     const res = await api.deleteMemory(memoryId);
 
     return res;
+  },
+
+  // Share link
+  getUserByUsername: async (username: string) => {
+    const { data, error } = await api.roomShareApi.findUserByUsername(username);
+    if (error || !data) return null;
+    return data;
+  },
+
+  isUserAlreadyInvited: async (roomId: number, userId: string) => {
+    const { data, error } = await api.roomShareApi.checkExistingInvite(
+      roomId,
+      userId
+    );
+    if (error) return null;
+    return data !== null;
+  },
+
+  inviteUser: async (
+    roomId: number,
+    invitedUserId: string,
+    invitedBy: string
+  ) => {
+    const { error } = await api.roomShareApi.insertInvite(
+      roomId,
+      invitedUserId,
+      invitedBy
+    );
+    return !error;
+  },
+
+  getSharedRooms: async (userId: string): Promise<SharedRoom[]> => {
+    const { data, error } = await api.roomShareApi.getSharedRoomsByUser(userId);
+
+    if (error || !data) return [];
+
+    return data.map((item: any) => ({
+      id: item.id,
+      roomShareId: item.room_id,
+      themeId: item.rooms?.user_theme?.theme_id,
+      ownerId: item.invited_by,
+      roomName: item.rooms?.room_name || "Không có tên",
+      ownerName: item.users?.username || "Ẩn danh",
+    }));
   },
 };

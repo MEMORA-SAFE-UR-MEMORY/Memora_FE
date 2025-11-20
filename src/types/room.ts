@@ -45,3 +45,12 @@ export interface Draft {
   lastEdited: string; // ISO
   patches: DraftOp[];
 }
+
+export type SharedRoom = {
+  id: number;
+  roomShareId: number;
+  roomName: string;
+  themeId: number;
+  ownerId: number;
+  ownerName: string;
+};
