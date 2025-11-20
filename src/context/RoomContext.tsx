@@ -12,7 +12,7 @@ type RoomContextType = {
   ) => void;
 };
 
-const RoomContext = createContext<RoomContextType | null>(null);
+export const RoomContext = createContext<RoomContextType | null>(null);
 
 export const RoomProvider = ({
   children,

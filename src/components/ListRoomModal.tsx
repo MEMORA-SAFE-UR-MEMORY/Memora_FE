@@ -1,7 +1,7 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import { useAuthContext } from "@src/context/AuthContext";
-import { useRoomContext } from "@src/context/RoomContext";
+import { useSafeRoomContext } from "@src/hooks/useSafeRoomContext";
 import { useSharedRoom } from "@src/hooks/useSharedRoom";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -19,9 +19,10 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   back: string;
+  useContext?: boolean;
 };
 
-const ListRoomModal = ({ visible, onClose, back }: Props) => {
+const ListRoomModal = ({ visible, onClose, back, useContext }: Props) => {
   const { width } = useWindowDimensions();
   const modalWidth = 0.6 * width;
 
@@ -31,17 +32,19 @@ const ListRoomModal = ({ visible, onClose, back }: Props) => {
   // Hook
   const { user } = useAuthContext();
   const { rooms, loading } = useSharedRoom(user.id);
-  const { setRoomContext } = useRoomContext();
+  const roomCtx = useSafeRoomContext();
 
   // Handle
   const handleRoomPress = (roomId: number, themeId: number) => {
-    setRoomContext({
-      roomId: roomId,
-      themeId: themeId,
-      mode: "view",
-      viewType: "list",
-      back: back,
-    });
+    if (useContext && roomCtx?.setRoomContext) {
+      roomCtx.setRoomContext({
+        roomId,
+        themeId,
+        mode: "view",
+        viewType: "list",
+        back,
+      });
+    }
 
     const params = {
       roomId,
