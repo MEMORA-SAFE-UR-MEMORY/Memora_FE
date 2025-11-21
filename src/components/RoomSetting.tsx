@@ -77,11 +77,20 @@ const RoomSetting: React.FC<Props> = ({
                       ]}
                       onPress={() => setSelected(op.value)}
                     ></Pressable>
-                    <Text>{op.label}</Text>
+                    <Text style={styles.text}>{op.label}</Text>
                   </View>
                 );
               })}
             </View>
+          </View>
+
+          <View style={styles.noteRow}>
+            <Text style={styles.noteLabel}>Lưu ý: </Text>
+            <Text style={styles.noteValue}>
+              Ở chế độ Riêng tư, ảnh được lưu trong thiết bị của bạn. Nếu bạn
+              xóa ảnh hoặc dữ liệu ứng dụng trên máy, những nội dung này sẽ bị
+              mất vĩnh viễn.
+            </Text>
           </View>
 
           <View style={styles.addButton}>
@@ -108,7 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 12,
-    width: "45%",
+    width: "50%",
     borderWidth: 6,
     borderColor: "#E9D8FF",
   },
@@ -135,7 +144,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 20,
-    marginBottom: 20,
   },
   label: {
     fontFamily: "Baloo2_semiBold",
@@ -150,11 +158,14 @@ const styles = StyleSheet.create({
   },
   opsRow: {
     flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 10,
   },
   opsUnselected: {
     borderRadius: 100,
-    padding: 10,
+    width: 20,
+    height: 20,
     borderWidth: 1,
     backgroundColor: "white",
   },
@@ -162,9 +173,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFBCDD",
   },
   text: {
-    fontFamily: "Baloo2_semiBold",
+    fontFamily: "Baloo2_medium",
     fontSize: 16,
     color: "#333",
+  },
+  noteRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 5,
+    marginBottom: 10,
+    marginTop: 5,
+  },
+  noteLabel: {
+    color: "red",
+    fontFamily: "Baloo2_semiBold",
+  },
+  noteValue: {
+    color: "#666",
+    fontFamily: "Baloo2_medium",
+    flex: 1,
+    fontSize: 14,
   },
   addButton: {
     alignSelf: "center",

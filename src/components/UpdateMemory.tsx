@@ -1,8 +1,9 @@
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import BtnBorder from "@src/components/BtnBorder";
-import ImageCropModal from "@src/components/ImageCropModal";
 import ModalCalendar from "@src/components/ModalCalendar";
+import ModalConfirm from "@src/components/ModalConfirm";
 import ScrollingText from "@src/components/ScrollingText";
+import { useAiCooldown } from "@src/hooks/useAiCooldown";
 import * as roomService from "@src/services/roomService";
 import { RoomItem } from "@src/types/item";
 import { Memory, SuggestReq } from "@src/types/memory";
@@ -29,6 +30,12 @@ type Props = {
   slotId: number | null;
   onUpdate: (data: Memory) => void;
   onLoadingChange?: (loading: boolean) => void;
+  onRequestCrop?: (
+    imageUri: string,
+    slot: any,
+    imgSize: { imgW: number; imgH: number },
+    onConfirm?: (croppedUri: string) => void
+  ) => void;
 };
 
 const UpdateMemory = ({
@@ -37,6 +44,7 @@ const UpdateMemory = ({
   slotId,
   onUpdate,
   onLoadingChange,
+  onRequestCrop,
 }: Props) => {
   const id = memory.id;
   const [title, setTitle] = useState(memory.title);
@@ -50,10 +58,10 @@ const UpdateMemory = ({
   const scrollRef = useRef<KeyboardAwareScrollView>(null);
   const textInputRef = useRef<TextInput>(null);
   const [aiError, setAiError] = useState(false);
+  const [aiErrorMsg, setAiErrorMsg] = useState<string>("");
 
-  // === Crop State ===
-  const [tempImage, setTempImage] = useState<string | null>(null);
-  const [isCropOpen, setIsCropOpen] = useState(false);
+  // Hook
+  const { aiDisabled, aiCountdown, startCooldown } = useAiCooldown(300);
 
   // Calendar
 
@@ -107,17 +115,13 @@ const UpdateMemory = ({
     });
 
     if (!result.canceled) {
-      handleOpenCropModal(result.assets[0].uri);
-    }
-  };
+      // Lấy ảnh và kích thước gốc
+      const imageUri = result.assets[0].uri;
+      const { width: imgW, height: imgH } = result.assets[0];
 
-  const handleOpenCropModal = async (imageUri: string) => {
-    try {
-      onLoadingChange?.(true);
-
+      // Lấy slot tương ứng từ frameItem
       if (!frameItem?.item?.slots || slotId == null) {
         console.warn("Không có slot hợp lệ để crop ảnh");
-        onLoadingChange?.(false);
         return;
       }
 
@@ -128,32 +132,16 @@ const UpdateMemory = ({
       const slot = slots.find((s) => s.slotId === slotId);
       if (!slot) {
         console.warn("Không tìm thấy slot với id:", slotId);
-        onLoadingChange?.(false);
         return;
       }
 
-      // Set ảnh tạm để modal crop sử dụng
-      setTempImage(imageUri);
-
-      // Mở modal sau 1 nhịp để đảm bảo render overlay trước
-      setTimeout(() => {
-        setIsCropOpen(true);
-        onLoadingChange?.(false);
-      }, 300);
-    } catch (err) {
-      console.error("Lỗi khi mở crop modal:", err);
-      onLoadingChange?.(false);
+      // Gọi callback sang MemoryModal
+      onRequestCrop?.(imageUri, slot, { imgW, imgH }, handleCropConfirm);
     }
   };
 
   const handleCropConfirm = (croppedUri: string) => {
     setSelectedImage(croppedUri);
-    setIsCropOpen(false);
-  };
-
-  const handleCropCancel = () => {
-    setIsCropOpen(false);
-    setTempImage(null);
   };
 
   const handleSuggest = async () => {
@@ -161,6 +149,7 @@ const UpdateMemory = ({
       onLoadingChange?.(true);
 
       if (!selectedImage) {
+        setAiErrorMsg("Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!");
         setAiError(true);
         onLoadingChange?.(false);
         return;
@@ -181,7 +170,9 @@ const UpdateMemory = ({
 
       setDescription(desc);
     } catch (error) {
-      console.error(error);
+      setAiErrorMsg("Hiện AI đang bị quá tải. Vui lòng thử lại sau 5'!");
+      setAiError(true);
+      startCooldown();
     } finally {
       onLoadingChange?.(false);
     }
@@ -341,12 +332,30 @@ const UpdateMemory = ({
                 <Text style={[styles.label]}>Miêu tả</Text>
 
                 <TouchableOpacity
-                  style={[styles.aiContanier, isFormValid() && styles.aiActive]}
+                  style={[
+                    styles.aiContanier,
+                    isFormValid() && !aiDisabled && styles.aiActive,
+                  ]}
                   onPress={handleSuggest}
-                  disabled={!isFormValid()}
+                  disabled={!isFormValid() || aiDisabled}
                 >
                   <FontAwesome5 name="robot" size={20} color="white" />
                 </TouchableOpacity>
+                {aiDisabled && (
+                  <Text
+                    style={{
+                      color: "#666",
+                      marginTop: 2,
+                      fontSize: 10,
+                      marginHorizontal: "auto",
+                      textAlign: "center",
+                      fontFamily: "Baloo2_medium",
+                    }}
+                  >
+                    {Math.floor(aiCountdown / 60)}:
+                    {(aiCountdown % 60).toString().padStart(2, "0")}
+                  </Text>
+                )}
               </View>
               <TextInput
                 ref={textInputRef}
@@ -387,34 +396,28 @@ const UpdateMemory = ({
         </TouchableWithoutFeedback>
       </KeyboardAwareScrollView>
 
-      {/* === Modal Crop === */}
-      {tempImage &&
-        isCropOpen &&
-        frameItem?.item?.slots &&
-        slotId !== null &&
-        (() => {
-          const slots = Array.isArray(frameItem.item.slots[0])
-            ? frameItem.item.slots.flat()
-            : frameItem.item.slots;
-
-          const slot = slots.find((s) => s.slotId === slotId);
-
-          if (!slot) {
-            console.warn("Không tìm thấy slot với id:", slotId);
-            return null;
-          }
-
-          return (
-            <ImageCropModal
-              key={slotId}
-              visible={isCropOpen}
-              imageUri={tempImage}
-              slot={slot}
-              onConfirm={handleCropConfirm}
-              onCancel={handleCropCancel}
-            />
-          );
-        })()}
+      {/* Error Modal */}
+      {aiError && (
+        <ModalConfirm
+          visible={aiError}
+          mode="noti"
+          titleText="Thông báo"
+          contentText={aiErrorMsg}
+          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+          iconBgColor="#FBBF24"
+          confirmBtnText="Đóng"
+          confirmBtnColor="grey"
+          onClose={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
+          onConfirm={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
+          width={460}
+        />
+      )}
     </View>
   );
 };

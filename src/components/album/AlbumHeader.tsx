@@ -19,13 +19,11 @@ export default function AlbumHeader({
     <SafeAreaView edges={["top"]}>
       <View
         style={{
-          height: 50,
+          height: 45,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
           paddingHorizontal: 12,
-          borderBottomWidth: 0.5,
-          borderBottomColor: "#fdfefeff",
         }}
       >
         <Pressable
@@ -44,15 +42,15 @@ export default function AlbumHeader({
           numberOfLines={1}
           style={{
             color: "#000000",
-            fontSize: 20,
-            fontWeight: "600",
-            fontFamily: "Baloo2-medium",
+            fontSize: 18,
+
+            fontFamily: "Baloo2_medium",
           }}
         >
           {title}
         </Text>
         <Pressable
-          onPress={() => router.push("/my-albums" as any)}
+          onPress={() => router.replace("/my-albums" as any)}
           style={{
             position: "absolute",
             right: 24,
@@ -66,7 +64,9 @@ export default function AlbumHeader({
           }}
         >
           <Ionicons name="albums-outline" size={16} color="#374151" />
-          <Text style={{ color: "#374151", fontWeight: "600" }}>Kho album</Text>
+          <Text style={{ color: "#374151", fontFamily: "Baloo2_semiBold" }}>
+            Kho album
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>

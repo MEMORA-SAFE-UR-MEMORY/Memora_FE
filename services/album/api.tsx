@@ -265,12 +265,23 @@ export type RNFileLike = { uri: string; name: string; type: string };
 export async function uploadSlotPhotoViaApi(params: {
   slotId: number;
   file: RNFileLike;
+  authToken?: string; // optional nếu server cần bearer token
 }): Promise<void> {
-  const { slotId, file } = params;
+  const { slotId, file, authToken } = params;
   const base = process.env.EXPO_PUBLIC_API_URL;
+  if (!base) {
+    console.error("[uploadSlotPhotoViaApi] Missing EXPO_PUBLIC_API_URL env");
+    throw new Error("Thiếu EXPO_PUBLIC_API_URL. Kiểm tra cấu hình.");
+  }
   const endpoint = `${base}/api/AlbumPageSlot/upload-1-photo?Id=${encodeURIComponent(
     String(slotId)
   )}`;
+  console.log("[uploadSlotPhotoViaApi] endpoint:", endpoint);
+  console.log("[uploadSlotPhotoViaApi] file:", {
+    name: file.name,
+    type: file.type,
+    uriStart: file.uri?.slice(0, 60),
+  });
 
   const form = new FormData();
   form.append("Photo", {
@@ -279,19 +290,41 @@ export async function uploadSlotPhotoViaApi(params: {
     type: file.type,
   } as any);
 
-  const res = await fetch(endpoint, {
-    method: "PUT",
-    body: form,
-  });
+  const headers: Record<string, string> = {};
+  if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+  const started = Date.now();
+  let res: Response;
+  try {
+    res = await fetch(endpoint, { method: "PUT", body: form, headers });
+  } catch (err) {
+    console.error("[uploadSlotPhotoViaApi] network error:", err);
+    throw new Error("Không thể kết nối máy chủ upload.");
+  }
+  const ms = Date.now() - started;
+  console.log(
+    "[uploadSlotPhotoViaApi] status:",
+    res.status,
+    res.statusText,
+    `(${ms}ms)`
+  );
 
   if (!res.ok) {
-    let msg = "Upload ảnh thất bại";
+    let msg = `Upload ảnh thất bại (${res.status})`;
     try {
       const text = await res.text();
+      console.log("[uploadSlotPhotoViaApi] error body:", text);
       if (text) msg = text;
     } catch {}
     throw new Error(msg);
   }
+
+  // Log body (nếu server trả gì đó để debug)
+  try {
+    const text = await res.text();
+    if (text)
+      console.log("[uploadSlotPhotoViaApi] response body:", text.slice(0, 500));
+  } catch {}
 }
 
 // Fetch albums of a user with slot progress (total vs filled)

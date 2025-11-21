@@ -5,6 +5,7 @@ import ImageCropModal from "@src/components/ImageCropModal";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalCalendar from "@src/components/ModalCalendar";
 import ModalConfirm from "@src/components/ModalConfirm";
+import { useAiCooldown } from "@src/hooks/useAiCooldown";
 import * as roomService from "@src/services/roomService";
 import { RoomItem } from "@src/types/item";
 import { Memory, SuggestReq } from "@src/types/memory";
@@ -16,7 +17,6 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -26,6 +26,13 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 type Props = {
   visible: boolean;
@@ -50,9 +57,14 @@ const AddMemoryModal: React.FC<Props> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [tempImage, setTempImage] = useState<string | null>(null);
+  const [imgSize, setImgSize] = useState<any>({
+    imgW: 0,
+    imgH: 0,
+  });
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [aiError, setAiError] = useState(false);
+  const [aiErrorMsg, setAiErrorMsg] = useState<string>("");
 
   const { width, height } = useWindowDimensions();
   const isSmallDevice = width <= 700;
@@ -63,6 +75,9 @@ const AddMemoryModal: React.FC<Props> = ({
     if (isTablet) return size * 1.2;
     return size; // thiết bị trung bình giữ nguyên
   };
+
+  // Hook
+  const { aiDisabled, aiCountdown, startCooldown } = useAiCooldown(300);
 
   // Calendar
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -110,6 +125,9 @@ const AddMemoryModal: React.FC<Props> = ({
     });
 
     if (!result.canceled) {
+      const { width: imgW, height: imgH } = result.assets[0];
+      setImgSize({ imgW, imgH });
+
       handleOpenCropModal(result.assets[0].uri);
     }
   };
@@ -164,6 +182,7 @@ const AddMemoryModal: React.FC<Props> = ({
       setIsLoading(true);
 
       if (!selectedImage) {
+        setAiErrorMsg("Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!");
         setAiError(true);
         setIsLoading(false);
         return;
@@ -184,7 +203,9 @@ const AddMemoryModal: React.FC<Props> = ({
 
       setDescription(desc);
     } catch (error) {
-      console.error(error);
+      setAiErrorMsg("Hiện AI đang bị quá tải. Vui lòng thử lại sau 5'!");
+      setAiError(true);
+      startCooldown();
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +225,13 @@ const AddMemoryModal: React.FC<Props> = ({
     setDescription("");
     setSelectedImage(null);
     setSelectedDate("");
-    onClose();
+    handleClose();
+  };
+
+  const handleClose = () => {
+    opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+      if (finished) runOnJS(onClose)();
+    });
   };
 
   const isFormValid = useCallback(() => {
@@ -213,20 +240,47 @@ const AddMemoryModal: React.FC<Props> = ({
     );
   }, [selectedImage, title, selectedDate]);
 
+  // Animated
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (visible) {
+      // Fade in
+      opacity.value = withTiming(1, {
+        duration: 300,
+        easing: Easing.inOut(Easing.ease),
+      });
+    } else {
+      // Fade out
+      opacity.value = withTiming(
+        0,
+        {
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(onClose)();
+          }
+        }
+      );
+    }
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    pointerEvents: visible ? "auto" : "none", // tránh bấm khi ẩn
+  }));
+
+  if (!visible && opacity.value === 0) return null;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
-      statusBarTranslucent
-      supportedOrientations={["portrait", "landscape"]}
-    >
+    <Animated.View style={[styles.overlay, animatedStyle]}>
       {isLoading && <LoadingOverlay />}
       <View style={styles.overlay}></View>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+        style={{ flex: 1, width, height }}
       >
         <TouchableWithoutFeedback
           onPress={() => {
@@ -258,7 +312,10 @@ const AddMemoryModal: React.FC<Props> = ({
                 >
                   Thêm kỷ niệm
                 </Text>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.closeButton}
+                >
                   <Ionicons
                     name="close-circle"
                     size={scale(28)}
@@ -433,13 +490,28 @@ const AddMemoryModal: React.FC<Props> = ({
                   <TouchableOpacity
                     style={[
                       styles.aiContanier,
-                      isFormValid() && styles.aiActive,
+                      isFormValid() && !aiDisabled && styles.aiActive,
                     ]}
                     onPress={handleSuggest}
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid() || aiDisabled}
                   >
                     <FontAwesome5 name="robot" size={20} color="white" />
                   </TouchableOpacity>
+                  {aiDisabled && (
+                    <Text
+                      style={{
+                        color: "#666",
+                        marginTop: 2,
+                        fontSize: 10,
+                        marginHorizontal: "auto",
+                        textAlign: "center",
+                        fontFamily: "Baloo2_medium",
+                      }}
+                    >
+                      {Math.floor(aiCountdown / 60)}:
+                      {(aiCountdown % 60).toString().padStart(2, "0")}
+                    </Text>
+                  )}
                 </View>
 
                 <TextInput
@@ -476,56 +548,63 @@ const AddMemoryModal: React.FC<Props> = ({
                 />
               </View>
             </View>
-
-            {/* Modal Crop */}
-            {tempImage &&
-              isCropOpen &&
-              frameItem?.item?.slots &&
-              slotId !== null &&
-              (() => {
-                // Dàn phẳng mảng slot
-                const slots = Array.isArray(frameItem.item.slots[0])
-                  ? frameItem.item.slots.flat()
-                  : frameItem.item.slots;
-
-                const slot = slots.find((s) => s.slotId === slotId);
-
-                if (!slot) {
-                  console.warn("Không tìm thấy slot với id:", slotId);
-                  return null;
-                }
-
-                return (
-                  <ImageCropModal
-                    key={slotId}
-                    visible={isCropOpen}
-                    imageUri={tempImage}
-                    slot={slot}
-                    onConfirm={handleCropConfirm}
-                    onCancel={handleCropCancel}
-                  />
-                );
-              })()}
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
+
+      {/* Modal Crop */}
+      {tempImage &&
+        isCropOpen &&
+        frameItem?.item?.slots &&
+        slotId !== null &&
+        (() => {
+          // Dàn phẳng mảng slot
+          const slots = Array.isArray(frameItem.item.slots[0])
+            ? frameItem.item.slots.flat()
+            : frameItem.item.slots;
+
+          const slot = slots.find((s) => s.slotId === slotId);
+
+          if (!slot) {
+            console.warn("Không tìm thấy slot với id:", slotId);
+            return null;
+          }
+
+          return (
+            <ImageCropModal
+              key={slotId}
+              visible={isCropOpen}
+              imageUri={tempImage}
+              slot={slot}
+              imgSize={imgSize}
+              onConfirm={handleCropConfirm}
+              onCancel={handleCropCancel}
+            />
+          );
+        })()}
 
       {aiError && (
         <ModalConfirm
           visible={aiError}
           mode="noti"
           titleText="Thông báo"
-          contentText="Vui lòng chọn ảnh trước khi sử dụng AI gợi ý miêu tả!"
+          contentText={aiErrorMsg}
           icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
           iconBgColor="#FBBF24"
           confirmBtnText="Đóng"
           confirmBtnColor="grey"
-          onClose={() => setAiError(false)}
-          onConfirm={() => setAiError(false)}
+          onClose={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
+          onConfirm={() => {
+            setAiError(false);
+            setAiErrorMsg("");
+          }}
           width={460}
         />
       )}
-    </Modal>
+    </Animated.View>
   );
 };
 
@@ -533,11 +612,14 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
     position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
+    zIndex: 200,
   },
   content: {
     backgroundColor: "white",
@@ -586,7 +668,7 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
     fontFamily: "Baloo2_medium",
-    marginTop: 5,
+    paddingTop: 5,
   },
   characterCount: {
     position: "absolute",

@@ -1,29 +1,34 @@
-import React, { useRef, useEffect, useState } from "react";
-import {
-  Modal,
-  View,
-  StyleSheet,
-  Image,
-  useWindowDimensions,
-  TouchableOpacity,
-} from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  runOnJS,
-} from "react-native-reanimated";
-import Svg, { Circle, Rect, Defs, Mask } from "react-native-svg";
-import * as ImageManipulator from "expo-image-manipulator";
 import { MaterialIcons } from "@expo/vector-icons";
+import BtnBorder from "@src/components/BtnBorder";
 import { FrameSlot } from "@src/types/frame";
 import { getCropShape } from "@src/utils/cropShape";
-import BtnBorder from "@src/components/BtnBorder";
+import * as ImageManipulator from "expo-image-manipulator";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import Svg, { Circle, Defs, Mask, Rect } from "react-native-svg";
 
 type Props = {
   visible: boolean;
   imageUri: string;
   slot: FrameSlot;
+  imgSize: { imgW: number; imgH: number };
   onConfirm: (croppedUri: string) => void;
   onCancel: () => void;
 };
@@ -32,6 +37,7 @@ const ImageCropModal: React.FC<Props> = ({
   visible,
   imageUri,
   slot,
+  imgSize,
   onConfirm,
   onCancel,
 }) => {
@@ -73,26 +79,25 @@ const ImageCropModal: React.FC<Props> = ({
 
   // Tính kích thước ảnh hiển thị thực tế
   useEffect(() => {
-    if (!imageUri) return;
-    Image.getSize(imageUri, (imgW, imgH) => {
-      const ratio = imgW / imgH;
-      let displayW = width;
-      let displayH = width / ratio;
+    if (!imageUri || !imgSize?.imgW || !imgSize?.imgH) return;
+    const { imgW, imgH } = imgSize;
+    const ratio = imgW / imgH;
+    let displayW = width;
+    let displayH = width / ratio;
 
-      if (displayH > height) {
-        displayH = height;
-        displayW = height * ratio;
-      }
+    if (displayH > height) {
+      displayH = height;
+      displayW = height * ratio;
+    }
 
-      setImageSize({ w: displayW, h: displayH });
+    setImageSize({ w: displayW, h: displayH });
 
-      // Fit ảnh với crop ban đầu
-      const fitScale = Math.max(cropW / displayW, cropH / displayH);
-      setMinScale(fitScale);
-      setMaxScale(fitScale * 3);
-      scale.value = fitScale;
-    });
-  }, [imageUri]);
+    // Fit ảnh với crop ban đầu
+    const fitScale = Math.max(cropW / displayW, cropH / displayH);
+    setMinScale(fitScale);
+    setMaxScale(fitScale * 3);
+    scale.value = fitScale;
+  }, [imageUri, imgSize]);
 
   // Pan gesture
   const pan = Gesture.Pan().onChange((e) => {
@@ -109,6 +114,7 @@ const ImageCropModal: React.FC<Props> = ({
   // Pinch gesture
   const pinch = Gesture.Pinch()
     .onChange((e) => {
+      if (e.numberOfPointers < 2) return;
       const nextScale = scale.value * e.scaleChange;
       scale.value = Math.min(Math.max(nextScale, minScale), maxScale);
 
@@ -135,24 +141,17 @@ const ImageCropModal: React.FC<Props> = ({
 
   const handleCrop = async () => {
     try {
-      // Lấy kích thước ảnh gốc
+      if (!imgSize || !imgSize.imgW || !imgSize.imgH) {
+        console.warn("Kích thước ảnh gốc chưa sẵn sàng:", imgSize);
+        return;
+      }
+
+      const { imgW: imgOrigW, imgH: imgOrigH } = imgSize;
       const { w: displayW, h: displayH } = imageSize;
-      const cropX = cropCenterX - cropW / 2;
-      const cropY = cropCenterY - cropH / 2;
+      const cropX = (width - cropW) / 2;
+      const cropY = (height - cropH) / 2;
 
-      // Tính kích thước ảnh gốc thực tế
-      const { width: imgOrigW, height: imgOrigH } = await new Promise<{
-        width: number;
-        height: number;
-      }>((resolve, reject) => {
-        Image.getSize(
-          imageUri,
-          (w, h) => resolve({ width: w, height: h }),
-          reject
-        );
-      });
-
-      // Toạ độ tâm ảnh sau pan
+      // Tính tâm ảnh sau pan
       const centerX = width / 2 + translateX.value;
       const centerY = height / 2 + translateY.value;
       const renderedW = displayW * scale.value;
@@ -168,7 +167,6 @@ const ImageCropModal: React.FC<Props> = ({
       const cropInImageW = (cropW / renderedW) * imgOrigW;
       const cropInImageH = (cropH / renderedH) * imgOrigH;
 
-      // Đảm bảo không vượt biên ảnh
       const finalCropX = Math.max(0, cropInImageX);
       const finalCropY = Math.max(0, cropInImageY);
       const finalCropW = Math.min(cropInImageW, imgOrigW - finalCropX);
@@ -189,7 +187,7 @@ const ImageCropModal: React.FC<Props> = ({
         { compress: 1, format: ImageManipulator.SaveFormat.PNG }
       );
 
-      runOnJS(onConfirm)(cropped.uri);
+      onConfirm(cropped.uri);
     } catch (error) {
       console.error("Lỗi crop ảnh:", error);
     }
@@ -201,157 +199,285 @@ const ImageCropModal: React.FC<Props> = ({
     scale.value = minScale;
   };
 
+  // Animated
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withTiming(visible ? 1 : 0, {
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [visible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    pointerEvents: visible ? "auto" : "none", // tránh bấm khi ẩn
+  }));
+
+  if (!visible && opacity.value === 0) return null;
+
   if (!slot?.shape) return null;
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent={false}
-      supportedOrientations={["portrait", "landscape"]}
-    >
-      <View style={[styles.container, { width, height }]}>
-        {/* Image container */}
-        <GestureDetector gesture={composed}>
-          <Animated.View
-            ref={viewRef}
-            collapsable={false}
-            style={[StyleSheet.absoluteFill, imageStyle, { zIndex: 0 }]}
-          >
-            <Image
-              source={{ uri: imageUri }}
-              style={{
-                width: imageSize.w,
-                height: imageSize.h,
-                position: "absolute",
-                left: (width - imageSize.w) / 2,
-                top: (height - imageSize.h) / 2,
-              }}
-              resizeMode="contain"
-            />
-          </Animated.View>
-        </GestureDetector>
+    <Animated.View style={[styles.overlay, animatedStyle]}>
+      <GestureHandlerRootView style={[styles.container, { width, height }]}>
+        <View style={[styles.container, { width, height }]}>
+          {/* Image container */}
+          <GestureDetector gesture={composed}>
+            <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]}>
+              <Animated.View
+                ref={viewRef}
+                collapsable={false}
+                style={[StyleSheet.absoluteFill, imageStyle, { zIndex: 0 }]}
+              >
+                <Image
+                  source={{ uri: imageUri }}
+                  style={{
+                    width: imageSize.w,
+                    height: imageSize.h,
+                    position: "absolute",
+                    left: (width - imageSize.w) / 2,
+                    top: (height - imageSize.h) / 2,
+                  }}
+                  resizeMode="contain"
+                />
+              </Animated.View>
 
-        {/* Overlay mask */}
-        <View
-          style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
-          pointerEvents="none"
-        >
-          <Svg height={height} width={width} style={StyleSheet.absoluteFill}>
-            <Defs>
-              <Mask id="cropMask">
-                <Rect width="100%" height="100%" fill="white" />
-                {cropShape.type === "circle" ? (
-                  <Circle
-                    cx={cropCenterX}
-                    cy={cropCenterY}
-                    r={cropW / 2}
-                    fill="black"
-                  />
-                ) : (
+              {/* Overlay mask */}
+              <View pointerEvents="none">
+                <Svg
+                  height={height}
+                  width={width}
+                  style={StyleSheet.absoluteFill}
+                >
+                  <Defs>
+                    <Mask id="cropMask">
+                      <Rect width="100%" height="100%" fill="white" />
+                      {cropShape.type === "circle" ? (
+                        <Circle
+                          cx={cropCenterX}
+                          cy={cropCenterY}
+                          r={cropW / 2}
+                          fill="black"
+                        />
+                      ) : (
+                        <Rect
+                          x={cropCenterX - cropW / 2}
+                          y={cropCenterY - cropH / 2}
+                          width={cropW}
+                          height={cropH}
+                          fill="black"
+                        />
+                      )}
+                    </Mask>
+                  </Defs>
+
                   <Rect
-                    x={cropCenterX - cropW / 2}
-                    y={cropCenterY - cropH / 2}
-                    width={cropW}
-                    height={cropH}
-                    fill="black"
+                    width="100%"
+                    height="100%"
+                    fill="rgba(0,0,0,0.7)"
+                    mask="url(#cropMask)"
                   />
+                </Svg>
+
+                {/* Crop frame border */}
+                <View
+                  style={[
+                    styles.cropFrame,
+                    {
+                      width: cropW,
+                      height: cropH,
+                      borderRadius: cropShape.type === "circle" ? cropW / 2 : 0,
+                      left: cropCenterX - cropW / 2,
+                      top: cropCenterY - cropH / 2,
+                    },
+                  ]}
+                />
+
+                {/* Grid lines */}
+                {cropShape.type === "rect" && (
+                  <>
+                    <View
+                      style={[
+                        styles.gridLine,
+                        {
+                          left: cropCenterX - cropW / 2 + cropW / 3,
+                          top: cropCenterY - cropH / 2,
+                          height: cropH,
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.gridLine,
+                        {
+                          left: cropCenterX - cropW / 2 + (cropW * 2) / 3,
+                          top: cropCenterY - cropH / 2,
+                          height: cropH,
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.gridLineHorizontal,
+                        {
+                          top: cropCenterY - cropH / 2 + cropH / 3,
+                          left: cropCenterX - cropW / 2,
+                          width: cropW,
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.gridLineHorizontal,
+                        {
+                          top: cropCenterY - cropH / 2 + (cropH * 2) / 3,
+                          left: cropCenterX - cropW / 2,
+                          width: cropW,
+                        },
+                      ]}
+                    />
+                  </>
                 )}
-              </Mask>
-            </Defs>
+              </View>
+            </View>
+          </GestureDetector>
 
-            <Rect
-              width="100%"
-              height="100%"
-              fill="rgba(0,0,0,0.7)"
-              mask="url(#cropMask)"
-            />
-          </Svg>
-
-          {/* Crop frame border */}
+          {/* Overlay mask */}
           <View
-            style={[
-              styles.cropFrame,
-              {
-                width: cropW,
-                height: cropH,
-                borderRadius: cropShape.type === "circle" ? cropW / 2 : 0,
-                left: cropCenterX - cropW / 2,
-                top: cropCenterY - cropH / 2,
-              },
-            ]}
-          />
+            style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
+            pointerEvents="none"
+          >
+            <Svg height={height} width={width} style={StyleSheet.absoluteFill}>
+              <Defs>
+                <Mask id="cropMask">
+                  <Rect width="100%" height="100%" fill="white" />
+                  {cropShape.type === "circle" ? (
+                    <Circle
+                      cx={cropCenterX}
+                      cy={cropCenterY}
+                      r={cropW / 2}
+                      fill="black"
+                    />
+                  ) : (
+                    <Rect
+                      x={cropCenterX - cropW / 2}
+                      y={cropCenterY - cropH / 2}
+                      width={cropW}
+                      height={cropH}
+                      fill="black"
+                    />
+                  )}
+                </Mask>
+              </Defs>
 
-          {/* Grid lines */}
-          {cropShape.type === "rect" && (
-            <>
-              <View
-                style={[
-                  styles.gridLine,
-                  {
-                    left: cropCenterX - cropW / 2 + cropW / 3,
-                    top: cropCenterY - cropH / 2,
-                    height: cropH,
-                  },
-                ]}
+              <Rect
+                width="100%"
+                height="100%"
+                fill="rgba(0,0,0,0.7)"
+                mask="url(#cropMask)"
               />
-              <View
-                style={[
-                  styles.gridLine,
-                  {
-                    left: cropCenterX - cropW / 2 + (cropW * 2) / 3,
-                    top: cropCenterY - cropH / 2,
-                    height: cropH,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.gridLineHorizontal,
-                  {
-                    top: cropCenterY - cropH / 2 + cropH / 3,
-                    left: cropCenterX - cropW / 2,
-                    width: cropW,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.gridLineHorizontal,
-                  {
-                    top: cropCenterY - cropH / 2 + (cropH * 2) / 3,
-                    left: cropCenterX - cropW / 2,
-                    width: cropW,
-                  },
-                ]}
-              />
-            </>
-          )}
-        </View>
+            </Svg>
 
-        {/* === TOP TOOLBAR === */}
-        <View style={styles.topToolbar}>
-          <TouchableOpacity onPress={handleReset} style={styles.toolButton}>
-            <MaterialIcons name="refresh" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
+            {/* Crop frame border */}
+            <View
+              style={[
+                styles.cropFrame,
+                {
+                  width: cropW,
+                  height: cropH,
+                  borderRadius: cropShape.type === "circle" ? cropW / 2 : 0,
+                  left: cropCenterX - cropW / 2,
+                  top: cropCenterY - cropH / 2,
+                },
+              ]}
+            />
 
-        {/* === Bottom buttons === */}
-        <View style={styles.bottomToolbar}>
-          <View style={styles.bottomButtons}>
-            <BtnBorder text="Hủy" colorType="grey" onPress={onCancel} />
-            <BtnBorder text="Xác nhận" colorType="blue" onPress={handleCrop} />
+            {/* Grid lines */}
+            {cropShape.type === "rect" && (
+              <>
+                <View
+                  style={[
+                    styles.gridLine,
+                    {
+                      left: cropCenterX - cropW / 2 + cropW / 3,
+                      top: cropCenterY - cropH / 2,
+                      height: cropH,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.gridLine,
+                    {
+                      left: cropCenterX - cropW / 2 + (cropW * 2) / 3,
+                      top: cropCenterY - cropH / 2,
+                      height: cropH,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.gridLineHorizontal,
+                    {
+                      top: cropCenterY - cropH / 2 + cropH / 3,
+                      left: cropCenterX - cropW / 2,
+                      width: cropW,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.gridLineHorizontal,
+                    {
+                      top: cropCenterY - cropH / 2 + (cropH * 2) / 3,
+                      left: cropCenterX - cropW / 2,
+                      width: cropW,
+                    },
+                  ]}
+                />
+              </>
+            )}
+          </View>
+
+          {/* === TOP TOOLBAR === */}
+          <View style={styles.topToolbar}>
+            <TouchableOpacity onPress={handleReset} style={styles.toolButton}>
+              <MaterialIcons name="refresh" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* === Bottom buttons === */}
+          <View style={styles.bottomToolbar}>
+            <View style={styles.bottomButtons}>
+              <BtnBorder text="Hủy" colorType="grey" onPress={onCancel} />
+              <BtnBorder
+                text="Xác nhận"
+                colorType="blue"
+                onPress={handleCrop}
+              />
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
+      </GestureHandlerRootView>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
     backgroundColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  container: {
+    flex: 1,
   },
   cropFrame: {
     position: "absolute",

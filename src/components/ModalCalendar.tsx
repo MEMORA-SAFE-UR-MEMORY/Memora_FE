@@ -167,7 +167,7 @@ const ModalCalendar = ({ onSelectDate, onClose, initialDate }: Props) => {
               <Picker
                 selectedValue={month}
                 onValueChange={(m) => setMonth(m)}
-                style={{ width: 120, color: "#5C4D90" }}
+                style={{ width: 150, color: "#5C4D90" }}
                 dropdownIconColor="#5C4D90"
                 itemStyle={{
                   color: "#5C4D90",
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
-    width: 280,
+    width: 290,
     alignItems: "center",
   },
   modalTitle: {
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   pickerRow: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
   },
 });

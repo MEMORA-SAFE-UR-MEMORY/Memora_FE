@@ -1,11 +1,12 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AddMemoryModal from "@src/components/AddMemoryModal";
 import { FrameView } from "@src/components/FrameView";
+import ImageCropModal from "@src/components/ImageCropModal";
 import InfoMemory from "@src/components/InfoMemory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalConfirm from "@src/components/ModalConfirm";
 import ModalMenu from "@src/components/ModalMenu";
-import UpdateMemory from "@src/components/UpdateMemory";
+
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import React, { useEffect, useMemo, useState } from "react";
@@ -34,7 +35,7 @@ type Props = {
   memory: Memory;
   onUpdate: (frameId: number, slotId: number, data: Memory) => void;
   onSave: (frameId: number, slotId: number, data: Memory) => void;
-  onDelete: (frameId: number, slotId: number) => void;
+  onDelete: (frameId: number, slotId: number, memoryId: number) => void;
   frameItem: RoomItem | null;
   slotId: number | null;
   onFrameRemoved?: boolean;
@@ -190,16 +191,58 @@ const MemoryModal = ({
   };
 
   const handleDelete = () => {
-    if (frameItem && selectedSlotId != null) {
+    if (frameItem && selectedSlotId != null && selectedMemory) {
       setShowConfirm(false);
-      onDelete(frameItem.id, selectedSlotId);
+      onDelete(frameItem.id, selectedSlotId, selectedMemory.id);
       handleClose();
     }
   };
 
+  // Crop modal
+  const [cropData, setCropData] = useState<{
+    imageUri: string | null;
+    slot: any | null;
+    imgSize: { imgW: number; imgH: number } | null;
+  }>({ imageUri: null, slot: null, imgSize: null });
+
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [pendingCropConfirm, setPendingCropConfirm] = useState<
+    ((uri: string) => void) | null
+  >(null);
+
+  const handleOpenCrop = (
+    imageUri: string,
+    slot: any,
+    imgSize: { imgW: number; imgH: number },
+    onConfirm?: (uri: string) => void
+  ) => {
+    setIsLoading(true);
+    setCropData({ imageUri, slot, imgSize });
+    setTimeout(() => {
+      setIsCropOpen(true);
+      setIsLoading(false);
+    }, 300);
+    if (onConfirm) setPendingCropConfirm(() => onConfirm);
+  };
+
+  const handleCropConfirm = (croppedUri: string) => {
+    if (pendingCropConfirm) {
+      pendingCropConfirm(croppedUri);
+    }
+
+    setIsCropOpen(false);
+    setCropData({ imageUri: null, slot: null, imgSize: null });
+    setPendingCropConfirm(null);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropOpen(false);
+    setCropData({ imageUri: null, slot: null, imgSize: null });
+  };
+
   useEffect(() => {
     setSelected(1);
-  }, [memory.id]);
+  }, [frameItem]);
 
   useEffect(() => {
     if (onFrameRemoved) handleClose();
@@ -218,9 +261,8 @@ const MemoryModal = ({
       style={[styles.backdrop, containerAnim]}
       pointerEvents={visible ? "auto" : "none"}
     >
+      {isLoading && <LoadingOverlay />}
       <View style={[styles.modalContainer, { width, height }]}>
-        {isLoading && <LoadingOverlay />}
-
         {/* LEFT: Frame Preview */}
         <View style={[styles.leftPane, { width: leftWidth }]}>
           {frameItem?.item && frameItem?.item.dimension && (
@@ -247,12 +289,17 @@ const MemoryModal = ({
                     .map((slot) => (
                       <Pressable
                         key={slot.slotId}
-                        style={{ position: "absolute" }}
+                        style={{
+                          position: "absolute",
+                          top: slot.y,
+                          left: slot.x,
+                        }}
                         onPress={() => handleSlotPress(slot.slotId)}
                       >
                         <FrameView
                           slot={slot}
                           memory={memoryResolver(frameItem.id, slot.slotId)}
+                          mode={mode}
                         />
                       </Pressable>
                     ))}
@@ -307,6 +354,7 @@ const MemoryModal = ({
                         onUpdate(frameItem.id, selectedSlotId, data)
                       }
                       onLoadingChange={setIsLoading}
+                      onRequestCrop={handleOpenCrop}
                     />
                   )}
               </>
@@ -344,6 +392,17 @@ const MemoryModal = ({
           )}
         </View>
       </View>
+
+      {isCropOpen && cropData.imageUri && cropData.slot && cropData.imgSize && (
+        <ImageCropModal
+          visible={isCropOpen}
+          imageUri={cropData.imageUri}
+          slot={cropData.slot}
+          imgSize={cropData.imgSize}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </Animated.View>
   );
 };

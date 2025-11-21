@@ -1,11 +1,21 @@
 import Cloud from "@src/components/login/Cloud";
+import OnboardingCarousel from "@src/components/OnboardingCarousel";
 import { AuthProvider } from "@src/context/AuthContext";
 import { InventoryProvider } from "@src/context/InventoryContext";
 import { MusicProvider } from "@src/context/MusicContext";
 import { ThemeProvider } from "@src/context/ThemeContext";
+import { getHasSeenOnboarding, setHasSeenOnboarding } from "@src/utils/storage";
+import * as NavigationBar from "expo-navigation-bar";
 import { Stack } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Platform,
+  StyleSheet,
+  View,
+} from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function HomeLayout() {
@@ -20,8 +30,37 @@ export default function HomeLayout() {
 
   const DROP_RATIO = 0.3;
 
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+
+  useEffect(() => {
+    (async () => {
+      const seen = await getHasSeenOnboarding();
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const finishOnboarding = async () => {
+    await setHasSeenOnboarding();
+    setShowOnboarding(false);
+  };
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      (async () => {
+        try {
+          await NavigationBar.setButtonStyleAsync("light");
+          await NavigationBar.setVisibilityAsync("hidden");
+        } catch {}
+      })();
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
+      <StatusBar hidden />
       <AuthProvider>
         <MusicProvider>
           <ThemeProvider>
@@ -145,6 +184,21 @@ export default function HomeLayout() {
                 </View>
 
                 <View style={{ flex: 1, zIndex: 30 }}>
+                  {/* Onboarding */}
+                  <OnboardingCarousel
+                    visible={showOnboarding}
+                    onFinish={finishOnboarding}
+                    onSkip={() => {
+                      finishOnboarding();
+                    }}
+                  />
+                  {/* <Button
+                          title="Hiển thị lại Onboarding (debug)"
+                          onPress={async () => {
+                            await resetOnboardingFlag();
+                            setShowOnboarding(true);
+                          }}
+                        /> */}
                   <Stack
                     screenOptions={{
                       headerShown: false,

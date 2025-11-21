@@ -35,7 +35,7 @@ export default function MyAlbumsScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
-        <Text className="fontFamily: 'Baloo2-medium'">Đang tải…</Text>
+        <Text className="fontFamily: 'Baloo2_medium'">Đang tải…</Text>
       </View>
     );
   }
@@ -43,7 +43,7 @@ export default function MyAlbumsScreen() {
   if (!userId) {
     return (
       <View style={styles.center}>
-        <Text className="fontFamily: 'Baloo2-medium'">Chưa đăng nhập.</Text>
+        <Text className="fontFamily: 'Baloo2_medium'">Chưa đăng nhập.</Text>
       </View>
     );
   }
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: "#6b7280",
     fontSize: 15,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
     textAlign: "center",
   },
   item: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#111827",
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
   },
   itemRowWrap: { flexDirection: "row", alignItems: "center", gap: 8 },
   actions: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: "rgba(255,255,255,0.9)",
     borderRadius: 8,
-    fontFamily: "Baloo2-medium",
+    fontFamily: "Baloo2_medium",
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "#E5E7EB",
   },
@@ -305,5 +305,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
-  lockTxt: { fontSize: 12, color: "#6b7280", fontFamily: "Baloo2-medium" },
+  lockTxt: { fontSize: 12, color: "#6b7280", fontFamily: "Baloo2_medium" },
 });

@@ -4,6 +4,7 @@ import AddMemoryModal from "@src/components/AddMemoryModal";
 import Inventory from "@src/components/Inventory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import MemoryModal from "@src/components/MemoryModal";
+
 import ModalConfirm from "@src/components/ModalConfirm";
 import PlacedFrame from "@src/components/PlacedFrame";
 import RoomMenu from "@src/components/RoomMenu";
@@ -86,6 +87,7 @@ const Room = () => {
     closeSetting,
     handleSaveSetting,
     loading,
+    fetchAndSetRoom,
   } = useRoom(roomId, themeId, type, effectiveRoom, draft, back);
 
   const openStore = () => {
@@ -146,7 +148,7 @@ const Room = () => {
     onUserInteractionEnd,
     onUserInteractionStart,
     activeFrameItem,
-  } = useMemory(roomId, scrollX, effectiveRoom, mode);
+  } = useMemory(roomId, scrollX, effectiveRoom, mode, type, fetchAndSetRoom);
 
   // Khi memory và items đã render xong
   useEffect(() => {
@@ -423,17 +425,17 @@ const Room = () => {
           titleText="Thông báo"
           contentText={
             decorCount === MAX_DECOR && frameCount === MAX_FRAME
-              ? "Bạn đã đạt giới hạn số lượng item."
+              ? "Bạn đã đạt giới hạn 25 item trong phòng."
               : decorCount === MAX_DECOR
-                ? "Bạn đã đạt giới hạn số lượng item trang trí."
+                ? "Bạn đã đạt giới hạn 10 item trang trí."
                 : frameCount === MAX_FRAME
-                  ? "Bạn đã đạt giới hạn số lượng item khung."
+                  ? "Bạn đã đạt giới hạn 15 item khung."
                   : ""
           }
           icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
           iconBgColor="#F75270"
           confirmBtnText="Đóng"
-          confirmBtnColor="red"
+          confirmBtnColor="grey"
           width={340}
         />
       )}
@@ -455,7 +457,7 @@ const Room = () => {
           icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
           iconBgColor="#F75270"
           confirmBtnText="Đóng"
-          confirmBtnColor="red"
+          confirmBtnColor="grey"
           width={340}
         />
       )}

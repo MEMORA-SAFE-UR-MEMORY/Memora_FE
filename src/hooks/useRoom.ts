@@ -28,46 +28,45 @@ export const useRoom = (
   // Setting modal
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
+  const fetchAndSetRoom = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Fetch room từ API
+      if (!roomId || !themeId) return;
+      const room = await service.getRoom(roomId);
+
+      // 2. Tìm theme dựa vào themeId
+      const theme = themes.find((t) => t.id === themeId);
+      if (!theme) {
+        setError("Theme not found");
+        setRoomDetail(null);
+        return;
+      }
+
+      // 3. Update roomDetail với theme và các thông tin cơ bản
+      const updatedRoom: RoomDetail = {
+        ...room,
+        theme,
+      };
+
+      setRoomDetail(updatedRoom);
+      if (!initialRoomRef.current) {
+        initialRoomRef.current = structuredClone(updatedRoom);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to load room");
+      setRoomDetail(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [roomId, themeId, themes]);
+
   // load once từ props
   useEffect(() => {
-    if (!roomId || !themeId) return;
-
-    const fetchAndSetRoom = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // 1. Fetch room từ API
-        const room = await service.getRoom(roomId);
-
-        // 2. Tìm theme dựa vào themeId
-        const theme = themes.find((t) => t.id === themeId);
-        if (!theme) {
-          setError("Theme not found");
-          setRoomDetail(null);
-          return;
-        }
-
-        // 3. Update roomDetail với theme và các thông tin cơ bản
-        const updatedRoom: RoomDetail = {
-          ...room,
-          theme,
-        };
-
-        setRoomDetail(updatedRoom);
-        if (!initialRoomRef.current) {
-          initialRoomRef.current = structuredClone(updatedRoom);
-        }
-      } catch (err: any) {
-        setError(err.message || "Failed to load room");
-        setRoomDetail(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAndSetRoom();
-  }, [roomId, themeId, themes]);
+  }, [fetchAndSetRoom]);
 
   // Setting controls
   const openSetting = () => setIsSettingOpen(true);
@@ -171,6 +170,7 @@ export const useRoom = (
     updating,
     updateType,
     exitToHall,
+    fetchAndSetRoom,
 
     // Setting
     isSettingOpen,

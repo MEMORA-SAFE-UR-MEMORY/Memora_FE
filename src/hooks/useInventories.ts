@@ -1,7 +1,7 @@
 // src/hooks/useInventory.ts
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "@src/lib/supabase";
+import { supabase } from "@src/utils/supabase";
 
 export const useInventory = () => {
   const [inventoryId, setInventoryId] = useState<number | null>(null);

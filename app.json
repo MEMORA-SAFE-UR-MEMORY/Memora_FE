@@ -2,8 +2,7 @@
   "expo": {
     "name": "Memora",
     "slug": "memora",
-    "owner": "memora-appstore",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "memora",
@@ -17,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -28,19 +27,25 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
-      "package": "com.anhtdse184525.Memora"
+      "package": "com.anhtdse184525.Memora",
+      "versionCode": 18
+    },
+    "androidStatusBar": {
+      "translucent": true,
+      "backgroundColor": "#ffffff",
+      "barStyle": "light-content"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -49,7 +54,29 @@
       "expo-audio",
       "expo-font",
       "expo-localization",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "newArchEnabled": true,
+            "gradleProperties": {
+              "newArchEnabled": "true",
+              "hermesEnabled": "true"
+            }
+          }
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "visible": "immersive",
+          "behavior": "overlay-swipe",
+          "barStyle": "light",
+          "backgroundColor": "#00000000"
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
@@ -57,7 +84,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3a42b0df-db99-4691-a07a-0229126d17e3"
+        "projectId": "ea7897cd-c84b-4f2f-974d-09a943c7643e"
       }
     },
     "runtimeVersion": "1.0.0",

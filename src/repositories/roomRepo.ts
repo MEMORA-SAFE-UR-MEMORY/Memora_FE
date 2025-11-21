@@ -119,4 +119,10 @@ export const roomRepo = {
         res.suggestedDescription || res.SuggestedDescription || "",
     };
   },
+
+  deleteMemory: async (memoryId: number) => {
+    const res = await api.deleteMemory(memoryId);
+
+    return res;
+  },
 };
