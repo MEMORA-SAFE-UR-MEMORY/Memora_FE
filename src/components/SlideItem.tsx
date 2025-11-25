@@ -1,15 +1,19 @@
+import BtnBorder from "@src/components/BtnBorder";
 import { CarouselItem } from "@src/components/OnboardingCarousel";
 import React from "react";
-import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   Extrapolate,
   interpolate,
   SharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import BtnBorder from "./BtnBorder";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export type SlideProps = {
   item: CarouselItem;
@@ -19,6 +23,7 @@ export type SlideProps = {
 };
 
 export function SlideItem({ item, index, scrollX, onFinish }: SlideProps) {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const animatedStyles = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollX.value,
@@ -52,7 +57,13 @@ export function SlideItem({ item, index, scrollX, onFinish }: SlideProps) {
   const isReversed = index % 2 === 1;
 
   return (
-    <View style={[styles.page, isLast && { paddingHorizontal: 150 }]}>
+    <View
+      style={[
+        styles.page,
+        { width: SCREEN_WIDTH },
+        isLast && { paddingHorizontal: 150 },
+      ]}
+    >
       <Animated.View
         style={[
           styles.row,
@@ -101,7 +112,6 @@ export function SlideItem({ item, index, scrollX, onFinish }: SlideProps) {
 
 const styles = StyleSheet.create({
   page: {
-    width: SCREEN_WIDTH,
     paddingHorizontal: 28,
     justifyContent: "center",
     alignItems: "center",

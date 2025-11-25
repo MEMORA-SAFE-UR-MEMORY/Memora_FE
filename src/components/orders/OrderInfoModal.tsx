@@ -26,7 +26,12 @@ type Props = {
     fullName: string;
     address: string;
     phone: string;
-    orderAlbums: { albumId: number; quantity: number; price: number }[];
+    orderAlbums: {
+      albumId: number;
+      quantity: number;
+      price: number;
+      type?: "ONLINE" | "PHYSICAL";
+    }[];
     totalPrice: number;
   }) => Promise<void> | void;
 };
@@ -42,6 +47,7 @@ export default function OrderInfoModal({
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
+  const [types, setTypes] = useState<Record<number, "ONLINE" | "PHYSICAL">>({});
 
   const canSubmit =
     fullName.trim().length > 0 &&
@@ -58,17 +64,29 @@ export default function OrderInfoModal({
       }
       return next;
     });
+    setTypes((prev) => {
+      const next: Record<number, "ONLINE" | "PHYSICAL"> = {};
+      for (const a of selectedAlbums) {
+        next[a.id] = prev[a.id] ?? "PHYSICAL";
+      }
+      return next;
+    });
   }, [selectedAlbums]);
 
-  const PRICE_PER_ALBUM = 350_000;
+  const PHYSICAL_PRICE = 350_000;
+  const ONLINE_PRICE = 50_000;
   const formatVnd = (n: number) =>
     n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
   const totalPrice = useMemo(() => {
     return selectedAlbums.reduce((sum, a) => {
       const qty = quantities[a.id] ?? 1;
-      return sum + qty * PRICE_PER_ALBUM;
+      const price =
+        (types[a.id] ?? "PHYSICAL") === "ONLINE"
+          ? ONLINE_PRICE
+          : PHYSICAL_PRICE;
+      return sum + qty * price;
     }, 0);
-  }, [selectedAlbums, quantities]);
+  }, [selectedAlbums, quantities, types]);
 
   return (
     <Modal
@@ -321,6 +339,71 @@ export default function OrderInfoModal({
                         <Ionicons name="add" size={16} color="#111827" />
                       </Pressable>
                     </View>
+                    {/* Type selector */}
+                    <View style={{ marginLeft: 8, alignItems: "flex-end" }}>
+                      <View style={{ flexDirection: "row", gap: 6 }}>
+                        <Pressable
+                          disabled={submitting}
+                          onPress={() =>
+                            setTypes((prev) => ({
+                              ...prev,
+                              [a.id]: "PHYSICAL",
+                            }))
+                          }
+                          style={{
+                            paddingHorizontal: 8,
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor:
+                              (types[a.id] ?? "PHYSICAL") === "PHYSICAL"
+                                ? "#7c3aed"
+                                : "#f3f4f6",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                (types[a.id] ?? "PHYSICAL") === "PHYSICAL"
+                                  ? "#fff"
+                                  : "#111827",
+                              fontFamily: "Baloo2_medium",
+                              fontSize: 12,
+                            }}
+                          >
+                            PHYSICAL
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          disabled={submitting}
+                          onPress={() =>
+                            setTypes((prev) => ({ ...prev, [a.id]: "ONLINE" }))
+                          }
+                          style={{
+                            paddingHorizontal: 8,
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor:
+                              (types[a.id] ?? "PHYSICAL") === "ONLINE"
+                                ? "#7c3aed"
+                                : "#f3f4f6",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color:
+                                (types[a.id] ?? "PHYSICAL") === "ONLINE"
+                                  ? "#fff"
+                                  : "#111827",
+                              fontFamily: "Baloo2_medium",
+                              fontSize: 12,
+                            }}
+                          >
+                            ONLINE
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -351,7 +434,8 @@ export default function OrderInfoModal({
               }}
             >
               <Text style={{ color: "#6b7280", fontFamily: "Baloo2_medium" }}>
-                Đơn giá: {formatVnd(PRICE_PER_ALBUM)}/album
+                Đơn giá: PHYSICAL {formatVnd(PHYSICAL_PRICE)} / ONLINE{" "}
+                {formatVnd(ONLINE_PRICE)}
               </Text>
               <Text
                 style={{
@@ -409,7 +493,11 @@ export default function OrderInfoModal({
                           const orderAlbums = selectedAlbums.map((a) => ({
                             albumId: a.id,
                             quantity: quantities[a.id] ?? 1,
-                            price: PRICE_PER_ALBUM,
+                            price:
+                              (types[a.id] ?? "PHYSICAL") === "ONLINE"
+                                ? ONLINE_PRICE
+                                : PHYSICAL_PRICE,
+                            type: types[a.id] ?? "PHYSICAL",
                           }));
                           await onSubmit({
                             fullName,

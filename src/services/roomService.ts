@@ -1,7 +1,8 @@
 import { roomRepo } from "@src/repositories/roomRepo";
 import { DraftManager } from "@src/services/draftService";
+import { ApiResponse } from "@src/types/api";
 import { SuggestReq } from "@src/types/memory";
-import { Draft, Room, RoomDetail, RoomType } from "@src/types/room";
+import { Draft, Room, RoomDetail, RoomType, SharedRoom } from "@src/types/room";
 import { getFromStorage, saveToStorage } from "@src/utils/roomStorage";
 
 const LAST_RESET_KEY = "last_discovered_reset";
@@ -101,3 +102,56 @@ export async function deleteMemory(memoryId: number) {
   const res = await roomRepo.deleteMemory(memoryId);
   return res;
 }
+
+// Share link
+export const roomShareService = {
+  async invite(username: string, roomId: number, inviterId: string) {
+    // 1. tìm user theo username
+    const user = await roomRepo.getUserByUsername(username);
+    if (!user) {
+      return { success: false, message: "Người dùng không tồn tại!" };
+    }
+
+    // 2. check trùng lời mời
+    const alreadyInvited = await roomRepo.isUserAlreadyInvited(roomId, user.id);
+
+    if (alreadyInvited) {
+      return {
+        success: false,
+        message: `${user.username} đã được mời trước đó!`,
+      };
+    }
+
+    // 3. thêm record
+    const ok = await roomRepo.inviteUser(roomId, user.id, inviterId);
+
+    if (!ok) {
+      return {
+        success: false,
+        message: "Không thể mời người dùng. Vui lòng thử lại!",
+      };
+    }
+
+    return {
+      success: true,
+      message: `Đã mời ${user.username} vào phòng thành công!`,
+    };
+  },
+
+  async getSharedRooms(userId: string): Promise<ApiResponse<SharedRoom[]>> {
+    try {
+      const result = await roomRepo.getSharedRooms(userId);
+
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (err) {
+      return {
+        success: false,
+        data: null,
+        msg: "Không thể lấy dữ liệu phòng được chia sẻ.",
+      };
+    }
+  },
+};

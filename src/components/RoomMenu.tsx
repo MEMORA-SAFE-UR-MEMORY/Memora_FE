@@ -1,3 +1,4 @@
+import { FontAwesome5 } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -11,7 +12,8 @@ type RoomMenuProps = {
   onOpenSetting: () => void;
   isInventoryDisabled: boolean;
   mode?: "view" | "edit";
-  onNext?: () => void; // callback cho nút "Tiếp" nếu cần
+  viewType?: "random" | "list";
+  onNext?: (viewType: string) => void; // callback cho nút "Tiếp" nếu cần
 };
 
 const RoomMenu = ({
@@ -19,12 +21,27 @@ const RoomMenu = ({
   onOpenSetting,
   isInventoryDisabled,
   mode = "edit",
+  viewType = "random",
   onNext,
 }: RoomMenuProps) => {
+  // State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [type, setType] = useState<string>(viewType);
 
+  // Check
+  const isRandom = type === "random";
+
+  // Handle
   const openStore = () => {
     router.push("/store");
+  };
+
+  const handleTypePress = () => {
+    setType((prev) => (prev === "random" ? "list" : "random"));
+  };
+
+  const handleNextPress = () => {
+    onNext?.(type);
   };
 
   // animated value cho menu (0 = đóng, 1 = mở)
@@ -54,7 +71,20 @@ const RoomMenu = ({
   if (mode === "view") {
     return (
       <View style={styles.nextContainer}>
-        <Pressable style={styles.nextButton} onPress={onNext}>
+        <Pressable style={styles.nextButton} onPress={handleTypePress}>
+          <View style={styles.typeButton}>
+            <FontAwesome5
+              name={isRandom ? "random" : "list-ul"}
+              size={15}
+              color="white"
+            />
+          </View>
+          <Text style={styles.typeText}>Chế độ</Text>
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable style={styles.nextButton} onPress={handleNextPress}>
           <Ionicons name="arrow-forward-circle" size={35} color="white" />
           <Text style={styles.nextText}>Tiếp</Text>
         </Pressable>
@@ -160,6 +190,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     alignItems: "center",
+    flexDirection: "row",
+    width: 120,
   },
   nextButton: {
     flexDirection: "column",
@@ -170,6 +202,19 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 12,
     fontFamily: "Baloo2_medium",
+  },
+  typeButton: {
+    padding: 6,
+    borderRadius: 50,
+    marginTop: 5,
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  typeText: {
+    color: "white",
+    fontSize: 12,
+    fontFamily: "Baloo2_medium",
+    marginTop: -2,
   },
 });
 

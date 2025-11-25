@@ -6,7 +6,7 @@ import InfoMemory from "@src/components/InfoMemory";
 import LoadingOverlay from "@src/components/LoadingOverlay";
 import ModalConfirm from "@src/components/ModalConfirm";
 import ModalMenu from "@src/components/ModalMenu";
-
+import UpdateMemory from "@src/components/UpdateMemory";
 import { RoomItem } from "@src/types/item";
 import { Memory } from "@src/types/memory";
 import React, { useEffect, useMemo, useState } from "react";

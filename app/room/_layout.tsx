@@ -13,6 +13,7 @@ export default function RootLayout() {
   const { themeId } = useLocalSearchParams<{ themeId: string }>();
   const { type } = useLocalSearchParams<{ type: RoomType }>();
   const { mode } = useLocalSearchParams<{ mode: "view" | "edit" }>();
+  const { viewType } = useLocalSearchParams<{ viewType: "random" | "list" }>();
   const { back } = useLocalSearchParams<{ back: string }>();
 
   const roomIdNum = Number(roomId);
@@ -51,6 +52,7 @@ export default function RootLayout() {
         themeId={themeIdNum}
         type={type}
         mode={mode}
+        viewType={viewType}
         back={back}
       >
         <RoomDraftProvider roomId={roomIdNum}>

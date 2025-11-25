@@ -277,176 +277,130 @@ const AddMemoryModal: React.FC<Props> = ({
   return (
     <Animated.View style={[styles.overlay, animatedStyle]}>
       {isLoading && <LoadingOverlay />}
-      <View style={styles.overlay}></View>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1, width, height }}
-      >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            Keyboard.dismiss();
-            if (isCalendarOpen) handleCalendarClose();
-          }}
+      <View style={styles.overlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, width, height }}
         >
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+              if (isCalendarOpen) handleCalendarClose();
+            }}
           >
             <View
-              style={[
-                styles.content,
-                {
-                  width: isTablet ? "60%" : isSmallDevice ? "90%" : "70%",
-                  padding: scale(18),
-                  borderWidth: scale(6),
-                  borderRadius: scale(20),
-                },
-              ]}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
             >
-              {/* Header */}
-              <View style={styles.header}>
-                <Text
-                  style={[
-                    styles.title,
-                    { fontSize: scale(20), textAlign: "center" },
-                  ]}
-                >
-                  Thêm kỷ niệm
-                </Text>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.closeButton}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={scale(28)}
-                    color="#B0B0B0"
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Tiêu đề */}
-              <View style={styles.inputRow}>
-                <Text style={[styles.label, { fontSize: scale(14) }]}>
-                  Tựa đề
-                </Text>
-                <View
-                  style={[
-                    styles.titleInputContainer,
-                    { height: scale(40), borderRadius: scale(20) },
-                  ]}
-                >
-                  <TextInput
-                    value={title}
-                    onChangeText={setTitle}
-                    style={[
-                      styles.titleInput,
-                      { fontSize: scale(13), paddingHorizontal: scale(10) },
-                    ]}
-                    maxLength={60}
-                    numberOfLines={1}
-                    placeholder="Nhập tựa đề..."
-                    placeholderTextColor="#999"
-                    editable={!isCalendarOpen}
-                  />
-
-                  {title.length > 0 && (
-                    <Text
-                      style={[
-                        styles.characterCount,
-                        { fontSize: scale(11), top: scale(17) },
-                      ]}
-                    >
-                      {title.length}/60
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              {/* Row 1: Ảnh + Ngày */}
               <View
                 style={[
-                  styles.row1,
+                  styles.content,
                   {
-                    gap: scale(10),
+                    width: isTablet ? "60%" : isSmallDevice ? "90%" : "70%",
+                    padding: scale(18),
+                    borderWidth: scale(6),
+                    borderRadius: scale(20),
                   },
                 ]}
               >
-                {/* Ảnh */}
-                <View style={styles.fileRow}>
-                  <Text style={[styles.label, { fontSize: scale(14) }]}>
-                    Nhập tập tin:
+                {/* Header */}
+                <View style={styles.header}>
+                  <Text
+                    style={[
+                      styles.title,
+                      { fontSize: scale(20), textAlign: "center" },
+                    ]}
+                  >
+                    Thêm kỷ niệm
                   </Text>
-                  {selectedImage ? (
-                    <TouchableOpacity
-                      onPress={pickImage}
-                      disabled={isCalendarOpen || keyboardVisible}
-                    >
-                      <Image
-                        source={{ uri: selectedImage }}
-                        style={[
-                          styles.thumbnailImage,
-                          {
-                            width: scale(45),
-                            height: scale(45),
-                            borderRadius: scale(8),
-                          },
-                        ]}
-                      />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={[
-                        styles.fileButton,
-                        {
-                          height: scale(40),
-                          borderRadius: scale(20),
-                          paddingVertical: scale(6),
-                          paddingHorizontal: scale(12),
-                        },
-                      ]}
-                      onPress={pickImage}
-                      disabled={isCalendarOpen || keyboardVisible}
-                    >
-                      <Text
-                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
-                      >
-                        Nhập ở đây
-                      </Text>
-                      <Text
-                        style={[styles.fileButtonText, { fontSize: scale(13) }]}
-                      >
-                        ▼
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    onPress={handleClose}
+                    style={styles.closeButton}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={scale(28)}
+                      color="#B0B0B0"
+                    />
+                  </TouchableOpacity>
                 </View>
 
-                {/* Ngày */}
-                <View style={styles.dateRow}>
+                {/* Tiêu đề */}
+                <View style={styles.inputRow}>
                   <Text style={[styles.label, { fontSize: scale(14) }]}>
-                    Ngày:
+                    Tựa đề
                   </Text>
-                  <View style={styles.dateInputs}>
-                    {isCalendarOpen ? (
-                      <View
+                  <View
+                    style={[
+                      styles.titleInputContainer,
+                      { height: scale(40), borderRadius: scale(20) },
+                    ]}
+                  >
+                    <TextInput
+                      value={title}
+                      onChangeText={setTitle}
+                      style={[
+                        styles.titleInput,
+                        { fontSize: scale(13), paddingHorizontal: scale(10) },
+                      ]}
+                      maxLength={60}
+                      numberOfLines={1}
+                      placeholder="Nhập tựa đề..."
+                      placeholderTextColor="#999"
+                      editable={!isCalendarOpen}
+                    />
+
+                    {title.length > 0 && (
+                      <Text
                         style={[
-                          styles.calendarContainer,
-                          {
-                            width: isTablet ? 500 : width * 0.8,
-                            height: height * (isTablet ? 0.5 : 0.4),
-                          },
+                          styles.characterCount,
+                          { fontSize: scale(11), top: scale(17) },
                         ]}
                       >
-                        <ModalCalendar
-                          onSelectDate={handleDateSelect}
-                          onClose={handleCalendarClose}
-                          initialDate={selectedDate}
+                        {title.length}/60
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Row 1: Ảnh + Ngày */}
+                <View
+                  style={[
+                    styles.row1,
+                    {
+                      gap: scale(10),
+                    },
+                  ]}
+                >
+                  {/* Ảnh */}
+                  <View style={styles.fileRow}>
+                    <Text style={[styles.label, { fontSize: scale(14) }]}>
+                      Nhập tập tin:
+                    </Text>
+                    {selectedImage ? (
+                      <TouchableOpacity
+                        onPress={pickImage}
+                        disabled={isCalendarOpen || keyboardVisible}
+                      >
+                        <Image
+                          source={{ uri: selectedImage }}
+                          style={[
+                            styles.thumbnailImage,
+                            {
+                              width: scale(45),
+                              height: scale(45),
+                              borderRadius: scale(8),
+                            },
+                          ]}
                         />
-                      </View>
+                      </TouchableOpacity>
                     ) : (
                       <TouchableOpacity
                         style={[
-                          styles.dateButton,
+                          styles.fileButton,
                           {
                             height: scale(40),
                             borderRadius: scale(20),
@@ -454,21 +408,20 @@ const AddMemoryModal: React.FC<Props> = ({
                             paddingHorizontal: scale(12),
                           },
                         ]}
-                        onPress={handleCalendarOpen}
+                        onPress={pickImage}
+                        disabled={isCalendarOpen || keyboardVisible}
                       >
                         <Text
                           style={[
-                            styles.dateButtonText,
+                            styles.fileButtonText,
                             { fontSize: scale(13) },
                           ]}
                         >
-                          {selectedDate
-                            ? formatDate(selectedDate)
-                            : "Chọn ngày"}
+                          Nhập ở đây
                         </Text>
                         <Text
                           style={[
-                            styles.dateButtonText,
+                            styles.fileButtonText,
                             { fontSize: scale(13) },
                           ]}
                         >
@@ -477,133 +430,191 @@ const AddMemoryModal: React.FC<Props> = ({
                       </TouchableOpacity>
                     )}
                   </View>
-                </View>
-              </View>
 
-              {/* Miêu tả */}
-              <View style={styles.descriptionRow}>
-                <View>
-                  <Text style={[styles.label, { fontSize: scale(14) }]}>
-                    Miêu tả
-                  </Text>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.aiContanier,
-                      isFormValid() && !aiDisabled && styles.aiActive,
-                    ]}
-                    onPress={handleSuggest}
-                    disabled={!isFormValid() || aiDisabled}
-                  >
-                    <FontAwesome5 name="robot" size={20} color="white" />
-                  </TouchableOpacity>
-                  {aiDisabled && (
-                    <Text
-                      style={{
-                        color: "#666",
-                        marginTop: 2,
-                        fontSize: 10,
-                        marginHorizontal: "auto",
-                        textAlign: "center",
-                        fontFamily: "Baloo2_medium",
-                      }}
-                    >
-                      {Math.floor(aiCountdown / 60)}:
-                      {(aiCountdown % 60).toString().padStart(2, "0")}
+                  {/* Ngày */}
+                  <View style={styles.dateRow}>
+                    <Text style={[styles.label, { fontSize: scale(14) }]}>
+                      Ngày:
                     </Text>
-                  )}
+                    <View style={styles.dateInputs}>
+                      {isCalendarOpen ? (
+                        <View
+                          style={[
+                            styles.calendarContainer,
+                            {
+                              width: isTablet ? 500 : width * 0.8,
+                              height: height * (isTablet ? 0.5 : 0.4),
+                            },
+                          ]}
+                        >
+                          <ModalCalendar
+                            onSelectDate={handleDateSelect}
+                            onClose={handleCalendarClose}
+                            initialDate={selectedDate}
+                          />
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          style={[
+                            styles.dateButton,
+                            {
+                              height: scale(40),
+                              borderRadius: scale(20),
+                              paddingVertical: scale(6),
+                              paddingHorizontal: scale(12),
+                            },
+                          ]}
+                          onPress={handleCalendarOpen}
+                        >
+                          <Text
+                            style={[
+                              styles.dateButtonText,
+                              { fontSize: scale(13) },
+                            ]}
+                          >
+                            {selectedDate
+                              ? formatDate(selectedDate)
+                              : "Chọn ngày"}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.dateButtonText,
+                              { fontSize: scale(13) },
+                            ]}
+                          >
+                            ▼
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
                 </View>
 
-                <TextInput
-                  value={description}
-                  onChangeText={setDescription}
-                  style={[
-                    styles.descriptionInput,
-                    {
-                      height: scale(90),
-                      borderRadius: scale(20),
-                      fontSize: scale(13),
-                    },
-                  ]}
-                  multiline={true}
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  placeholder="Nếu bạn chưa biết ghi gì, có thể nhờ AI hỗ trợ nha!"
-                  placeholderTextColor="#999"
-                  editable={!isCalendarOpen}
-                  onFocus={() => {
-                    if (isCalendarOpen) Keyboard.dismiss();
-                  }}
-                />
-              </View>
+                {/* Miêu tả */}
+                <View style={styles.descriptionRow}>
+                  <View>
+                    <Text style={[styles.label, { fontSize: scale(14) }]}>
+                      Miêu tả
+                    </Text>
 
-              {/* Nút thêm */}
-              <View style={styles.addButton}>
-                <BtnBorder
-                  text="Thêm"
-                  fontSize={scale(14)}
-                  colorType={isFormValid() ? "pink" : "grey"}
-                  onPress={handleSave}
-                  disabled={!isFormValid()}
-                />
+                    <TouchableOpacity
+                      style={[
+                        styles.aiContanier,
+                        isFormValid() && !aiDisabled && styles.aiActive,
+                      ]}
+                      onPress={handleSuggest}
+                      disabled={!isFormValid() || aiDisabled}
+                    >
+                      <FontAwesome5 name="robot" size={20} color="white" />
+                    </TouchableOpacity>
+                    {aiDisabled && (
+                      <Text
+                        style={{
+                          color: "#666",
+                          marginTop: 2,
+                          fontSize: 10,
+                          marginHorizontal: "auto",
+                          textAlign: "center",
+                          fontFamily: "Baloo2_medium",
+                        }}
+                      >
+                        {Math.floor(aiCountdown / 60)}:
+                        {(aiCountdown % 60).toString().padStart(2, "0")}
+                      </Text>
+                    )}
+                  </View>
+
+                  <TextInput
+                    value={description}
+                    onChangeText={setDescription}
+                    style={[
+                      styles.descriptionInput,
+                      {
+                        height: scale(90),
+                        borderRadius: scale(20),
+                        fontSize: scale(13),
+                      },
+                    ]}
+                    multiline={true}
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                    placeholder="Nếu bạn chưa biết ghi gì, có thể nhờ AI hỗ trợ nha!"
+                    placeholderTextColor="#999"
+                    editable={!isCalendarOpen}
+                    onFocus={() => {
+                      if (isCalendarOpen) Keyboard.dismiss();
+                    }}
+                  />
+                </View>
+
+                {/* Nút thêm */}
+                <View style={styles.addButton}>
+                  <BtnBorder
+                    text="Thêm"
+                    fontSize={scale(14)}
+                    colorType={isFormValid() ? "pink" : "grey"}
+                    onPress={handleSave}
+                    disabled={!isFormValid()}
+                  />
+                </View>
               </View>
             </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
 
-      {/* Modal Crop */}
-      {tempImage &&
-        isCropOpen &&
-        frameItem?.item?.slots &&
-        slotId !== null &&
-        (() => {
-          // Dàn phẳng mảng slot
-          const slots = Array.isArray(frameItem.item.slots[0])
-            ? frameItem.item.slots.flat()
-            : frameItem.item.slots;
+        {/* Modal Crop */}
+        {tempImage &&
+          isCropOpen &&
+          frameItem?.item?.slots &&
+          slotId !== null &&
+          (() => {
+            // Dàn phẳng mảng slot
+            const slots = Array.isArray(frameItem.item.slots[0])
+              ? frameItem.item.slots.flat()
+              : frameItem.item.slots;
 
-          const slot = slots.find((s) => s.slotId === slotId);
+            const slot = slots.find((s) => s.slotId === slotId);
 
-          if (!slot) {
-            console.warn("Không tìm thấy slot với id:", slotId);
-            return null;
-          }
+            if (!slot) {
+              console.warn("Không tìm thấy slot với id:", slotId);
+              return null;
+            }
 
-          return (
-            <ImageCropModal
-              key={slotId}
-              visible={isCropOpen}
-              imageUri={tempImage}
-              slot={slot}
-              imgSize={imgSize}
-              onConfirm={handleCropConfirm}
-              onCancel={handleCropCancel}
-            />
-          );
-        })()}
+            return (
+              <ImageCropModal
+                key={slotId}
+                visible={isCropOpen}
+                imageUri={tempImage}
+                slot={slot}
+                imgSize={imgSize}
+                onConfirm={handleCropConfirm}
+                onCancel={handleCropCancel}
+              />
+            );
+          })()}
 
-      {aiError && (
-        <ModalConfirm
-          visible={aiError}
-          mode="noti"
-          titleText="Thông báo"
-          contentText={aiErrorMsg}
-          icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
-          iconBgColor="#FBBF24"
-          confirmBtnText="Đóng"
-          confirmBtnColor="grey"
-          onClose={() => {
-            setAiError(false);
-            setAiErrorMsg("");
-          }}
-          onConfirm={() => {
-            setAiError(false);
-            setAiErrorMsg("");
-          }}
-          width={460}
-        />
-      )}
+        {aiError && (
+          <ModalConfirm
+            visible={aiError}
+            mode="noti"
+            titleText="Thông báo"
+            contentText={aiErrorMsg}
+            icon={<FontAwesome5 name="exclamation" size={30} color="white" />}
+            iconBgColor="#FBBF24"
+            confirmBtnText="Đóng"
+            confirmBtnColor="grey"
+            onClose={() => {
+              setAiError(false);
+              setAiErrorMsg("");
+            }}
+            onConfirm={() => {
+              setAiError(false);
+              setAiErrorMsg("");
+            }}
+            width={460}
+          />
+        )}
+      </View>
     </Animated.View>
   );
 };
