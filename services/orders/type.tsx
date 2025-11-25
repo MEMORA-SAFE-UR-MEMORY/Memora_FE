@@ -2,6 +2,7 @@ export type OrderAlbumInput = {
   albumId: number;
   quantity: number;
   price: number;
+  type?: "ONLINE" | "PHYSICAL"; // added type field
 };
 
 export type CreateOrderPayload = {

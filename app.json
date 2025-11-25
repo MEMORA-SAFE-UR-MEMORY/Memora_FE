@@ -8,8 +8,11 @@
     "scheme": "memora",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true,
-      "icon": "./assets/images/icon.png"
+      "bundleIdentifier": "com.memoraco.memora",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
