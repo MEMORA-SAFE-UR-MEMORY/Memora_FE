@@ -28,6 +28,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import UpdateMemory from "./UpdateMemory";
 
 type Props = {
   visible: boolean;
